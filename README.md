@@ -13,6 +13,20 @@ attached to a specific Git commit SHA.
 Reguard does not certify legal compliance. It tests one
 technical property at a time and reports what it observed.
 
+This project is **source-visible proprietary software**. The
+source is published for inspection and security review only.
+No license is granted to execute, modify, distribute, host,
+or commercially use the software except under a separate
+written commercial agreement with the copyright holder. A
+hosted free manual-check service and a paid GitHub App for
+continuous automated checks are planned but are not yet
+available. See [`LICENSE`](./LICENSE) and
+[`docs/licensing.md`](./docs/licensing.md).
+
+The product name `Reguard` is a **provisional working name**
+pending trademark and naming-collision review. It must not
+be treated as a final brand until that review is complete.
+
 ## Why Reguard
 
 Most "AI governance" tooling today decides compliance by reading
