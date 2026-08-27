@@ -1,0 +1,142 @@
+[
+  {
+    "full_name": "agentic-community/mcp-gateway-registry",
+    "verdict": "REJECT",
+    "reason": "MCP gateway/registry/control plane for AI assets; not itself an agent runtime or framework that orchestrates tools.",
+    "is_false_positive": true,
+    "category_match": "not_agent"
+  },
+  {
+    "full_name": "ASCIT31/Dark-Moon",
+    "verdict": "ACCEPT",
+    "reason": "Autonomous pentesting engine orchestrating 50 specialist AI agents and 50+ offensive tools via an MCP layer with real exploit execution.",
+    "is_false_positive": false,
+    "category_match": "workflow_agent"
+  },
+  {
+    "full_name": "AaronWong1999/hermesclaw",
+    "verdict": "REJECT",
+    "reason": "WeChat iLink router/proxy that runs Hermes Agent and OpenClaw side-by-side; no substantive Python agent runtime of its own.",
+    "is_false_positive": true,
+    "category_match": "not_agent"
+  },
+  {
+    "full_name": "avibe-bot/avibe",
+    "verdict": "ACCEPT",
+    "reason": "Local-first Python Agent OS that drives Claude Code, Codex and OpenCode from browsers/chat apps, providing a substantive orchestration runtime.",
+    "is_false_positive": false,
+    "category_match": "workflow_agent"
+  },
+  {
+    "full_name": "howl-anderson/agentsilex",
+    "verdict": "ACCEPT",
+    "reason": "Minimal hackable Python agent framework with tools, sessions, and multi-agent handoffs built on LiteLLM.",
+    "is_false_positive": false,
+    "category_match": "agent_framework"
+  },
+  {
+    "full_name": "Repello-AI/Agent-Wiz",
+    "verdict": "REJECT",
+    "reason": "CLI for AST-based static analysis and threat modeling of OTHER agents' code; does not orchestrate actions or tools itself.",
+    "is_false_positive": true,
+    "category_match": "not_agent"
+  },
+  {
+    "full_name": "autogluon/autogluon-assistant",
+    "verdict": "ACCEPT",
+    "reason": "Multi-agent LLM system (MLZero) for end-to-end ML automation with code execution and tool orchestration.",
+    "is_false_positive": false,
+    "category_match": "multi_agent"
+  },
+  {
+    "full_name": "C2SAgent/c2sagent",
+    "verdict": "ACCEPT",
+    "reason": "Python platform for building configurable agents with MCP tools and A2A multi-agent collaboration.",
+    "is_false_positive": false,
+    "category_match": "multi_agent"
+  },
+  {
+    "full_name": "yycyyv/M-Cube",
+    "verdict": "ACCEPT",
+    "reason": "LangGraph-orchestrated multi-agent patent drafting assistant with multimodal tools, verifications, and multi-step reasoning.",
+    "is_false_positive": false,
+    "category_match": "multi_agent"
+  },
+  {
+    "full_name": "memovai/memov",
+    "verdict": "REJECT",
+    "reason": "MCP memory/version-control layer for existing coding agents; not itself an agent runtime or framework.",
+    "is_false_positive": true,
+    "category_match": "not_agent"
+  },
+  {
+    "full_name": "he-yufeng/ContractGuard",
+    "verdict": "REJECT",
+    "reason": "Single-purpose CLI tool that sends parsed contracts to an LLM; no agent runtime, tool orchestration, or framework.",
+    "is_false_positive": true,
+    "category_match": "not_agent"
+  },
+  {
+    "full_name": "YUHAO-corn/manufacturing-agents",
+    "verdict": "ACCEPT",
+    "reason": "LangGraph-based multi-agent system of six specialized LLM agents orchestrating replenishment analysis with tools.",
+    "is_false_positive": false,
+    "category_match": "multi_agent"
+  },
+  {
+    "full_name": "rennf93/roboco",
+    "verdict": "ACCEPT",
+    "reason": "Substantive 25-agent AI workforce runtime with role-gated lifecycle, state-machine coordination, and full build/review/merge pipeline.",
+    "is_false_positive": false,
+    "category_match": "workflow_agent"
+  },
+  {
+    "full_name": "rootSunc/CNEquity",
+    "verdict": "REJECT",
+    "reason": "Local Parquet data lake for Chinese A-share market data; no AI agent or orchestration present.",
+    "is_false_positive": true,
+    "category_match": "not_agent"
+  },
+  {
+    "full_name": "krishagarwal314/CodeJury",
+    "verdict": "ACCEPT",
+    "reason": "Terminal-first multi-agent coding pipeline with planner, developer, QA, and two-model jury reviewers gating PRs.",
+    "is_false_positive": false,
+    "category_match": "coding_agent"
+  },
+  {
+    "full_name": "visresearch/WordAgent",
+    "verdict": "ACCEPT",
+    "reason": "Multi-agent AI writing system with LangChain/LangGraph that orchestrates Word document tools (search/read/edit/generate).",
+    "is_false_positive": false,
+    "category_match": "tool_using_agent"
+  },
+  {
+    "full_name": "open-bias/open-bias",
+    "verdict": "REJECT",
+    "reason": "LLM proxy/gateway enforcing RULES.md guardrails on traffic; not an agent runtime or framework itself.",
+    "is_false_positive": true,
+    "category_match": "not_agent"
+  },
+  {
+    "full_name": "Hoylon/peerbridge-mcp",
+    "verdict": "ACCEPT",
+    "reason": "Python multi-agent orchestration runtime wrapping Codex/Claude Code/Grok/Kimi with audit trails and shared governance.",
+    "is_false_positive": false,
+    "category_match": "multi_agent"
+  },
+  {
+    "full_name": "wanmol/goal-flow",
+    "verdict": "ACCEPT",
+    "reason": "Production-grade agent framework on LangGraph combining workflow graphs and agent loops with middleware and Dify DSL transpiler.",
+    "is_false_positive": false,
+    "category_match": "agent_framework"
+  },
+  {
+    "full_name": "whiteducksoftware/flock",
+    "verdict": "ACCEPT",
+    "reason": "Declarative Blackboard multi-agent system framework with type contracts, event-driven orchestration, and OpenClaw integration.",
+    "is_false_positive": false,
+    "category_match": "multi_agent"
+  }
+]

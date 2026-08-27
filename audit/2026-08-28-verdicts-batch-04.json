@@ -1,0 +1,142 @@
+[
+  {
+    "full_name": "double-k-3033/AI-agent-solana",
+    "verdict": "ACCEPT",
+    "reason": "Python framework for building AI agents with multi-agent swarm, tool orchestration, MCP support, and Solana integration.",
+    "is_false_positive": false,
+    "category_match": "other_agent"
+  },
+  {
+    "full_name": "GodModeAI2025/skill-forge",
+    "verdict": "ACCEPT",
+    "reason": "Autonomous AI agent that mutates skill instructions/code, evaluates against metrics, keeps improvements, reverts regressions.",
+    "is_false_positive": false,
+    "category_match": "workflow_agent"
+  },
+  {
+    "full_name": "agenticmarket/andromity",
+    "verdict": "ACCEPT",
+    "reason": "Terminal AI coding agent with LiteLLM, MCP support, trust modes, profiles, scheduler, and headless mode.",
+    "is_false_positive": false,
+    "category_match": "coding_agent"
+  },
+  {
+    "full_name": "SamPlvs/zero-operators",
+    "verdict": "ACCEPT",
+    "reason": "Autonomous AI research team with orchestrator, multi-agent team (data engineer, model builder, oracle, code reviewer).",
+    "is_false_positive": false,
+    "category_match": "general_agent"
+  },
+  {
+    "full_name": "Rockielab/rockie-nugget",
+    "verdict": "BORDERLINE",
+    "reason": "MCP server and skill catalog are Python but the actual agent runtime is Goose (Rust binary); Python is config plus tool surface.",
+    "is_false_positive": true,
+    "category_match": "other_agent"
+  },
+  {
+    "full_name": "Zuga-Technologies/zugamind",
+    "verdict": "ACCEPT",
+    "reason": "Python attention sidecar with salience competition that wakes agent harnesses; zero-dependency substantive implementation.",
+    "is_false_positive": false,
+    "category_match": "other_agent"
+  },
+  {
+    "full_name": "emqnuele/projectBEA",
+    "verdict": "ACCEPT",
+    "reason": "Modular Python AI VTuber agent with RAG memory, OBS integration, Discord voice, Minecraft agent, and plugin-based skills.",
+    "is_false_positive": false,
+    "category_match": "tool_using_agent"
+  },
+  {
+    "full_name": "helgster77/serenecode",
+    "verdict": "REJECT",
+    "reason": "Verification framework (CLI plus MCP server) for code analysis; it is a tool that AI agents call, not an agent itself.",
+    "is_false_positive": true,
+    "category_match": "not_agent"
+  },
+  {
+    "full_name": "mikepsinn/positron",
+    "verdict": "ACCEPT",
+    "reason": "Autonomous task agents framework with RAG, LLMs for reasoning, and external API tools for non-profit use cases.",
+    "is_false_positive": false,
+    "category_match": "workflow_agent"
+  },
+  {
+    "full_name": "mtov/ark",
+    "verdict": "ACCEPT",
+    "reason": "Lightweight Python coding agent with OpenAI/Ollama support, workspace patching, test gates, and user approval flow.",
+    "is_false_positive": false,
+    "category_match": "coding_agent"
+  },
+  {
+    "full_name": "seangalliher/ProbOS",
+    "verdict": "ACCEPT",
+    "reason": "Probabilistic agent-native OS with agent lifecycle, consensus voting, trust network, and self-organizing agents.",
+    "is_false_positive": false,
+    "category_match": "general_agent"
+  },
+  {
+    "full_name": "gymaira1990-jpg/noah-gen3-type2",
+    "verdict": "ACCEPT",
+    "reason": "Python AI cognitive architecture with context management, Mnemosyne memory loop, and autonomous evolution subprojects.",
+    "is_false_positive": false,
+    "category_match": "other_agent"
+  },
+  {
+    "full_name": "Lion-1209/coderio",
+    "verdict": "ACCEPT",
+    "reason": "Local Python coding agent with TUI, MCP, multi-layer sandbox, four hard verification gates, and Chinese coding plan support.",
+    "is_false_positive": false,
+    "category_match": "coding_agent"
+  },
+  {
+    "full_name": "Ugbot/ai-grind",
+    "verdict": "REJECT",
+    "reason": "MCP tool server (devtools-mcp) plus project tracker providing tools to coding agents; not itself an agent runtime.",
+    "is_false_positive": true,
+    "category_match": "not_agent"
+  },
+  {
+    "full_name": "iammrduncan/tinyloom",
+    "verdict": "ACCEPT",
+    "reason": "Tiny Python SDK-first coding agent harness with built-in tools, providers, MCP, plugins, hooks, and TUI.",
+    "is_false_positive": false,
+    "category_match": "coding_agent"
+  },
+  {
+    "full_name": "greyok00/cortexagent",
+    "verdict": "ACCEPT",
+    "reason": "Local Python AI coding agent on llama.cpp with TUI, browser automation via CDP, speech-to-text, and persistent memory.",
+    "is_false_positive": false,
+    "category_match": "coding_agent"
+  },
+  {
+    "full_name": "evoelsewhere/evoflux",
+    "verdict": "ACCEPT",
+    "reason": "Local-first Python multi-agent workspace with lead coordinating specialists for coding, research, and browser automation.",
+    "is_false_positive": false,
+    "category_match": "general_agent"
+  },
+  {
+    "full_name": "rongtnt/claude-code-hooks-cookbook",
+    "verdict": "REJECT",
+    "reason": "Cookbook of copy-paste Claude Code hook recipes; not a substantive agent implementation, just skill snippets.",
+    "is_false_positive": true,
+    "category_match": "not_agent"
+  },
+  {
+    "full_name": "ashah360/hermes-cursor",
+    "verdict": "REJECT",
+    "reason": "Hermes Agent plugin that delegates to Cursor Cloud; the actual coding agent is Cursor, this is just an integration bridge.",
+    "is_false_positive": true,
+    "category_match": "not_agent"
+  },
+  {
+    "full_name": "Tryboy869/dojutsu-for-ai",
+    "verdict": "ACCEPT",
+    "reason": "Python coding agent with 5-step pipeline (Byakugan, Mode Sage, Jogan, RAG Booster) for precision code generation.",
+    "is_false_positive": false,
+    "category_match": "coding_agent"
+  }
+]

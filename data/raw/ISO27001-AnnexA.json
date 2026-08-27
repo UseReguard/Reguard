@@ -1,0 +1,932 @@
+[
+  {
+    "theme": "A.5",
+    "themeName": "Organizational",
+    "control": "A.5.1",
+    "name": "Policies for information security",
+    "implementationHint": "Define, approve at management level, publish, and communicate a set of information security policies. Policies must be reviewed at planned intervals and when significant changes occur. Ensure each policy has an owner and a review date; store approved versions in a document management system accessible to all staff.",
+    "category": "Governance",
+    "criticality": 3,
+    "auditRelevance": "high"
+  },
+  {
+    "theme": "A.5",
+    "themeName": "Organizational",
+    "control": "A.5.2",
+    "name": "Information security roles and responsibilities",
+    "implementationHint": "Assign and document information security roles (CISO, data owner, system custodian, end-user) in job descriptions and an RACI matrix. Every information asset must have a named owner responsible for its protection. Confirm roles are communicated during onboarding and re-confirmed annually.",
+    "category": "Governance",
+    "criticality": 3,
+    "auditRelevance": "high"
+  },
+  {
+    "theme": "A.5",
+    "themeName": "Organizational",
+    "control": "A.5.3",
+    "name": "Segregation of duties",
+    "implementationHint": "Identify conflicting duties and areas of responsibility that require separation to reduce fraud or error risk. Document the segregation matrix and implement compensating controls (e.g., audit logging, dual approval) where full segregation is not feasible due to headcount constraints.",
+    "category": "Governance",
+    "criticality": 2,
+    "auditRelevance": "medium"
+  },
+  {
+    "theme": "A.5",
+    "themeName": "Organizational",
+    "control": "A.5.4",
+    "name": "Management responsibilities",
+    "implementationHint": "Require all managers to actively direct their staff to comply with information security policies. Include information security accountability in managerial performance objectives. Managers should be able to demonstrate security briefings given to their teams and document escalation paths for security incidents.",
+    "category": "Governance",
+    "criticality": 2,
+    "auditRelevance": "medium"
+  },
+  {
+    "theme": "A.5",
+    "themeName": "Organizational",
+    "control": "A.5.5",
+    "name": "Contact with authorities",
+    "implementationHint": "Maintain a documented list of relevant authorities (CERT-In, MEITY, local law enforcement, sector regulator) with named contact points. Define the trigger conditions and process for contacting each authority. Review the contact list annually and after any regulatory change.",
+    "category": "Governance",
+    "criticality": 2,
+    "auditRelevance": "medium"
+  },
+  {
+    "theme": "A.5",
+    "themeName": "Organizational",
+    "control": "A.5.6",
+    "name": "Contact with special interest groups",
+    "implementationHint": "Subscribe the organization to relevant security information sharing groups (e.g., ISAC for your sector, CERT-In advisories, OWASP chapters, vendor security mailing lists). Assign a named person to monitor incoming threat intelligence and action it. Document memberships and evidence of intelligence being acted upon.",
+    "category": "Governance",
+    "criticality": 1,
+    "auditRelevance": "low"
+  },
+  {
+    "theme": "A.5",
+    "themeName": "Organizational",
+    "control": "A.5.7",
+    "name": "Threat intelligence",
+    "implementationHint": "Collect, analyze, and produce actionable threat intelligence relevant to your organization's assets and sector. Feed threat intelligence into risk assessments and control decisions. Maintain a threat intelligence register updated at least quarterly; document sources (commercial feeds, open-source, industry ISACs) and how findings influence security controls.",
+    "category": "Governance",
+    "criticality": 2,
+    "auditRelevance": "medium"
+  },
+  {
+    "theme": "A.5",
+    "themeName": "Organizational",
+    "control": "A.5.8",
+    "name": "Information security in project management",
+    "implementationHint": "Integrate information security requirements into the organization's project management methodology. Every project with an IT or data component should have a security review gate (architecture review, threat model, DPIA where applicable) before go-live. Maintain a project security checklist and evidence that it was completed per project.",
+    "category": "Governance",
+    "criticality": 2,
+    "auditRelevance": "medium"
+  },
+  {
+    "theme": "A.5",
+    "themeName": "Organizational",
+    "control": "A.5.9",
+    "name": "Inventory of information and other associated assets",
+    "implementationHint": "Maintain a comprehensive asset register covering hardware, software, data assets, and services. Each asset entry should record: asset ID, description, owner, classification, location, and disposal method. Review and reconcile the asset register at least annually and after significant infrastructure changes.",
+    "category": "Asset Management",
+    "criticality": 3,
+    "auditRelevance": "high"
+  },
+  {
+    "theme": "A.5",
+    "themeName": "Organizational",
+    "control": "A.5.10",
+    "name": "Acceptable use of information and other associated assets",
+    "implementationHint": "Document and communicate an Acceptable Use Policy (AUP) covering acceptable and prohibited uses of information systems, devices, internet, email, and cloud services. Require annual staff acknowledgement. Include specific guidance on personal use, social media, removable media, and AI tools.",
+    "category": "Asset Management",
+    "criticality": 2,
+    "auditRelevance": "medium"
+  },
+  {
+    "theme": "A.5",
+    "themeName": "Organizational",
+    "control": "A.5.11",
+    "name": "Return of assets",
+    "implementationHint": "Define a formal process for the return or secure disposal of all organizational assets (devices, access tokens, physical documents) when employment or contracts end. Integrate with HR offboarding workflows. Maintain a checklist per departing employee/contractor with signatures confirming return or disposal.",
+    "category": "Asset Management",
+    "criticality": 2,
+    "auditRelevance": "medium"
+  },
+  {
+    "theme": "A.5",
+    "themeName": "Organizational",
+    "control": "A.5.12",
+    "name": "Classification of information",
+    "implementationHint": "Define an information classification scheme (e.g., Public / Internal / Confidential / Restricted) with clear criteria for each level. Document which business data types map to which classification. Provide decision-tree guidance to help staff classify new documents correctly at creation.",
+    "category": "Asset Management",
+    "criticality": 3,
+    "auditRelevance": "high"
+  },
+  {
+    "theme": "A.5",
+    "themeName": "Organizational",
+    "control": "A.5.13",
+    "name": "Labelling of information",
+    "implementationHint": "Implement labelling procedures aligned to your classification scheme. Physical documents should carry visible classification markings; digital documents and email should use metadata labels or subject-line prefixes. Automate labelling in Microsoft 365 / Google Workspace sensitivity labels where possible. Audit a sample of documents periodically for correct labelling.",
+    "category": "Asset Management",
+    "criticality": 2,
+    "auditRelevance": "medium"
+  },
+  {
+    "theme": "A.5",
+    "themeName": "Organizational",
+    "control": "A.5.14",
+    "name": "Information transfer",
+    "implementationHint": "Define rules and controls for transferring information internally and to external parties. Require encryption for all Confidential/Restricted data in transit (TLS 1.2+). Maintain a register of approved transfer mechanisms; prohibit ad-hoc use of personal email or consumer file-sharing services for classified data. Include NDAs and data transfer clauses in third-party contracts.",
+    "category": "Asset Management",
+    "criticality": 2,
+    "auditRelevance": "medium"
+  },
+  {
+    "theme": "A.5",
+    "themeName": "Organizational",
+    "control": "A.5.15",
+    "name": "Access control",
+    "implementationHint": "Establish and document an access control policy based on need-to-know and least privilege. Define access provisioning, review, and revocation processes. Conduct access reviews at least semi-annually for privileged accounts and annually for standard accounts. The policy should cover logical, physical, and remote access.",
+    "category": "Access Control",
+    "criticality": 3,
+    "auditRelevance": "high"
+  },
+  {
+    "theme": "A.5",
+    "themeName": "Organizational",
+    "control": "A.5.16",
+    "name": "Identity management",
+    "implementationHint": "Maintain a full lifecycle management process for all identities (employees, contractors, service accounts, machine identities). Every identity must be uniquely identifiable (no shared accounts). Implement a joiner-mover-leaver process integrated with HR; automate deprovisioning within 24 hours of termination.",
+    "category": "Access Control",
+    "criticality": 3,
+    "auditRelevance": "high"
+  },
+  {
+    "theme": "A.5",
+    "themeName": "Organizational",
+    "control": "A.5.17",
+    "name": "Authentication information",
+    "implementationHint": "Define password/passphrase policies (minimum length, complexity, no reuse, no default credentials). Require MFA for all remote access and privileged accounts. Provide a secure password manager to all staff. Audit authentication configuration against policy quarterly. Do not allow passwords to be transmitted in plaintext.",
+    "category": "Access Control",
+    "criticality": 3,
+    "auditRelevance": "high"
+  },
+  {
+    "theme": "A.5",
+    "themeName": "Organizational",
+    "control": "A.5.18",
+    "name": "Access rights",
+    "implementationHint": "Implement a formal request, approval, provisioning, and review process for all access rights. Access to sensitive systems requires documented manager approval. Maintain a register of privileged access grants. Conduct quarterly reviews of privileged rights and annual reviews of all other rights; document and action findings.",
+    "category": "Access Control",
+    "criticality": 3,
+    "auditRelevance": "high"
+  },
+  {
+    "theme": "A.5",
+    "themeName": "Organizational",
+    "control": "A.5.19",
+    "name": "Information security in supplier relationships",
+    "implementationHint": "Define security requirements for supplier relationships and ensure they are agreed contractually before access is granted. Include security clauses (data protection, incident notification, right to audit) in all supplier contracts that involve access to organizational information or systems. Maintain a supplier register with security assessment status.",
+    "category": "Supplier Relations",
+    "criticality": 2,
+    "auditRelevance": "high"
+  },
+  {
+    "theme": "A.5",
+    "themeName": "Organizational",
+    "control": "A.5.20",
+    "name": "Addressing information security within supplier agreements",
+    "implementationHint": "Ensure all agreements with suppliers that access, process, or store organizational information explicitly address: information security requirements, classification handling, incident reporting obligations, sub-processing restrictions, audit rights, and data return/destruction at contract end. Use a standard security schedule/addendum for supplier contracts.",
+    "category": "Supplier Relations",
+    "criticality": 2,
+    "auditRelevance": "high"
+  },
+  {
+    "theme": "A.5",
+    "themeName": "Organizational",
+    "control": "A.5.21",
+    "name": "Managing information security in the ICT supply chain",
+    "implementationHint": "Assess and manage security risks from the ICT supply chain, including hardware, software, and cloud service providers. Maintain a critical supplier register with security ratings. Address supply chain security in procurement criteria. Monitor supplier security advisories and patch cadence for critical software dependencies.",
+    "category": "Supplier Relations",
+    "criticality": 2,
+    "auditRelevance": "medium"
+  },
+  {
+    "theme": "A.5",
+    "themeName": "Organizational",
+    "control": "A.5.22",
+    "name": "Monitoring, review and change management of supplier services",
+    "implementationHint": "Regularly review and monitor supplier service delivery against agreed security requirements. Conduct annual supplier security reviews and document findings. Establish a process for managing changes to supplier services, including security impact assessment before changes are approved. Track supplier incidents and near-misses.",
+    "category": "Supplier Relations",
+    "criticality": 2,
+    "auditRelevance": "medium"
+  },
+  {
+    "theme": "A.5",
+    "themeName": "Organizational",
+    "control": "A.5.23",
+    "name": "Information security for use of cloud services",
+    "implementationHint": "Define a cloud security policy covering approved cloud services, data classification rules for cloud storage, shared responsibility understanding, and data residency requirements. Maintain a cloud service register. Assess each cloud service against the policy before procurement. Address exit strategies and data portability for critical cloud services.",
+    "category": "Supplier Relations",
+    "criticality": 2,
+    "auditRelevance": "high"
+  },
+  {
+    "theme": "A.5",
+    "themeName": "Organizational",
+    "control": "A.5.24",
+    "name": "Information security incident management planning and preparation",
+    "implementationHint": "Define and document an incident management process covering detection, triage, containment, eradication, recovery, and post-incident review. Assign an Incident Response Team (IRT) with documented roles. Conduct at least one tabletop exercise per year. Ensure the process includes escalation paths and regulatory notification obligations (CERT-In 6-hour rule, DPDP obligations).",
+    "category": "Incident Management",
+    "criticality": 3,
+    "auditRelevance": "high"
+  },
+  {
+    "theme": "A.5",
+    "themeName": "Organizational",
+    "control": "A.5.25",
+    "name": "Assessment and decision on information security events",
+    "implementationHint": "Establish criteria and a process for assessing security events and deciding whether they qualify as incidents. Define event severity levels and corresponding response timelines. Maintain an event log with triage decisions documented. Train the IRT to distinguish security events from incidents using documented criteria.",
+    "category": "Incident Management",
+    "criticality": 2,
+    "auditRelevance": "medium"
+  },
+  {
+    "theme": "A.5",
+    "themeName": "Organizational",
+    "control": "A.5.26",
+    "name": "Response to information security incidents",
+    "implementationHint": "Execute incident response according to documented procedures, ensuring containment actions are taken swiftly and evidence is preserved forensically where required. Maintain an incident log with timeline, actions taken, decisions made, and personnel involved. Notify relevant stakeholders and authorities within required timeframes.",
+    "category": "Incident Management",
+    "criticality": 3,
+    "auditRelevance": "high"
+  },
+  {
+    "theme": "A.5",
+    "themeName": "Organizational",
+    "control": "A.5.27",
+    "name": "Learning from information security incidents",
+    "implementationHint": "Conduct post-incident reviews (PIR) for every significant security incident and document root causes, lessons learned, and improvement actions. Feed findings into risk assessments and control improvements. Share sanitized lessons learned with relevant staff. Track remediation actions to closure. Demonstrate trend analysis across incidents annually.",
+    "category": "Incident Management",
+    "criticality": 2,
+    "auditRelevance": "medium"
+  },
+  {
+    "theme": "A.5",
+    "themeName": "Organizational",
+    "control": "A.5.28",
+    "name": "Collection of evidence",
+    "implementationHint": "Define procedures for the identification, collection, preservation, and handling of evidence related to security incidents, ensuring chain of custody and admissibility for potential legal proceedings. Train nominated staff in forensically sound evidence collection. Maintain immutable audit logs for at least 12 months to support forensic investigations.",
+    "category": "Incident Management",
+    "criticality": 2,
+    "auditRelevance": "medium"
+  },
+  {
+    "theme": "A.5",
+    "themeName": "Organizational",
+    "control": "A.5.29",
+    "name": "Information security during disruption",
+    "implementationHint": "Ensure information security controls remain in place during disruptions (outages, natural disasters, pandemics). Business Continuity Plans must include security requirements for recovery scenarios. Test that security controls are functional in fallback/recovery environments. Document which controls may be temporarily relaxed during a declared crisis and the compensating measures required.",
+    "category": "Business Continuity",
+    "criticality": 2,
+    "auditRelevance": "medium"
+  },
+  {
+    "theme": "A.5",
+    "themeName": "Organizational",
+    "control": "A.5.30",
+    "name": "ICT readiness for business continuity",
+    "implementationHint": "Plan, implement, test, and review ICT continuity capabilities aligned to BCM objectives and RTO/RPO targets. Define ICT recovery priorities based on business impact analysis. Conduct annual failover tests for critical systems and document results. Maintain hot/warm/cold standby configurations for critical infrastructure.",
+    "category": "Business Continuity",
+    "criticality": 2,
+    "auditRelevance": "medium"
+  },
+  {
+    "theme": "A.5",
+    "themeName": "Organizational",
+    "control": "A.5.31",
+    "name": "Legal, statutory, regulatory and contractual requirements",
+    "implementationHint": "Identify and document all legal, statutory, regulatory (IT Act 2000, DPDP Act 2023, CERT-In directions, sector regulators such as RBI/SEBI/IRDAI), and contractual requirements relevant to information security. Assign ownership for each compliance obligation. Review the register at least annually and when regulations change.",
+    "category": "Compliance",
+    "criticality": 3,
+    "auditRelevance": "high"
+  },
+  {
+    "theme": "A.5",
+    "themeName": "Organizational",
+    "control": "A.5.32",
+    "name": "Intellectual property rights",
+    "implementationHint": "Define procedures to ensure compliance with intellectual property rights covering software licensing, third-party content, patents, and trademarks. Maintain a software asset register that tracks license types, quantities, and compliance status. Conduct annual software license audits. Include IP obligations in employee and contractor agreements.",
+    "category": "Compliance",
+    "criticality": 1,
+    "auditRelevance": "low"
+  },
+  {
+    "theme": "A.5",
+    "themeName": "Organizational",
+    "control": "A.5.33",
+    "name": "Protection of records",
+    "implementationHint": "Define retention periods for all categories of organizational records based on legal and business requirements. Implement controls to protect records from loss, destruction, falsification, and unauthorized access. Ensure records are readable throughout their retention period. Document the disposal method for records at end of retention.",
+    "category": "Compliance",
+    "criticality": 2,
+    "auditRelevance": "medium"
+  },
+  {
+    "theme": "A.5",
+    "themeName": "Organizational",
+    "control": "A.5.34",
+    "name": "Privacy and protection of personally identifiable information",
+    "implementationHint": "Establish and maintain a privacy program aligned to applicable privacy regulations (DPDP Act 2023 in India). Define roles (Data Fiduciary, Data Principal), data processing purposes, consent mechanisms, and data subject rights handling. Maintain a Record of Processing Activities (RoPA). Conduct Data Protection Impact Assessments (DPIAs) for high-risk processing.",
+    "category": "Compliance",
+    "criticality": 3,
+    "auditRelevance": "high"
+  },
+  {
+    "theme": "A.5",
+    "themeName": "Organizational",
+    "control": "A.5.35",
+    "name": "Independent review of information security",
+    "implementationHint": "Conduct independent reviews of the ISMS at planned intervals to assess whether the approach to managing information security is suitable, adequate, and effective. Reviews can be internal audits, external audits, or management reviews. Document findings, corrective actions, and their status. Maintain evidence that findings were presented to top management.",
+    "category": "Compliance",
+    "criticality": 2,
+    "auditRelevance": "high"
+  },
+  {
+    "theme": "A.5",
+    "themeName": "Organizational",
+    "control": "A.5.36",
+    "name": "Compliance with policies, rules and standards for information security",
+    "implementationHint": "Managers must regularly review that information processing within their areas of responsibility complies with applicable security policies, standards, and procedures. Maintain a compliance review schedule and document outcomes. Feed non-compliance findings into the corrective action process. Automate compliance checks where possible (e.g., cloud policy-as-code, MDM compliance dashboards).",
+    "category": "Compliance",
+    "criticality": 2,
+    "auditRelevance": "medium"
+  },
+  {
+    "theme": "A.5",
+    "themeName": "Organizational",
+    "control": "A.5.37",
+    "name": "Documented operating procedures",
+    "implementationHint": "Maintain up-to-date documented operating procedures for all information processing facilities and security-related operations (backup procedures, incident response runbooks, access provisioning steps, patch management procedures). Procedures must be available to those who need them and reviewed when changes occur. Version control all procedures.",
+    "category": "Operations",
+    "criticality": 2,
+    "auditRelevance": "medium"
+  },
+  {
+    "theme": "A.6",
+    "themeName": "People",
+    "control": "A.6.1",
+    "name": "Screening",
+    "implementationHint": "Define and apply background verification checks for all candidates before employment and for contractors before engagement, commensurate with the sensitivity of the role and data access. In India, background checks typically include identity, address, criminal record, educational, and employment verification via third-party agencies. Document the screening process and retain results per legal requirements.",
+    "category": "HR Security",
+    "criticality": 2,
+    "auditRelevance": "medium"
+  },
+  {
+    "theme": "A.6",
+    "themeName": "People",
+    "control": "A.6.2",
+    "name": "Terms and conditions of employment",
+    "implementationHint": "Include information security responsibilities in employment contracts and contractor agreements. All employees and contractors must sign a confidentiality/NDA agreement before being granted access. Employment terms must explicitly state consequences of violating security policies. Review and update terms when the legal landscape changes (e.g., DPDP Act enactment).",
+    "category": "HR Security",
+    "criticality": 2,
+    "auditRelevance": "medium"
+  },
+  {
+    "theme": "A.6",
+    "themeName": "People",
+    "control": "A.6.3",
+    "name": "Information security awareness, education and training",
+    "implementationHint": "Deliver mandatory information security awareness training to all staff at onboarding and annually thereafter. Training must cover phishing recognition, password hygiene, data classification, incident reporting, and relevant policies. Track completion rates and maintain training records. Conduct phishing simulation exercises at least twice per year and use results to target further training.",
+    "category": "HR Security",
+    "criticality": 3,
+    "auditRelevance": "high"
+  },
+  {
+    "theme": "A.6",
+    "themeName": "People",
+    "control": "A.6.4",
+    "name": "Disciplinary process",
+    "implementationHint": "Define and communicate a formal disciplinary process for employees who commit information security policy violations. The process must be graduated (warning, formal warning, termination) and consistently applied. Document that the disciplinary process is referenced in the employee handbook and employment contracts. Maintain records of any disciplinary actions taken.",
+    "category": "HR Security",
+    "criticality": 1,
+    "auditRelevance": "low"
+  },
+  {
+    "theme": "A.6",
+    "themeName": "People",
+    "control": "A.6.5",
+    "name": "Responsibilities after termination or change of employment",
+    "implementationHint": "Define security responsibilities that remain in force after employment ends, including ongoing confidentiality obligations, IP ownership, and data return/destruction. Conduct formal exit interviews covering security obligations. Revoke all access within 24 hours of termination (same day for involuntary). Confirm asset return and NDA continuation at exit.",
+    "category": "HR Security",
+    "criticality": 2,
+    "auditRelevance": "medium"
+  },
+  {
+    "theme": "A.6",
+    "themeName": "People",
+    "control": "A.6.6",
+    "name": "Confidentiality or non-disclosure agreements",
+    "implementationHint": "Define requirements for confidentiality/NDA agreements and apply them to all parties with access to organizational information (employees, contractors, partners, vendors). Maintain a register of signed agreements. Ensure NDAs reflect the classification of information being shared and the retention period for obligations. Review NDA templates when law changes.",
+    "category": "HR Security",
+    "criticality": 2,
+    "auditRelevance": "medium"
+  },
+  {
+    "theme": "A.6",
+    "themeName": "People",
+    "control": "A.6.7",
+    "name": "Remote working",
+    "implementationHint": "Define and implement controls for remote working that ensure information security is maintained outside organizational premises. Controls should include: VPN or zero-trust network access, endpoint security requirements (encrypted disk, MDM enrollment, screen lock), clean-desk policy for home offices, and restrictions on public Wi-Fi use without VPN. Review remote working policy annually.",
+    "category": "HR Security",
+    "criticality": 2,
+    "auditRelevance": "medium"
+  },
+  {
+    "theme": "A.6",
+    "themeName": "People",
+    "control": "A.6.8",
+    "name": "Information security event reporting",
+    "implementationHint": "Establish and communicate a clear, easy-to-use channel for staff to report security events (suspicious emails, lost devices, unauthorized access). Define what constitutes a reportable event. Set a target reporting time (e.g., within 2 hours of discovery). Provide a no-blame culture to encourage reporting. Measure the number of events reported as a security culture metric.",
+    "category": "HR Security",
+    "criticality": 3,
+    "auditRelevance": "high"
+  },
+  {
+    "theme": "A.7",
+    "themeName": "Physical",
+    "control": "A.7.1",
+    "name": "Physical security perimeters",
+    "implementationHint": "Define and implement physical security perimeters (locked doors, access-controlled entry points, clear boundary marking) around areas containing sensitive information or information processing facilities. Perimeters should be commensurate with the risk — server rooms require stronger perimeters than general office areas. Document the perimeter definitions and inspection schedule.",
+    "category": "Physical Security",
+    "criticality": 2,
+    "auditRelevance": "medium"
+  },
+  {
+    "theme": "A.7",
+    "themeName": "Physical",
+    "control": "A.7.2",
+    "name": "Physical entry",
+    "implementationHint": "Implement controls to ensure only authorized persons can enter secured areas. Use access cards/badges, biometrics, or security personnel for server rooms and sensitive areas. Maintain an access log. Issue visitor passes and ensure visitors are escorted at all times in secure areas. Review access rights to physical areas semi-annually.",
+    "category": "Physical Security",
+    "criticality": 2,
+    "auditRelevance": "medium"
+  },
+  {
+    "theme": "A.7",
+    "themeName": "Physical",
+    "control": "A.7.3",
+    "name": "Securing offices, rooms and facilities",
+    "implementationHint": "Apply security controls to offices, rooms, and facilities proportionate to the assets they house. Key controls include: locked cabinets for sensitive documents, clean-desk and clear-screen policies, locked server/network rooms, alarm systems, and CCTV where warranted. Conduct periodic physical security walkthroughs and document findings.",
+    "category": "Physical Security",
+    "criticality": 2,
+    "auditRelevance": "medium"
+  },
+  {
+    "theme": "A.7",
+    "themeName": "Physical",
+    "control": "A.7.4",
+    "name": "Physical security monitoring",
+    "implementationHint": "Continuously or periodically monitor premises for unauthorized physical access. CCTV, alarm systems, and security guard patrols are typical controls. Retain CCTV footage for at least 30 days. Review access logs for anomalies (after-hours access, tailgating). Ensure monitoring coverage includes server rooms, comms rooms, and data centres.",
+    "category": "Physical Security",
+    "criticality": 2,
+    "auditRelevance": "medium"
+  },
+  {
+    "theme": "A.7",
+    "themeName": "Physical",
+    "control": "A.7.5",
+    "name": "Protecting against physical and environmental threats",
+    "implementationHint": "Protect information processing facilities against natural disasters, malicious attack, and accidents. Assess threats relevant to the facility location (flooding, fire, power outage, civil unrest in Indian context). Implement appropriate mitigations: fire suppression, UPS, flood barriers, surge protection. Document the threat assessment and mitigation rationale.",
+    "category": "Physical Security",
+    "criticality": 2,
+    "auditRelevance": "medium"
+  },
+  {
+    "theme": "A.7",
+    "themeName": "Physical",
+    "control": "A.7.6",
+    "name": "Working in secure areas",
+    "implementationHint": "Define rules for working in secure areas (server rooms, classified document areas). Prohibit unnecessary mobile phones, cameras, and recording devices in secure areas. Require lone-worker protocols for after-hours access. Restrict knowledge of and access to secure areas to authorized and essential personnel only.",
+    "category": "Physical Security",
+    "criticality": 1,
+    "auditRelevance": "low"
+  },
+  {
+    "theme": "A.7",
+    "themeName": "Physical",
+    "control": "A.7.7",
+    "name": "Clear desk and clear screen",
+    "implementationHint": "Implement and enforce a clear-desk policy (no sensitive documents left unattended) and clear-screen policy (screens locked when unattended, auto-lock after defined timeout). Conduct periodic clean-desk audits. Configure all workstations to auto-lock after 10 minutes of inactivity. Include compliance in physical security walkthrough checklist.",
+    "category": "Physical Security",
+    "criticality": 2,
+    "auditRelevance": "medium"
+  },
+  {
+    "theme": "A.7",
+    "themeName": "Physical",
+    "control": "A.7.8",
+    "name": "Equipment siting and protection",
+    "implementationHint": "Site equipment to minimize risks from environmental threats and unauthorized access. Server racks should be in locked rooms with controlled temperature/humidity. Workstations in public-facing areas should be positioned to prevent shoulder-surfing. Keep cables organized and labeled to support incident detection and reduce tripping hazards.",
+    "category": "Physical Security",
+    "criticality": 1,
+    "auditRelevance": "low"
+  },
+  {
+    "theme": "A.7",
+    "themeName": "Physical",
+    "control": "A.7.9",
+    "name": "Security of assets off-premises",
+    "implementationHint": "Define and implement controls for assets used outside organizational premises (laptops, mobile phones, portable storage). Controls should include: full-disk encryption, remote wipe capability, VPN mandatory for corporate access, physical cable locks for high-theft risk environments. Report and process lost/stolen assets within 2 hours of discovery.",
+    "category": "Physical Security",
+    "criticality": 2,
+    "auditRelevance": "medium"
+  },
+  {
+    "theme": "A.7",
+    "themeName": "Physical",
+    "control": "A.7.10",
+    "name": "Storage media",
+    "implementationHint": "Manage storage media (USB drives, external HDDs, backup tapes, optical media) through their full lifecycle: procurement, use, transfer, and disposal. Maintain a media register for classified storage media. Encrypt all removable media containing Confidential or Restricted data. Securely destroy media at end of life using NIST 800-88 or equivalent standards.",
+    "category": "Physical Security",
+    "criticality": 2,
+    "auditRelevance": "medium"
+  },
+  {
+    "theme": "A.7",
+    "themeName": "Physical",
+    "control": "A.7.11",
+    "name": "Supporting utilities",
+    "implementationHint": "Protect information processing facilities from disruptions caused by supporting utility failures (power, water, HVAC, cooling). Implement UPS for critical systems with at least 30-minute runtime; provide generator backup for longer outages. Test UPS and generator failover quarterly. Monitor temperature and humidity in server rooms with alerts for out-of-tolerance conditions.",
+    "category": "Physical Security",
+    "criticality": 2,
+    "auditRelevance": "medium"
+  },
+  {
+    "theme": "A.7",
+    "themeName": "Physical",
+    "control": "A.7.12",
+    "name": "Cabling security",
+    "implementationHint": "Protect power and data cabling from interception, interference, or damage. Use cable trays and conduits; label all cabling. Segregate power cables from data cables to reduce electromagnetic interference. Restrict access to patch panels and distribution frames. Document cable routes for critical systems.",
+    "category": "Physical Security",
+    "criticality": 1,
+    "auditRelevance": "low"
+  },
+  {
+    "theme": "A.7",
+    "themeName": "Physical",
+    "control": "A.7.13",
+    "name": "Equipment maintenance",
+    "implementationHint": "Maintain information processing equipment in accordance with supplier maintenance schedules to ensure ongoing availability and integrity. Maintain a maintenance log per asset. Only authorized personnel or approved external engineers may perform maintenance. Ensure data is protected or removed before equipment leaves the premises for external maintenance.",
+    "category": "Physical Security",
+    "criticality": 1,
+    "auditRelevance": "low"
+  },
+  {
+    "theme": "A.7",
+    "themeName": "Physical",
+    "control": "A.7.14",
+    "name": "Secure disposal or re-use of equipment",
+    "implementationHint": "Verify that sensitive data is securely erased or destroyed before equipment is disposed of, repurposed, or returned to suppliers. Use certified data destruction methods (NIST 800-88 overwriting for HDDs, physical shredding for SSDs, degaussing for magnetic media). Obtain and retain a certificate of destruction from third-party disposal vendors. Include in the asset decommissioning checklist.",
+    "category": "Physical Security",
+    "criticality": 2,
+    "auditRelevance": "medium"
+  },
+  {
+    "theme": "A.8",
+    "themeName": "Technological",
+    "control": "A.8.1",
+    "name": "User endpoint devices",
+    "implementationHint": "Establish and enforce security configuration standards for all user endpoint devices (laptops, desktops, mobile phones, tablets). Minimum requirements: full-disk encryption, EDR/antivirus, MDM enrollment, OS and software patching within defined SLAs, and screen lock. Maintain a device inventory and compliance dashboard. Block unmanaged devices from accessing corporate resources.",
+    "category": "Endpoint Security",
+    "criticality": 3,
+    "auditRelevance": "high"
+  },
+  {
+    "theme": "A.8",
+    "themeName": "Technological",
+    "control": "A.8.2",
+    "name": "Privileged access rights",
+    "implementationHint": "Restrict, control, and monitor the use of privileged access rights. Implement Privileged Access Management (PAM) — no standing privilege, just-in-time access, separate privileged accounts (not shared with daily-use accounts), MFA for all privileged sessions, and session recording. Review privileged access quarterly and revoke when no longer required.",
+    "category": "Access Control",
+    "criticality": 3,
+    "auditRelevance": "high"
+  },
+  {
+    "theme": "A.8",
+    "themeName": "Technological",
+    "control": "A.8.3",
+    "name": "Information access restriction",
+    "implementationHint": "Restrict access to information and application systems based on the access control policy and least-privilege principle. Implement role-based access control (RBAC). Ensure application-level access controls enforce data classification boundaries. Test access restrictions as part of application security reviews and after role changes.",
+    "category": "Access Control",
+    "criticality": 3,
+    "auditRelevance": "high"
+  },
+  {
+    "theme": "A.8",
+    "themeName": "Technological",
+    "control": "A.8.4",
+    "name": "Access to source code",
+    "implementationHint": "Restrict access to source code repositories (GitHub, GitLab, Bitbucket) on a need-to-know basis. Implement branch protection rules, require code reviews before merging, and prevent direct pushes to main/production branches. Audit repository access quarterly. Ensure departing employees have repository access revoked immediately. Scan commits for accidentally committed secrets.",
+    "category": "Access Control",
+    "criticality": 2,
+    "auditRelevance": "medium"
+  },
+  {
+    "theme": "A.8",
+    "themeName": "Technological",
+    "control": "A.8.5",
+    "name": "Secure authentication",
+    "implementationHint": "Implement secure authentication mechanisms proportionate to risk. Require MFA for all external-facing systems, VPN, privileged access, and cloud consoles. Use adaptive authentication where available. Disable legacy authentication protocols (Basic Auth, NTLMv1). Implement account lockout after 5 failed attempts. Prefer phishing-resistant MFA (hardware keys, passkeys) for privileged accounts.",
+    "category": "Access Control",
+    "criticality": 3,
+    "auditRelevance": "high"
+  },
+  {
+    "theme": "A.8",
+    "themeName": "Technological",
+    "control": "A.8.6",
+    "name": "Capacity management",
+    "implementationHint": "Monitor, tune, and project the capacity of resources (compute, storage, network bandwidth, database connections) to ensure required system performance is maintained. Set thresholds and alerts at 70-80% utilization. Maintain a capacity plan reviewed quarterly. Include capacity considerations in change management for new workloads.",
+    "category": "Operations",
+    "criticality": 1,
+    "auditRelevance": "low"
+  },
+  {
+    "theme": "A.8",
+    "themeName": "Technological",
+    "control": "A.8.7",
+    "name": "Protection against malware",
+    "implementationHint": "Implement malware protection controls across all applicable systems: endpoint detection and response (EDR) on all workstations, email gateway scanning, web proxy filtering, and application allowlisting for servers. Keep malware signatures current (auto-update within 24 hours). Conduct quarterly scans and review EDR alert queues daily. Ensure malware protection cannot be disabled by end-users.",
+    "category": "Endpoint Security",
+    "criticality": 3,
+    "auditRelevance": "high"
+  },
+  {
+    "theme": "A.8",
+    "themeName": "Technological",
+    "control": "A.8.8",
+    "name": "Management of technical vulnerabilities",
+    "implementationHint": "Establish a vulnerability management program: identify vulnerabilities via regular scanning (weekly for internet-facing, monthly for internal), assess criticality using CVSS scoring, and remediate within defined SLAs (Critical ≤7 days, High ≤30 days, Medium ≤90 days). Subscribe to CVE feeds for your technology stack. Track open vulnerabilities in a register with owner and target remediation date.",
+    "category": "Vulnerability Management",
+    "criticality": 3,
+    "auditRelevance": "high"
+  },
+  {
+    "theme": "A.8",
+    "themeName": "Technological",
+    "control": "A.8.9",
+    "name": "Configuration management",
+    "implementationHint": "Define, document, implement, and maintain security configuration baselines for all system types (workstations, servers, network devices, cloud resources). Use CIS Benchmarks or equivalent as a starting point. Automate baseline enforcement using infrastructure-as-code (Terraform, Ansible). Detect and alert on configuration drift. Review baselines annually or when new threats emerge.",
+    "category": "Operations",
+    "criticality": 2,
+    "auditRelevance": "medium"
+  },
+  {
+    "theme": "A.8",
+    "themeName": "Technological",
+    "control": "A.8.10",
+    "name": "Information deletion",
+    "implementationHint": "Ensure information is deleted when no longer required, in accordance with data retention policies and legal obligations. This directly maps to the DPDP Act 2023 right to erasure for personal data. Implement data deletion procedures for databases, file shares, backups, cloud storage, and decommissioned systems. Automate deletion at end-of-retention where possible. Maintain deletion logs as evidence.",
+    "category": "Data Management",
+    "criticality": 2,
+    "auditRelevance": "high"
+  },
+  {
+    "theme": "A.8",
+    "themeName": "Technological",
+    "control": "A.8.11",
+    "name": "Data masking",
+    "implementationHint": "Apply data masking, pseudonymization, or anonymization techniques to sensitive data used in non-production environments (development, testing, QA). Never use real production personal data in test environments. Implement dynamic masking for sensitive fields in application outputs where users do not require full data visibility. Document masking rules and test their effectiveness.",
+    "category": "Data Management",
+    "criticality": 2,
+    "auditRelevance": "medium"
+  },
+  {
+    "theme": "A.8",
+    "themeName": "Technological",
+    "control": "A.8.12",
+    "name": "Data leakage prevention",
+    "implementationHint": "Implement Data Loss Prevention (DLP) controls to detect and prevent unauthorized exfiltration of sensitive data. DLP should cover email (outbound scanning), web (block upload to unauthorized cloud services), endpoint (USB/removable media restrictions), and print. Define DLP policies based on data classification. Monitor DLP alerts daily and tune rules to reduce false positives.",
+    "category": "Data Management",
+    "criticality": 2,
+    "auditRelevance": "medium"
+  },
+  {
+    "theme": "A.8",
+    "themeName": "Technological",
+    "control": "A.8.13",
+    "name": "Information backup",
+    "implementationHint": "Define and implement backup procedures for all critical systems and data. Follow the 3-2-1 rule: 3 copies, 2 different media types, 1 offsite. Test restores at least quarterly and document results — untested backups are not backups. Encrypt backups containing sensitive data. Define and measure RPO and RTO for each system tier.",
+    "category": "Operations",
+    "criticality": 3,
+    "auditRelevance": "high"
+  },
+  {
+    "theme": "A.8",
+    "themeName": "Technological",
+    "control": "A.8.14",
+    "name": "Redundancy of information processing facilities",
+    "implementationHint": "Implement redundancy for critical information processing facilities to meet availability requirements. Use multi-AZ deployments for cloud workloads, redundant network links, load balancers, and database clustering or read replicas. Document the redundancy architecture and test failover annually. Align redundancy levels to documented RTO/RPO targets from the BIA.",
+    "category": "Operations",
+    "criticality": 2,
+    "auditRelevance": "medium"
+  },
+  {
+    "theme": "A.8",
+    "themeName": "Technological",
+    "control": "A.8.15",
+    "name": "Logging",
+    "implementationHint": "Implement event logging for all systems proportionate to risk. Minimum log sources: authentication events, privileged access usage, firewall/network flows, application errors, and data access for classified systems. Protect logs from tampering (write-once storage, SIEM ingestion). Define log retention: minimum 12 months online, 3 years archived. Review logs for security anomalies at least weekly.",
+    "category": "Monitoring",
+    "criticality": 3,
+    "auditRelevance": "high"
+  },
+  {
+    "theme": "A.8",
+    "themeName": "Technological",
+    "control": "A.8.16",
+    "name": "Monitoring activities",
+    "implementationHint": "Monitor networks, systems, and applications for anomalous behavior that could indicate a security incident. Implement a SIEM or log analytics platform with alerting rules for high-risk behaviors (brute force, lateral movement, data exfiltration indicators). Define alert tiers and response SLAs. Document alert rules, their rationale, and tuning history.",
+    "category": "Monitoring",
+    "criticality": 2,
+    "auditRelevance": "medium"
+  },
+  {
+    "theme": "A.8",
+    "themeName": "Technological",
+    "control": "A.8.17",
+    "name": "Clock synchronization",
+    "implementationHint": "Ensure all information processing systems synchronize their clocks to an approved time source (NTP server, GPS time). Use a hierarchical NTP infrastructure for large environments. Accurate timestamps are critical for incident investigation and log correlation. Monitor NTP sync status and alert on drift beyond 1 second for security-critical systems.",
+    "category": "Operations",
+    "criticality": 1,
+    "auditRelevance": "low"
+  },
+  {
+    "theme": "A.8",
+    "themeName": "Technological",
+    "control": "A.8.18",
+    "name": "Use of privileged utility programs",
+    "implementationHint": "Restrict the use of utility programs that can override system and application controls (e.g., OS-level diagnostic tools, registry editors, password crackers used for recovery). Maintain an approved list of privileged utilities; prohibit installation of unauthorized ones. Log all usage of privileged utilities. Require manager approval for use in production environments.",
+    "category": "Access Control",
+    "criticality": 2,
+    "auditRelevance": "medium"
+  },
+  {
+    "theme": "A.8",
+    "themeName": "Technological",
+    "control": "A.8.19",
+    "name": "Installation of software on operational systems",
+    "implementationHint": "Define and enforce procedures for software installation on operational systems. Only approved software from approved sources may be installed; use application allowlisting or MDM policies to enforce this. Require change management approval for software installation on production servers. Scan all new software for malware before installation. Prohibit installation of cracked, pirated, or end-of-life software.",
+    "category": "Operations",
+    "criticality": 2,
+    "auditRelevance": "medium"
+  },
+  {
+    "theme": "A.8",
+    "themeName": "Technological",
+    "control": "A.8.20",
+    "name": "Networks security",
+    "implementationHint": "Manage and control networks to protect information in systems and applications. Segment networks by trust zone (DMZ, production, development, user VLANs). Implement firewalls at all zone boundaries with deny-by-default rules. Use network access control (NAC) to restrict unmanaged devices. Review firewall rule sets at least annually and remove obsolete rules.",
+    "category": "Network Security",
+    "criticality": 3,
+    "auditRelevance": "high"
+  },
+  {
+    "theme": "A.8",
+    "themeName": "Technological",
+    "control": "A.8.21",
+    "name": "Security of network services",
+    "implementationHint": "Identify and implement security requirements for network services (ISP links, VPN, SD-WAN, cloud interconnects). Include security clauses in network service provider contracts. Monitor network service SLAs and security performance metrics. Ensure network services support required encryption standards and that provider security certifications are current (ISO 27001, SOC 2).",
+    "category": "Network Security",
+    "criticality": 2,
+    "auditRelevance": "medium"
+  },
+  {
+    "theme": "A.8",
+    "themeName": "Technological",
+    "control": "A.8.22",
+    "name": "Segregation of networks",
+    "implementationHint": "Segregate groups of information services, users, and systems using network segmentation. Use VLANs, subnets, and firewall zones to isolate: production from development, PCI cardholder data environments, IoT devices, guest Wi-Fi, and management networks. Test that segregation controls actually prevent unauthorized cross-segment traffic. Document the network segmentation architecture.",
+    "category": "Network Security",
+    "criticality": 2,
+    "auditRelevance": "medium"
+  },
+  {
+    "theme": "A.8",
+    "themeName": "Technological",
+    "control": "A.8.23",
+    "name": "Web filtering",
+    "implementationHint": "Implement web filtering controls to restrict access to malicious or inappropriate websites. Use a web proxy or DNS-based filtering solution (e.g., Cisco Umbrella, Cloudflare Gateway, Zscaler) to block malware-hosting, phishing, and policy-violating categories. Log web browsing for security-relevant categories. Update threat intelligence feeds daily. Review blocked/allowed categories quarterly.",
+    "category": "Network Security",
+    "criticality": 2,
+    "auditRelevance": "medium"
+  },
+  {
+    "theme": "A.8",
+    "themeName": "Technological",
+    "control": "A.8.24",
+    "name": "Use of cryptography",
+    "implementationHint": "Define a cryptography policy covering approved algorithms (AES-256 for data at rest, TLS 1.2+ for data in transit, RSA-2048 or ECC-256 minimum for asymmetric), key management procedures, and prohibited algorithms (MD5, SHA-1, DES, 3DES). Implement PKI or a managed key management service (AWS KMS, Azure Key Vault). Audit cryptographic implementations annually.",
+    "category": "Cryptography",
+    "criticality": 3,
+    "auditRelevance": "high"
+  },
+  {
+    "theme": "A.8",
+    "themeName": "Technological",
+    "control": "A.8.25",
+    "name": "Secure development lifecycle",
+    "implementationHint": "Establish security requirements in the software development lifecycle (SDLC). Integrate: threat modeling during design, SAST/DAST scanning in CI/CD pipelines, dependency vulnerability scanning (SCA), security code review, and penetration testing before major releases. Define security acceptance criteria that must be met before production deployment. Train developers in secure coding practices.",
+    "category": "Secure Development",
+    "criticality": 3,
+    "auditRelevance": "high"
+  },
+  {
+    "theme": "A.8",
+    "themeName": "Technological",
+    "control": "A.8.26",
+    "name": "Application security requirements",
+    "implementationHint": "Define security requirements for all in-house and outsourced application development. Requirements should address authentication, authorization, data validation, error handling, logging, session management, and encryption. Use the OWASP Top 10 as a minimum baseline for web applications. Include security requirements in user stories/acceptance criteria in agile projects.",
+    "category": "Secure Development",
+    "criticality": 2,
+    "auditRelevance": "medium"
+  },
+  {
+    "theme": "A.8",
+    "themeName": "Technological",
+    "control": "A.8.27",
+    "name": "Secure system architecture and engineering principles",
+    "implementationHint": "Apply secure engineering principles throughout all system design and build activities. Core principles: least privilege, defense in depth, fail secure, economy of mechanism, separation of privilege, and zero-trust architecture. Document architecture decisions and security design reviews. Maintain architecture decision records (ADRs) that include security rationale.",
+    "category": "Secure Development",
+    "criticality": 2,
+    "auditRelevance": "medium"
+  },
+  {
+    "theme": "A.8",
+    "themeName": "Technological",
+    "control": "A.8.28",
+    "name": "Secure coding",
+    "implementationHint": "Establish and enforce secure coding standards (OWASP Secure Coding Practices, language-specific guidelines). Use linters, SAST tools (Semgrep, SonarQube, Checkmarx), and peer code reviews to enforce standards. Train all developers in secure coding annually. Maintain a library of approved, secure code patterns and prohibit known-insecure patterns (string concatenation for SQL, innerHTML for DOM).",
+    "category": "Secure Development",
+    "criticality": 2,
+    "auditRelevance": "medium"
+  },
+  {
+    "theme": "A.8",
+    "themeName": "Technological",
+    "control": "A.8.29",
+    "name": "Security testing in development and acceptance",
+    "implementationHint": "Define and execute security testing as part of the development and acceptance process. Tests should include: unit-level security tests, integration security tests, DAST scanning against staging, and manual penetration testing for significant changes. Gate production deployments on passing security test results. Retain test reports as evidence of security due diligence.",
+    "category": "Secure Development",
+    "criticality": 2,
+    "auditRelevance": "medium"
+  },
+  {
+    "theme": "A.8",
+    "themeName": "Technological",
+    "control": "A.8.30",
+    "name": "Outsourced development",
+    "implementationHint": "Apply information security requirements to outsourced software development. Include secure coding standards, code review rights, IP ownership, background checks for developers with production access, and security testing requirements in outsourcing contracts. Conduct security architecture reviews of outsourced deliverables before acceptance. Never grant production database access to outsourced developers.",
+    "category": "Secure Development",
+    "criticality": 2,
+    "auditRelevance": "medium"
+  },
+  {
+    "theme": "A.8",
+    "themeName": "Technological",
+    "control": "A.8.31",
+    "name": "Separation of development, test and production environments",
+    "implementationHint": "Maintain strictly separated development, test/staging, and production environments with different access controls, credentials, and data. Production access should require elevated approval and be logged. Do not use production data in development or test environments without masking. Use infrastructure-as-code to ensure environment parity while maintaining isolation.",
+    "category": "Secure Development",
+    "criticality": 2,
+    "auditRelevance": "medium"
+  },
+  {
+    "theme": "A.8",
+    "themeName": "Technological",
+    "control": "A.8.32",
+    "name": "Change management",
+    "implementationHint": "Implement formal change management procedures for all changes to information processing facilities and systems. Every change must be: requested, assessed (security impact included), approved by an appropriate authority, tested, and reviewed post-implementation. Maintain a change log. Emergency change procedures must include retrospective review and sign-off.",
+    "category": "Operations",
+    "criticality": 2,
+    "auditRelevance": "medium"
+  },
+  {
+    "theme": "A.8",
+    "themeName": "Technological",
+    "control": "A.8.33",
+    "name": "Test information",
+    "implementationHint": "Protect test information: do not use real personal data or sensitive operational data in testing unless absolutely necessary and with appropriate controls (masking, pseudonymization, restricted access, data deletion post-testing). Maintain records of what test data was used and its disposal. Obtain DPO approval before using real personal data in any test environment.",
+    "category": "Data Management",
+    "criticality": 2,
+    "auditRelevance": "medium"
+  },
+  {
+    "theme": "A.8",
+    "themeName": "Technological",
+    "control": "A.8.34",
+    "name": "Protection of information systems during audit testing",
+    "implementationHint": "Plan and coordinate audit tests involving operational systems to minimize disruption. Agree on audit scope, timing, and activities with the system owner before commencement. Restrict audit access to read-only where possible. Monitor audit activities and retain audit access logs. Ensure audit tools cannot be used to compromise systems — only approved tools by authorized auditors.",
+    "category": "Operations",
+    "criticality": 1,
+    "auditRelevance": "low"
+  }
+]

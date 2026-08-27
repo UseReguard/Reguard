@@ -1,0 +1,142 @@
+[
+  {
+    "full_name": "WanLanglin/-awesome-cc-harness",
+    "verdict": "REJECT",
+    "reason": "Reverse-engineering textbook about Claude Code's TypeScript source, not a Python agent implementation.",
+    "is_false_positive": true,
+    "category_match": "not_agent"
+  },
+  {
+    "full_name": "context-machine-lab/ContextAgent",
+    "verdict": "ACCEPT",
+    "reason": "Substantive Python multi-agent framework with PyTorch-like API, pipeline orchestration, and multi-LLM support.",
+    "is_false_positive": false,
+    "category_match": "coding_agent"
+  },
+  {
+    "full_name": "vstorm-co/pydantic-ai-todo",
+    "verdict": "REJECT",
+    "reason": "Plugin/toolset adding todo capabilities to existing Pydantic AI agents, not an agent runtime itself.",
+    "is_false_positive": true,
+    "category_match": "not_agent"
+  },
+  {
+    "full_name": "band-ai/codeband",
+    "verdict": "ACCEPT",
+    "reason": "Substantive Python orchestrator coordinating adversarial Claude/Codex coding agents with planner, reviewers, and mergemaster.",
+    "is_false_positive": false,
+    "category_match": "workflow_agent"
+  },
+  {
+    "full_name": "MohitGoyal09/AgentForge",
+    "verdict": "ACCEPT",
+    "reason": "Substantive Python terminal agent harness with agent loop, tool registry, MCP, subagents, and persistence.",
+    "is_false_positive": false,
+    "category_match": "coding_agent"
+  },
+  {
+    "full_name": "KlementMultiverse/ai-crm-agents",
+    "verdict": "ACCEPT",
+    "reason": "Substantive Python multi-agent CRM with 6 autonomous LangChain-orchestrated agents handling real workflows.",
+    "is_false_positive": false,
+    "category_match": "workflow_agent"
+  },
+  {
+    "full_name": "The-Swarm-Corporation/swarms-cloud",
+    "verdict": "REJECT",
+    "reason": "Deployment SDK and marketplace client for publishing agents to a cloud platform, not an agent runtime.",
+    "is_false_positive": true,
+    "category_match": "not_agent"
+  },
+  {
+    "full_name": "Aryan-Pardeshi/DeepResearch_AI",
+    "verdict": "ACCEPT",
+    "reason": "Substantive Python multi-agent research system with LangGraph state machines, 25-agent pipeline, and HITL checkpoints.",
+    "is_false_positive": false,
+    "category_match": "workflow_agent"
+  },
+  {
+    "full_name": "pguilp25/jarvis",
+    "verdict": "ACCEPT",
+    "reason": "Substantive Python multi-brain coding agent with 4-stage pipeline, tool calls, and self-verification on SWE-bench.",
+    "is_false_positive": false,
+    "category_match": "other_agent"
+  },
+  {
+    "full_name": "Saran-nns/sorn",
+    "verdict": "REJECT",
+    "reason": "Self-Organizing Recurrent Neural Networks library for computational neuroscience, not an AI agent runtime.",
+    "is_false_positive": true,
+    "category_match": "not_agent"
+  },
+  {
+    "full_name": "DariuszNewecki/CORE",
+    "verdict": "ACCEPT",
+    "reason": "Substantive Python governance runtime enforcing constitutional rules, blocking invalid mutations, and auditing agent actions.",
+    "is_false_positive": false,
+    "category_match": "coding_agent"
+  },
+  {
+    "full_name": "swarmzero/examples",
+    "verdict": "REJECT",
+    "reason": "Examples repository demonstrating how to build agents on the SwarmZero platform, not a substantive implementation.",
+    "is_false_positive": true,
+    "category_match": "not_agent"
+  },
+  {
+    "full_name": "bparlan/omp-agent",
+    "verdict": "BORDERLINE",
+    "reason": "Agent engineering framework describing skills and workflows but README lacks evidence of substantive Python agent runtime code.",
+    "is_false_positive": true,
+    "category_match": "not_agent"
+  },
+  {
+    "full_name": "AlexAnys/agent-first-dev",
+    "verdict": "REJECT",
+    "reason": "Educational knowledge base adapted from Stanford CS146S course, not a Python agent implementation.",
+    "is_false_positive": true,
+    "category_match": "not_agent"
+  },
+  {
+    "full_name": "skyvanguard/Kryon",
+    "verdict": "ACCEPT",
+    "reason": "Substantive Python autonomous offensive-security agent with ReAct loop, 110 playbooks, 362 tools, and deterministic pre-hooks.",
+    "is_false_positive": false,
+    "category_match": "workflow_agent"
+  },
+  {
+    "full_name": "luigiPP93/OpenV2X_self_driving_vision_and_reconstruction",
+    "verdict": "REJECT",
+    "reason": "Computer vision/V2X framework for autonomous vehicles, not an AI agent runtime with tool orchestration.",
+    "is_false_positive": true,
+    "category_match": "not_agent"
+  },
+  {
+    "full_name": "KRLabsOrg/squeez",
+    "verdict": "REJECT",
+    "reason": "Tool output pruning utility/library for LLM coding agents, not an agent runtime or framework itself.",
+    "is_false_positive": true,
+    "category_match": "not_agent"
+  },
+  {
+    "full_name": "securezeron/zeron-agent-development-kit",
+    "verdict": "ACCEPT",
+    "reason": "Substantive Python/Node/Go ADK for building autonomous cybersecurity agents with BaseAgent, ToolExecutor, and policy engine.",
+    "is_false_positive": false,
+    "category_match": "general_agent"
+  },
+  {
+    "full_name": "earthwalker17/agent-os",
+    "verdict": "ACCEPT",
+    "reason": "Substantive Python local-first agent OS harness with two-agent split, plan-execute-verify-deploy loop, and recovery matrix.",
+    "is_false_positive": false,
+    "category_match": "other_agent"
+  },
+  {
+    "full_name": "frankbria/codeframe",
+    "verdict": "ACCEPT",
+    "reason": "Substantive Python project delivery framework orchestrating coding agents with PRD generation, verification gates, and PR flow.",
+    "is_false_positive": false,
+    "category_match": "coding_agent"
+  }
+]

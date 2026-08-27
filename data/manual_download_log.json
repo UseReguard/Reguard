@@ -1,0 +1,238 @@
+{
+  "source_dir": "/mnt/c/Users/mrcel/Desktop/Obsidian Vaults/Systematic Value Productivity/EU-AI-Compliance/Missing EU Laws",
+  "total": 29,
+  "results": [
+    {
+      "src": "EUR-Lex - 32002L0058 - EN.html",
+      "celex": "32002L0058",
+      "ok": true,
+      "articles": 0,
+      "recitals": 59,
+      "annexes": 0
+    },
+    {
+      "src": "L_2016119EN.01000101.xml.html",
+      "celex": "32016R0679",
+      "ok": true,
+      "articles": 99,
+      "recitals": 173,
+      "annexes": 0
+    },
+    {
+      "src": "L_2016119EN.01008901.xml.html",
+      "celex": "32016L0680",
+      "ok": true,
+      "articles": 65,
+      "recitals": 107,
+      "annexes": 0
+    },
+    {
+      "src": "L_2016157EN.01000101.xml.html",
+      "celex": "32016L0943",
+      "ok": true,
+      "articles": 21,
+      "recitals": 40,
+      "annexes": 0
+    },
+    {
+      "src": "L_2017117EN.01000101.xml.html",
+      "celex": "32017R0745",
+      "ok": true,
+      "articles": 123,
+      "recitals": 101,
+      "annexes": 0
+    },
+    {
+      "src": "L_2018303EN.01005901.xml.html",
+      "celex": "32018R1807",
+      "ok": true,
+      "articles": 9,
+      "recitals": 39,
+      "annexes": 0
+    },
+    {
+      "src": "L_2019151EN.01001501.xml.html",
+      "celex": "32019R0881",
+      "ok": true,
+      "articles": 69,
+      "recitals": 110,
+      "annexes": 0
+    },
+    {
+      "src": "L_2019305EN.01001701.xml.html",
+      "celex": "32019L1937",
+      "ok": true,
+      "articles": 29,
+      "recitals": 110,
+      "annexes": 0
+    },
+    {
+      "src": "L_2022152EN.01000101.xml.html",
+      "celex": "32022R0868",
+      "ok": true,
+      "articles": 38,
+      "recitals": 63,
+      "annexes": 0
+    },
+    {
+      "src": "L_2022265EN.01000101.xml.html",
+      "celex": "32022R1925",
+      "ok": true,
+      "articles": 54,
+      "recitals": 109,
+      "annexes": 0
+    },
+    {
+      "src": "L_2022277EN.01000101.xml.html",
+      "celex": "32022R2065",
+      "ok": true,
+      "articles": 93,
+      "recitals": 156,
+      "annexes": 0
+    },
+    {
+      "src": "L_2022333EN.01000101.xml.html",
+      "celex": "32022R2554",
+      "ok": true,
+      "articles": 64,
+      "recitals": 106,
+      "annexes": 0
+    },
+    {
+      "src": "L_2022333EN.01008001.xml.html",
+      "celex": "32022L2555",
+      "ok": true,
+      "articles": 46,
+      "recitals": 144,
+      "annexes": 0
+    },
+    {
+      "src": "L_2022333EN.01016401.xml.html",
+      "celex": "32022L2557",
+      "ok": true,
+      "articles": 29,
+      "recitals": 45,
+      "annexes": 0
+    },
+    {
+      "src": "L_202302854EN.000101.fmx.xml.html",
+      "celex": "32023R2854",
+      "ok": true,
+      "articles": 50,
+      "recitals": 119,
+      "annexes": 0
+    },
+    {
+      "src": "L_2023165EN.01000101.xml.html",
+      "celex": "32023R1230",
+      "ok": true,
+      "articles": 54,
+      "recitals": 86,
+      "annexes": 0
+    },
+    {
+      "src": "L_2023231EN.01011801.xml.html",
+      "celex": "32023D1795",
+      "ok": true,
+      "articles": 4,
+      "recitals": 223,
+      "annexes": 0
+    },
+    {
+      "src": "L_202401183EN.000101.fmx.xml.html",
+      "celex": "32024R1183",
+      "ok": true,
+      "articles": 27,
+      "recitals": 78,
+      "annexes": 0
+    },
+    {
+      "src": "L_202401640EN.000101.fmx.xml.html",
+      "celex": "32024L1640",
+      "ok": true,
+      "articles": 80,
+      "recitals": 139,
+      "annexes": 0
+    },
+    {
+      "src": "L_202402847EN.000101.fmx.xml.html",
+      "celex": "32024R2847",
+      "ok": true,
+      "articles": 71,
+      "recitals": 130,
+      "annexes": 0
+    },
+    {
+      "src": "L_202402853EN.000101.fmx.xml.html",
+      "celex": "32024L2853",
+      "ok": true,
+      "articles": 24,
+      "recitals": 64,
+      "annexes": 0
+    },
+    {
+      "src": "L_202500038EN.000101.fmx.xml.html",
+      "celex": "32025R0038",
+      "ok": true,
+      "articles": 26,
+      "recitals": 61,
+      "annexes": 0
+    },
+    {
+      "src": "L_202500327EN.000101.fmx.xml.html",
+      "celex": "32025R0327",
+      "ok": true,
+      "articles": 105,
+      "recitals": 115,
+      "annexes": 0
+    },
+    {
+      "src": "L_202500454EN.000101.fmx.xml.html",
+      "celex": "32025R0454",
+      "ok": true,
+      "articles": 20,
+      "recitals": 13,
+      "annexes": 0
+    },
+    {
+      "src": "L_202501535EN.000101.fmx.xml.html",
+      "celex": "32025R1535",
+      "ok": true,
+      "articles": 2,
+      "recitals": 4,
+      "annexes": 0
+    },
+    {
+      "src": "L_202502392EN.000101.fmx.xml.html",
+      "celex": "32025R2392",
+      "ok": true,
+      "articles": 3,
+      "recitals": 9,
+      "annexes": 0
+    },
+    {
+      "src": "L_202600881EN.000101.fmx.xml.html",
+      "celex": "32026R0881",
+      "ok": true,
+      "articles": 6,
+      "recitals": 9,
+      "annexes": 0
+    },
+    {
+      "src": "L_202601744EN.000101.fmx.xml.html",
+      "celex": "32026R1744",
+      "ok": true,
+      "articles": 7,
+      "recitals": 47,
+      "annexes": 0
+    },
+    {
+      "src": "L_202601755EN.000101.fmx.xml.html",
+      "celex": "32026R1755",
+      "ok": true,
+      "articles": 15,
+      "recitals": 6,
+      "annexes": 0
+    }
+  ]
+}

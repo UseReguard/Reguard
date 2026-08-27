@@ -1,0 +1,1 @@
+"""Plain requirements-only package."""

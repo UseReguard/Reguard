@@ -1,0 +1,2 @@
+# Plain requirements file (no pyproject.toml)
+httpx>=0.27

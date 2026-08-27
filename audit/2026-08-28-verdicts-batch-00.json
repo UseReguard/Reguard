@@ -1,0 +1,142 @@
+[
+  {
+    "full_name": "Panniantong/Agent-Reach",
+    "verdict": "REJECT",
+    "reason": "Tool/skill pack giving AI agents web-scraping capabilities; not an agent runtime or framework that orchestrates actions itself.",
+    "is_false_positive": true,
+    "category_match": "not_agent"
+  },
+  {
+    "full_name": "hugohe3/ppt-master",
+    "verdict": "ACCEPT",
+    "reason": "Python AI agent app that orchestrates document parsing, structuring, and native PPTX generation via LLM-driven pipeline.",
+    "is_false_positive": false,
+    "category_match": "workflow_agent"
+  },
+  {
+    "full_name": "HKUDS/nanobot",
+    "verdict": "ACCEPT",
+    "reason": "Python self-hosted personal AI agent framework with WebUI, tools, memory, MCP, and multi-agent delegation.",
+    "is_false_positive": false,
+    "category_match": "multi_agent"
+  },
+  {
+    "full_name": "bojieli/ai-agent-book",
+    "verdict": "REJECT",
+    "reason": "Open-source book repo with accompanying experimental code; a paper/book artifact, not a substantive agent runtime or framework.",
+    "is_false_positive": true,
+    "category_match": "not_agent"
+  },
+  {
+    "full_name": "agno-agi/agno",
+    "verdict": "ACCEPT",
+    "reason": "Python framework and runtime for building, serving, and managing agent platforms with tools, memory, and integrations.",
+    "is_false_positive": false,
+    "category_match": "agent_framework"
+  },
+  {
+    "full_name": "HKUDS/Vibe-Trading",
+    "verdict": "ACCEPT",
+    "reason": "Python AI trading agent platform with multi-agent workflows, MCP, broker adapters, and runtime APIs.",
+    "is_false_positive": false,
+    "category_match": "tool_using_agent"
+  },
+  {
+    "full_name": "mukul975/Anthropic-Cybersecurity-Skills",
+    "verdict": "REJECT",
+    "reason": "Library of 818 cybersecurity skills for AI agents; pure skill-pack, not an agent runtime or orchestrator.",
+    "is_false_positive": true,
+    "category_match": "not_agent"
+  },
+  {
+    "full_name": "agentscope-ai/agentscope",
+    "verdict": "ACCEPT",
+    "reason": "Python production-ready multi-agent framework with tool use, MCP, multi-modal support, and reactive orchestration.",
+    "is_false_positive": false,
+    "category_match": "agent_framework"
+  },
+  {
+    "full_name": "vectorize-io/hindsight",
+    "verdict": "REJECT",
+    "reason": "Agent memory subsystem (retain/recall/reflect) plus MCP server; a memory layer for agents, not an agent runtime/framework.",
+    "is_false_positive": true,
+    "category_match": "not_agent"
+  },
+  {
+    "full_name": "microsoft/agent-lightning",
+    "verdict": "ACCEPT",
+    "reason": "Python agentic RL framework with Trainer, API Gateway, and Rollout Controller that runs and orchestrates agents with tools.",
+    "is_false_positive": false,
+    "category_match": "agent_framework"
+  },
+  {
+    "full_name": "nesquena/hermes-webui",
+    "verdict": "REJECT",
+    "reason": "Web UI frontend for the existing Hermes Agent; thin Gradio-style client, no independent agent runtime.",
+    "is_false_positive": true,
+    "category_match": "not_agent"
+  },
+  {
+    "full_name": "browser-use/web-ui",
+    "verdict": "REJECT",
+    "reason": "Gradio WebUI wrapper around the browser-use library; frontend only, the agent runtime lives in a separate repo.",
+    "is_false_positive": true,
+    "category_match": "not_agent"
+  },
+  {
+    "full_name": "The-Pocket/PocketFlow",
+    "verdict": "ACCEPT",
+    "reason": "100-line Python LLM framework explicitly supporting Multi-Agents, Workflow, RAG, and tool orchestration patterns.",
+    "is_false_positive": false,
+    "category_match": "agent_framework"
+  },
+  {
+    "full_name": "ValueCell-ai/valuecell",
+    "verdict": "ACCEPT",
+    "reason": "Python community multi-agent platform for finance with DeepResearch, Strategy, News agents and MCP integrations.",
+    "is_false_positive": false,
+    "category_match": "multi_agent"
+  },
+  {
+    "full_name": "RayVentura/ShortGPT",
+    "verdict": "ACCEPT",
+    "reason": "Python AI framework orchestrating video editing, voiceover, asset sourcing via LLM-driven automated editing language.",
+    "is_false_positive": false,
+    "category_match": "workflow_agent"
+  },
+  {
+    "full_name": "aiwaves-cn/agents",
+    "verdict": "ACCEPT",
+    "reason": "Python framework for self-evolving autonomous language agents with symbolic back-prop, multi-agent graphs, and tools.",
+    "is_false_positive": false,
+    "category_match": "general_agent"
+  },
+  {
+    "full_name": "google/agents-cli",
+    "verdict": "REJECT",
+    "reason": "CLI plus skills pack for scaffolding/deploying agents on Google Cloud; no agent runtime of its own.",
+    "is_false_positive": true,
+    "category_match": "not_agent"
+  },
+  {
+    "full_name": "Q00/ouroboros",
+    "verdict": "ACCEPT",
+    "reason": "Python Agent OS exposing MCP server that orchestrates 13 coding-agent runtimes via interview-gated evaluation loops.",
+    "is_false_positive": false,
+    "category_match": "workflow_agent"
+  },
+  {
+    "full_name": "huangruiteng/loopx",
+    "verdict": "ACCEPT",
+    "reason": "Python long-horizon agent control plane that orchestrates Codex, Claude Code, and other harnesses with state/governance.",
+    "is_false_positive": false,
+    "category_match": "workflow_agent"
+  },
+  {
+    "full_name": "katanaml/sparrow",
+    "verdict": "ACCEPT",
+    "reason": "Python API-first platform combining ML/Vision-LLM extraction with workflow and decision agents for document intelligence.",
+    "is_false_positive": false,
+    "category_match": "workflow_agent"
+  }
+]

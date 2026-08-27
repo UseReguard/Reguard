@@ -1,0 +1,237 @@
+{
+  "laws": [
+    {
+      "celex": "32024R1689",
+      "articles": 113,
+      "recitals": 180,
+      "annexes": 0
+    },
+    {
+      "celex": "32016R0679",
+      "articles": 99,
+      "recitals": 173,
+      "annexes": 0
+    },
+    {
+      "celex": "32024R2847",
+      "articles": 71,
+      "recitals": 130,
+      "annexes": 0
+    },
+    {
+      "celex": "32025R2392",
+      "articles": 3,
+      "recitals": 9,
+      "annexes": 0
+    },
+    {
+      "celex": "32026R0881",
+      "articles": 6,
+      "recitals": 9,
+      "annexes": 0
+    },
+    {
+      "celex": "32025R1535",
+      "articles": 2,
+      "recitals": 4,
+      "annexes": 0
+    },
+    {
+      "celex": "32022L2555",
+      "articles": 46,
+      "recitals": 144,
+      "annexes": 0
+    },
+    {
+      "celex": "32024L2853",
+      "articles": 24,
+      "recitals": 64,
+      "annexes": 0
+    },
+    {
+      "celex": "32023R2854",
+      "articles": 50,
+      "recitals": 119,
+      "annexes": 0
+    },
+    {
+      "celex": "32026R1744",
+      "articles": 7,
+      "recitals": 47,
+      "annexes": 0
+    },
+    {
+      "celex": "32025R0454",
+      "articles": 20,
+      "recitals": 13,
+      "annexes": 0
+    },
+    {
+      "celex": "32026R1755",
+      "articles": 15,
+      "recitals": 6,
+      "annexes": 0
+    },
+    {
+      "celex": "32022R2554",
+      "articles": 64,
+      "recitals": 106,
+      "annexes": 0
+    },
+    {
+      "celex": "32017R0745",
+      "articles": 123,
+      "recitals": 101,
+      "annexes": 0
+    },
+    {
+      "celex": "32023R1230",
+      "articles": 54,
+      "recitals": 86,
+      "annexes": 0
+    },
+    {
+      "celex": "32002L0058",
+      "articles": 0,
+      "recitals": 49,
+      "annexes": 0
+    },
+    {
+      "celex": "32024R1183",
+      "articles": 27,
+      "recitals": 78,
+      "annexes": 0
+    },
+    {
+      "celex": "32025R0327",
+      "articles": 105,
+      "recitals": 115,
+      "annexes": 0
+    },
+    {
+      "celex": "32024L1640",
+      "articles": 80,
+      "recitals": 139,
+      "annexes": 0
+    },
+    {
+      "celex": "32022R0868",
+      "articles": 38,
+      "recitals": 63,
+      "annexes": 0
+    },
+    {
+      "celex": "32022R2065",
+      "articles": 93,
+      "recitals": 156,
+      "annexes": 0
+    },
+    {
+      "celex": "32022R1925",
+      "articles": 54,
+      "recitals": 109,
+      "annexes": 0
+    },
+    {
+      "celex": "32022L2557",
+      "articles": 29,
+      "recitals": 45,
+      "annexes": 0
+    },
+    {
+      "celex": "32019R0881",
+      "articles": 69,
+      "recitals": 110,
+      "annexes": 0
+    },
+    {
+      "celex": "32025R0038",
+      "articles": 26,
+      "recitals": 61,
+      "annexes": 0
+    },
+    {
+      "celex": "32019L1937",
+      "articles": 29,
+      "recitals": 110,
+      "annexes": 0
+    },
+    {
+      "celex": "32023D1795",
+      "articles": 4,
+      "recitals": 223,
+      "annexes": 0
+    },
+    {
+      "celex": "32016L0943",
+      "articles": 21,
+      "recitals": 40,
+      "annexes": 0
+    },
+    {
+      "celex": "32016L0680",
+      "articles": 65,
+      "recitals": 107,
+      "annexes": 0
+    },
+    {
+      "celex": "32018R1807",
+      "articles": 9,
+      "recitals": 39,
+      "annexes": 0
+    },
+    {
+      "celex": "12012P000",
+      "articles": 54,
+      "recitals": 0,
+      "annexes": 0
+    }
+  ],
+  "frameworks": [
+    {
+      "framework_id": "soc2",
+      "items_added": 353
+    },
+    {
+      "framework_id": "iso27001",
+      "items_added": 93
+    },
+    {
+      "framework_id": "iso42001",
+      "items_added": 38
+    },
+    {
+      "framework_id": "pci-dss",
+      "items_added": 351
+    },
+    {
+      "framework_id": "iso9001",
+      "items_added": 7
+    },
+    {
+      "framework_id": "nen7510",
+      "items_added": 113
+    },
+    {
+      "framework_id": "hipaa-privacy",
+      "items_added": 19
+    },
+    {
+      "framework_id": "hipaa-security",
+      "items_added": 9
+    },
+    {
+      "framework_id": "hipaa-general",
+      "items_added": 60
+    },
+    {
+      "framework_id": "ccpa",
+      "items_added": 194
+    },
+    {
+      "framework_id": "nist-csf",
+      "items_added": 32
+    }
+  ],
+  "skipped": []
+}

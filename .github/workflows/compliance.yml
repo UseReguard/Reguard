@@ -1,0 +1,164 @@
+name: compliance-pipeline
+
+# Deterministic runtime compliance pipeline against three pinned Article 12(1)
+# targets. Uses the same run_one() engine as local development
+# (scripts/maintenance/compliance_pipeline.py) — NOT a parallel CI
+# implementation. The verdicts land in data/eu_ai_compliance.db via the
+# dedup-unique index in migrations/005_compliance_runtime_runs.sql, so
+# re-running this workflow will not double-write a row at the same
+# (repo, requirement_version, sha, scenario, adapter) combination.
+#
+# Triggered manually and on changes to the pipeline surface. The pipeline
+# is heavy (clone + pip install -e + fresh venv per repo) and is NOT
+# expected to run on every commit.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "src/compliance/pipeline/**"
+      - "src/compliance/adapters/**"
+      - "src/compliance/requirements/**"
+      - "scripts/maintenance/compliance_pipeline.py"
+      - "scripts/maintenance/seed_compliance_targets.py"
+      - ".github/workflows/compliance.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "src/compliance/**"
+      - "scripts/maintenance/compliance_pipeline.py"
+      - "scripts/maintenance/seed_compliance_targets.py"
+      - ".github/workflows/compliance.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Approximate wall-clock cost: 30-90s per repo × 3 repos + DB init.
+jobs:
+  compliance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      PYTHONPATH: src
+      PYTHONDONTWRITEBYTECODE: "1"
+      PYTHONUNBUFFERED: "1"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install package (editable)
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+
+      - name: Init DB schema
+        # Idempotent: creates tables only if absent. The compliance
+        # pipeline writes to data/eu_ai_compliance.db via sqlite3.
+        run: python src/compliance/db.py
+
+      - name: Seed pinned Article 12(1) targets
+        # Idempotent: skipped rows are preserved.
+        run: python scripts/maintenance/seed_compliance_targets.py
+
+      - name: Run SWE-agent/mini-swe-agent
+        id: minisweagent
+        run: |
+          set -euo pipefail
+          mkdir -p compliance-results
+          python scripts/maintenance/compliance_pipeline.py run \
+            --repo SWE-agent/mini-swe-agent \
+            --sha 25941c89cfbc91eb40b3f8756348c91d9977d57e \
+            > compliance-results/minisweagent.json
+          cat compliance-results/minisweagent.json
+
+      - name: Run he-yufeng/CoreCoder
+        id: corecoder
+        run: |
+          set -euo pipefail
+          mkdir -p compliance-results
+          python scripts/maintenance/compliance_pipeline.py run \
+            --repo he-yufeng/CoreCoder \
+            --sha a03ef36412e432fc49d972d4007b36ce44ec5d9a \
+            > compliance-results/corecoder.json
+          cat compliance-results/corecoder.json
+
+      - name: Run HKUDS/nanobot
+        id: nanobot
+        run: |
+          set -euo pipefail
+          mkdir -p compliance-results
+          python scripts/maintenance/compliance_pipeline.py run \
+            --repo HKUDS/nanobot \
+            --sha 4d204ba077a86dc42225c16f8f90032013ea1969 \
+            > compliance-results/nanobot.json
+          cat compliance-results/nanobot.json
+
+      - name: Aggregate verdicts
+        # Summarise the three JSONs into one summary.json and a
+        # Markdown table on the job log. Exits non-zero if any
+        # verdict is not PASS, so a regression breaks the build.
+        id: summary
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          targets = ["minisweagent", "corecoder", "nanobot"]
+          results = {}
+          any_non_pass = False
+          for t in targets:
+              data = json.loads(Path(f"compliance-results/{t}.json").read_text())
+              results[t] = data
+              if data.get("status") != "PASS":
+                  any_non_pass = True
+
+          summary = {
+              "results": results,
+              "all_pass": not any_non_pass,
+              "verdict_counts": {
+                  "PASS": sum(1 for r in results.values() if r["status"] == "PASS"),
+                  "FAIL": sum(1 for r in results.values() if r["status"] == "FAIL"),
+                  "ERROR": sum(1 for r in results.values() if r["status"] == "ERROR"),
+                  "UNKNOWN": sum(1 for r in results.values() if r["status"] == "UNKNOWN"),
+              },
+          }
+          Path("compliance-results/summary.json").write_text(json.dumps(summary, indent=2))
+
+          print()
+          print("| repo | sha | status | reason | events | duration_s |")
+          print("|------|-----|--------|--------|--------|------------|")
+          for t, r in results.items():
+              sha = r["sha"][:10]
+              print(f"| {r['repository']} | `{sha}` | "
+                    f"**{r['status']}** | {r['reason']} | "
+                    f"{r['event_count']} | {r['duration_seconds']} |")
+
+          if any_non_pass:
+              raise SystemExit(2)
+          print("all three Article 12(1) targets PASS")
+          PY
+
+      - name: Upload per-repo results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: compliance-results
+          path: compliance-results/
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload DB snapshot
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: eu-ai-compliance-db
+          path: data/eu_ai_compliance.db
+          if-no-files-found: warn
+          retention-days: 14

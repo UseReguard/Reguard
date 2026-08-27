@@ -1,0 +1,70 @@
+{
+  "started_at": "2026-08-21T08:12:07.342412Z",
+  "elapsed_seconds": 0.041417598724365234,
+  "total": 10,
+  "ok": 10,
+  "err": 0,
+  "total_bytes": 79596491,
+  "results": [
+    {
+      "celex": "32024R1689",
+      "ok": true,
+      "cached": true,
+      "bytes": 3700998
+    },
+    {
+      "celex": "32016R0679",
+      "ok": true,
+      "cached": true,
+      "bytes": 60842719
+    },
+    {
+      "celex": "32024R2847",
+      "ok": true,
+      "cached": true,
+      "bytes": 1889399
+    },
+    {
+      "celex": "32025R0454",
+      "ok": true,
+      "cached": true,
+      "bytes": 43027
+    },
+    {
+      "celex": "32026R1755",
+      "ok": true,
+      "cached": true,
+      "bytes": 37198
+    },
+    {
+      "celex": "32026R1744",
+      "ok": true,
+      "cached": true,
+      "bytes": 220172
+    },
+    {
+      "celex": "32022L2555",
+      "ok": true,
+      "cached": true,
+      "bytes": 8378319
+    },
+    {
+      "celex": "32023R2854",
+      "ok": true,
+      "cached": true,
+      "bytes": 1829904
+    },
+    {
+      "celex": "32024L2853",
+      "ok": true,
+      "cached": true,
+      "bytes": 567060
+    },
+    {
+      "celex": "32022R0868",
+      "ok": true,
+      "cached": true,
+      "bytes": 2087695
+    }
+  ]
+}

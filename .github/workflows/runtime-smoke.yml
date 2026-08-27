@@ -1,0 +1,306 @@
+name: runtime-smoke
+
+# Builds the repo-runtime Docker image, runs inspect + build + test
+# against synthetic fixtures, and uploads the structured result.json
+# plus per-command stdout/stderr artifacts.
+#
+# This workflow tests the RUNTIME itself. It does not scan external
+# repositories, does not touch the corpus database, and does not invoke
+# any compliance rule. Those will live in a separate workflow once the
+# compliance engine exists.
+#
+# Lessons baked in from the local podman smoke (see runtime/REPORT.md):
+#   * /artifacts bind mount needs `:U` so the non-root runtime user
+#     can write results back to the host.
+#   * No `--tmpfs /workspace` — the Dockerfile pre-creates /workspace
+#     as runtime:runtime. tmpfs mounts would overlay it with a
+#     root-owned filesystem that the runtime user cannot write.
+#   * `--network enabled` is required for build and test (deps +
+#     pytest download).
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "runtime/**"
+      - ".github/workflows/runtime-smoke.yml"
+      - "tests/runtime/fixtures/**"
+  pull_request:
+    branches: [main]
+    paths:
+      - "runtime/**"
+      - ".github/workflows/runtime-smoke.yml"
+      - "tests/runtime/fixtures/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python (host-side unit tests)
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install pytest
+        run: python -m pip install --upgrade pip pytest
+
+      - name: Run runtime unit tests on host Python
+        # Detection, inspect-mode security invariants, schema validation,
+        # and subprocess timeout — all runnable on host Python without Docker.
+        run: PYTHONPATH=. python -m pytest tests/runtime/ -v
+
+      - name: Verify sentinel files do not exist before inspect
+        run: |
+          test ! -f /tmp/INSPECT_IMPORTED_A_REPO_MODULE
+          test ! -f /tmp/INSPECT_EXECUTED_REPO_CODE
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build runtime image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: runtime/Dockerfile
+          tags: python-agent-runtime:dev
+          load: true
+          platforms: linux/amd64
+
+      - name: Run inspect against the pytest fixture
+        run: |
+          set -euo pipefail
+          mkdir -p smoke-artifacts-inspect
+          docker run --rm \
+            --network none \
+            --read-only \
+            --cap-drop ALL \
+            --security-opt no-new-privileges \
+            --pids-limit 256 \
+            --memory 2g \
+            --cpus 2 \
+            --user 10001:10001 \
+            --tmpfs /tmp:rw,nosuid,size=512m \
+            --mount type=bind,src="${{ github.workspace }}/tests/runtime/fixtures/07-pytest",dst=/input,readonly \
+            --mount type=bind,src="${{ github.workspace }}/smoke-artifacts-inspect",dst=/artifacts \
+            python-agent-runtime:dev \
+            inspect \
+              --repo-sha "ci-smoke-${{ github.run_id }}" \
+              --output /artifacts/result.json
+          test -f smoke-artifacts-inspect/result.json
+          test -f smoke-artifacts-inspect/python_files.json
+          head -40 smoke-artifacts-inspect/result.json
+
+      - name: Verify inspect did not import any repo module
+        run: |
+          test ! -f /tmp/INSPECT_IMPORTED_A_REPO_MODULE
+          test ! -f /tmp/INSPECT_EXECUTED_REPO_CODE
+          echo "sentinels absent — inspect did not execute any repo code"
+
+      - name: Validate inspect result.json schema
+        run: |
+          python -c "
+          import json, sys
+          sys.path.insert(0, '${{ github.workspace }}')
+          from runtime.models import validate_dict
+          d = json.load(open('smoke-artifacts-inspect/result.json'))
+          validate_dict(d)
+          print('schema ok')
+          print('status:', d['status'])
+          print('detection.test_framework:', d['detection']['test_framework'])
+          print('python_files:', d['detection']['python_files'])
+          print('environment.python_version:', d['environment']['python_version'])
+          assert d['status'] == 'success', d
+          assert d['detection']['test_framework'] == 'pytest', d['detection']
+          assert d['detection']['python_files'] == 2, d['detection']
+          assert d['environment']['python_version'].startswith('3.12'), d['environment']
+          assert d['commands'] == [], 'inspect must record zero subprocess invocations'
+          "
+
+      - name: Run inspect against the no-build-system fixture (must succeed)
+        run: |
+          mkdir -p smoke-artifacts-nobs
+          docker run --rm \
+            --network none \
+            --cap-drop ALL \
+            --security-opt no-new-privileges \
+            --pids-limit 128 \
+            --memory 1g \
+            --cpus 1 \
+            --user 10001:10001 \
+            --tmpfs /tmp:rw,nosuid,size=256m \
+            --mount type=bind,src="${{ github.workspace }}/tests/runtime/fixtures/08-no-build-system",dst=/input,readonly \
+            --mount type=bind,src="${{ github.workspace }}/smoke-artifacts-nobs",dst=/artifacts \
+            python-agent-runtime:dev \
+            inspect \
+              --repo-sha "ci-nobs" \
+              --output /artifacts/result.json
+          python -c "
+          import json, sys
+          sys.path.insert(0, '${{ github.workspace }}')
+          from runtime.models import validate_dict
+          d = json.load(open('smoke-artifacts-nobs/result.json'))
+          validate_dict(d)
+          assert d['status'] == 'success'
+          assert d['detection']['package_manager'] is None
+          print('no-build-system fixture: inspect succeeded with no detections')
+          "
+
+      - name: Run inspect against the Poetry fixture (must succeed; no Poetry exec)
+        run: |
+          mkdir -p smoke-artifacts-poetry
+          docker run --rm \
+            --network none \
+            --cap-drop ALL \
+            --security-opt no-new-privileges \
+            --pids-limit 128 \
+            --memory 1g \
+            --cpus 1 \
+            --user 10001:10001 \
+            --tmpfs /tmp:rw,nosuid,size=256m \
+            --mount type=bind,src="${{ github.workspace }}/tests/runtime/fixtures/05-poetry",dst=/input,readonly \
+            --mount type=bind,src="${{ github.workspace }}/smoke-artifacts-poetry",dst=/artifacts \
+            python-agent-runtime:dev \
+            inspect \
+              --repo-sha "ci-poetry" \
+              --output /artifacts/result.json
+          python -c "
+          import json, sys
+          sys.path.insert(0, '${{ github.workspace }}')
+          from runtime.models import validate_dict
+          d = json.load(open('smoke-artifacts-poetry/result.json'))
+          validate_dict(d)
+          assert d['status'] == 'success', d
+          assert d['detection']['has_poetry_lock'] is True
+          assert d['commands'] == [], 'inspect must not shell out'
+          print('poetry fixture: inspect succeeded without invoking poetry')
+          "
+
+      - name: Run build against the pytest fixture (full lifecycle, network enabled)
+        run: |
+          set -euo pipefail
+          mkdir -p smoke-artifacts-build
+          docker run --rm \
+            --cap-drop ALL \
+            --security-opt no-new-privileges \
+            --pids-limit 256 \
+            --memory 2g \
+            --cpus 2 \
+            --user 10001:10001 \
+            --tmpfs /tmp:rw,nosuid,size=512m \
+            --mount type=bind,src="${{ github.workspace }}/tests/runtime/fixtures/07-pytest",dst=/input,readonly \
+            --mount type=bind,src="${{ github.workspace }}/smoke-artifacts-build",dst=/artifacts \
+            python-agent-runtime:dev \
+            build \
+              --repo-sha "ci-build-${{ github.run_id }}" \
+              --output /artifacts/result.json \
+              --timeout-seconds 180 \
+              --network enabled
+          python -c "
+          import json, sys
+          sys.path.insert(0, '${{ github.workspace }}')
+          from runtime.models import validate_dict
+          d = json.load(open('smoke-artifacts-build/result.json'))
+          validate_dict(d)
+          print('build status:', d['status'])
+          assert d['status'] == 'success', d
+          assert any(c['label'] == '01_install' and c['exit_code'] == 0 for c in d['commands']), d['commands']
+          print('build: 01_install exited 0')
+          "
+
+      - name: Run test against the pytest fixture (full lifecycle: install + pytest auto-install + run)
+        run: |
+          set -euo pipefail
+          mkdir -p smoke-artifacts-test
+          docker run --rm \
+            --cap-drop ALL \
+            --security-opt no-new-privileges \
+            --pids-limit 256 \
+            --memory 2g \
+            --cpus 2 \
+            --user 10001:10001 \
+            --tmpfs /tmp:rw,nosuid,size=512m \
+            --mount type=bind,src="${{ github.workspace }}/tests/runtime/fixtures/07-pytest",dst=/input,readonly \
+            --mount type=bind,src="${{ github.workspace }}/smoke-artifacts-test",dst=/artifacts \
+            python-agent-runtime:dev \
+            test \
+              --repo-sha "ci-test-${{ github.run_id }}" \
+              --output /artifacts/result.json \
+              --timeout-seconds 180 \
+              --network enabled
+          python -c "
+          import json, sys
+          sys.path.insert(0, '${{ github.workspace }}')
+          from runtime.models import validate_dict
+          d = json.load(open('smoke-artifacts-test/result.json'))
+          validate_dict(d)
+          print('test status:', d['status'])
+          labels = [c['label'] for c in d['commands']]
+          print('commands:', labels)
+          assert d['status'] == 'success', d
+          assert '01_install' in labels, d
+          assert '02_pytest' in labels, d
+          # pytest auto-install is required because the runtime image
+          # does not preinstall pytest — this proves the auto-setup
+          # lifecycle works inside one container invocation.
+          assert '01b_pytest_install' in labels, d
+          pytest_cmd = next(c for c in d['commands'] if c['label'] == '02_pytest')
+          assert pytest_cmd['exit_code'] == 0, pytest_cmd
+          print('test: 01_install + 01b_pytest_install + 02_pytest all exited 0')
+          "
+
+      - name: Run build against the Poetry fixture (must surface status=unsupported)
+        run: |
+          set -euo pipefail
+          mkdir -p smoke-artifacts-poetry-build
+          docker run --rm \
+            --cap-drop ALL \
+            --security-opt no-new-privileges \
+            --pids-limit 128 \
+            --memory 1g \
+            --cpus 1 \
+            --user 10001:10001 \
+            --tmpfs /tmp:rw,nosuid,size=256m \
+            --mount type=bind,src="${{ github.workspace }}/tests/runtime/fixtures/05-poetry",dst=/input,readonly \
+            --mount type=bind,src="${{ github.workspace }}/smoke-artifacts-poetry-build",dst=/artifacts \
+            python-agent-runtime:dev \
+            build \
+              --repo-sha "ci-poetry-build" \
+              --output /artifacts/result.json \
+              --timeout-seconds 30 \
+              --network enabled
+          python -c "
+          import json, sys
+          sys.path.insert(0, '${{ github.workspace }}')
+          from runtime.models import validate_dict
+          d = json.load(open('smoke-artifacts-poetry-build/result.json'))
+          validate_dict(d)
+          assert d['status'] == 'unsupported', d
+          assert 'poetry' in d['extra']['strategy']
+          assert 'not supported' in d['error']
+          assert d['commands'] == []
+          print('poetry build correctly reported status=unsupported')
+          "
+
+      - name: Upload inspect result.json
+        uses: actions/upload-artifact@v4
+        with:
+          name: runtime-smoke-inspect-result
+          path: smoke-artifacts-inspect/result.json
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Upload test stdout/stderr
+        uses: actions/upload-artifact@v4
+        with:
+          name: runtime-smoke-test-stdout
+          path: smoke-artifacts-test/02_pytest.stdout.log
+          if-no-files-found: warn
+          retention-days: 7

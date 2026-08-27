@@ -1,0 +1,403 @@
+<rdf:RDF
+    xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+    xmlns:j.0="http://publications.europa.eu/ontology/cdm#"
+    xmlns:owl="http://www.w3.org/2002/07/owl#"
+    xmlns:j.1="http://www.w3.org/2004/02/skos/core#"
+    xmlns:j.2="http://publications.europa.eu/ontology/annotation#"
+    xmlns:j.3="http://publications.europa.eu/ontology/cdm/cmr#" > 
+  <rdf:Description rdf:about="http://publications.europa.eu/resource/celex/12016E339">
+    <rdf:type rdf:resource="http://publications.europa.eu/ontology/cdm#work"/>
+  </rdf:Description>
+  <rdf:Description rdf:nodeID="A0">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Axiom"/>
+    <owl:annotatedSource rdf:resource="http://publications.europa.eu/resource/oj/L_202601755"/>
+    <owl:annotatedProperty rdf:resource="http://publications.europa.eu/ontology/cdm#resource_legal_date_entry-into-force"/>
+    <owl:annotatedTarget rdf:datatype="http://www.w3.org/2001/XMLSchema#date">2026-08-10</owl:annotatedTarget>
+    <j.2:comment_on_date>{DATPUB|http://publications.europa.eu/resource/authority/fd_335/DATPUB} +20 {V|http://publications.europa.eu/resource/authority/fd_335/V} {ART|http://publications.europa.eu/resource/authority/fd_335/ART} 15</j.2:comment_on_date>
+    <j.2:type_of_date>{EV|http://publications.europa.eu/resource/authority/fd_335/EV}</j.2:type_of_date>
+    <owl:annotatedProperty rdf:resource="http://publications.europa.eu/ontology/cdm#date"/>
+    <owl:annotatedProperty rdf:resource="http://publications.europa.eu/ontology/cdm#date_entry-into-force"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://eurovoc.europa.eu/c_8bf65f26">
+    <rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+    <rdf:type rdf:resource="http://publications.europa.eu/ontology/cdm#concept"/>
+    <rdf:type rdf:resource="http://publications.europa.eu/ontology/cdm#concept_eurovoc"/>
+    <j.1:inScheme rdf:resource="http://eurovoc.europa.eu/100141"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://publications.europa.eu/resource/authority/dir-eu-legal-act/131030">
+    <rdf:type rdf:resource="http://publications.europa.eu/ontology/cdm#concept_directory-code"/>
+    <rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+    <rdf:type rdf:resource="http://publications.europa.eu/ontology/cdm#concept"/>
+    <j.1:inScheme rdf:resource="http://publications.europa.eu/resource/authority/dir-eu-legal-act"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://publications.europa.eu/resource/authority/dir-eu-legal-act/132060">
+    <rdf:type rdf:resource="http://publications.europa.eu/ontology/cdm#concept_directory-code"/>
+    <rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+    <rdf:type rdf:resource="http://publications.europa.eu/ontology/cdm#concept"/>
+    <j.1:inScheme rdf:resource="http://publications.europa.eu/resource/authority/dir-eu-legal-act"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://eurovoc.europa.eu/c_5a195ffd">
+    <rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+    <rdf:type rdf:resource="http://publications.europa.eu/ontology/cdm#concept"/>
+    <rdf:type rdf:resource="http://publications.europa.eu/ontology/cdm#concept_eurovoc"/>
+    <j.1:inScheme rdf:resource="http://eurovoc.europa.eu/100141"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://publications.europa.eu/resource/authority/subject-matter/MARI">
+    <rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+    <rdf:type rdf:resource="http://publications.europa.eu/ontology/cdm#concept"/>
+    <rdf:type rdf:resource="http://publications.europa.eu/ontology/cdm#subject-matter"/>
+    <j.1:inScheme rdf:resource="http://publications.europa.eu/resource/authority/subject-matter"/>
+  </rdf:Description>
+  <rdf:Description rdf:nodeID="A1">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Axiom"/>
+    <owl:annotatedSource rdf:resource="http://publications.europa.eu/resource/oj/L_202601755"/>
+    <owl:annotatedProperty rdf:resource="http://publications.europa.eu/ontology/cdm#resource_legal_based_on_resource_legal"/>
+    <owl:annotatedTarget rdf:resource="http://publications.europa.eu/resource/celex/32024R1689"/>
+    <j.2:comment_on_legal_basis>A92P6</j.2:comment_on_legal_basis>
+    <j.2:article>92</j.2:article>
+    <j.2:paragraph>6</j.2:paragraph>
+    <owl:annotatedProperty rdf:resource="http://publications.europa.eu/ontology/cdm#based_on"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://eurovoc.europa.eu/3030">
+    <rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+    <rdf:type rdf:resource="http://publications.europa.eu/ontology/cdm#concept"/>
+    <rdf:type rdf:resource="http://publications.europa.eu/ontology/cdm#concept_eurovoc"/>
+    <j.1:inScheme rdf:resource="http://eurovoc.europa.eu/100141"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://eurovoc.europa.eu/3862">
+    <rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+    <rdf:type rdf:resource="http://publications.europa.eu/ontology/cdm#concept"/>
+    <rdf:type rdf:resource="http://publications.europa.eu/ontology/cdm#concept_eurovoc"/>
+    <j.1:inScheme rdf:resource="http://eurovoc.europa.eu/100141"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://publications.europa.eu/resource/authority/document-collection/OJ-L">
+    <rdf:type rdf:resource="http://publications.europa.eu/ontology/cdm#collection"/>
+    <rdf:type rdf:resource="http://publications.europa.eu/ontology/cdm#collection_document"/>
+    <rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+    <rdf:type rdf:resource="http://publications.europa.eu/ontology/cdm#concept"/>
+    <j.1:inScheme rdf:resource="http://publications.europa.eu/resource/authority/document-collection"/>
+    <j.0:contains rdf:resource="http://publications.europa.eu/resource/oj/L_202601755"/>
+    <j.0:collection_document_contains_official-journal-act rdf:resource="http://publications.europa.eu/resource/oj/L_202601755"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://publications.europa.eu/resource/celex/32026R1755">
+    <rdf:type rdf:resource="http://publications.europa.eu/ontology/cdm#work"/>
+    <j.0:resource_legal_in-force rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</j.0:resource_legal_in-force>
+    <rdf:type rdf:resource="http://publications.europa.eu/ontology/cdm#resource_legal"/>
+    <j.0:in-force rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</j.0:in-force>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://eurovoc.europa.eu/3636">
+    <rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+    <rdf:type rdf:resource="http://publications.europa.eu/ontology/cdm#concept"/>
+    <rdf:type rdf:resource="http://publications.europa.eu/ontology/cdm#concept_eurovoc"/>
+    <j.1:inScheme rdf:resource="http://eurovoc.europa.eu/100141"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://publications.europa.eu/resource/celex/32024R2509">
+    <rdf:type rdf:resource="http://publications.europa.eu/ontology/cdm#work"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://publications.europa.eu/resource/authority/corporate-body/CNECT">
+    <j.1:inScheme rdf:resource="http://publications.europa.eu/resource/authority/corporate-body"/>
+    <rdf:type rdf:resource="http://publications.europa.eu/ontology/cdm#institution"/>
+    <rdf:type rdf:resource="http://publications.europa.eu/ontology/cdm#agent-conceptual"/>
+    <rdf:type rdf:resource="http://publications.europa.eu/ontology/cdm#agent"/>
+    <rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://publications.europa.eu/resource/authority/subject-matter/TECN">
+    <rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+    <rdf:type rdf:resource="http://publications.europa.eu/ontology/cdm#concept"/>
+    <rdf:type rdf:resource="http://publications.europa.eu/ontology/cdm#subject-matter"/>
+    <j.1:inScheme rdf:resource="http://publications.europa.eu/resource/authority/subject-matter"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://publications.europa.eu/resource/authority/corporate-body/COM">
+    <j.1:inScheme rdf:resource="http://publications.europa.eu/resource/authority/corporate-body"/>
+    <rdf:type rdf:resource="http://publications.europa.eu/ontology/cdm#institution"/>
+    <rdf:type rdf:resource="http://publications.europa.eu/ontology/cdm#agent-conceptual"/>
+    <rdf:type rdf:resource="http://publications.europa.eu/ontology/cdm#agent"/>
+    <rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+  </rdf:Description>
+  <rdf:Description rdf:nodeID="A2">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Axiom"/>
+    <owl:annotatedSource rdf:resource="http://publications.europa.eu/resource/oj/L_202601755"/>
+    <owl:annotatedProperty rdf:resource="http://publications.europa.eu/ontology/cdm#work_date_document"/>
+    <owl:annotatedTarget rdf:datatype="http://www.w3.org/2001/XMLSchema#date">2026-07-20</owl:annotatedTarget>
+    <j.2:comment_on_date>{DATADOPT|http://publications.europa.eu/resource/authority/fd_365/DATADOPT}</j.2:comment_on_date>
+    <owl:annotatedProperty rdf:resource="http://publications.europa.eu/ontology/cdm#date"/>
+    <owl:annotatedProperty rdf:resource="http://publications.europa.eu/ontology/cdm#date_document"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://publications.europa.eu/resource/cellar/b8c9e6d4-849c-11f1-bf5e-01aa75ed71a1">
+    <owl:sameAs rdf:resource="http://publications.europa.eu/resource/oj/L_202601755"/>
+    <owl:sameAs rdf:resource="http://publications.europa.eu/resource/eli/reg_impl/2026/1755/oj"/>
+    <owl:sameAs rdf:resource="http://publications.europa.eu/resource/celex/32026R1755"/>
+    <j.3:creationDate rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2026-07-21T02:39:57.129+02:00</j.3:creationDate>
+    <j.3:lastModificationDate rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2026-08-10T08:44:17.415+02:00</j.3:lastModificationDate>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://eurovoc.europa.eu/2695">
+    <rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+    <rdf:type rdf:resource="http://publications.europa.eu/ontology/cdm#concept"/>
+    <rdf:type rdf:resource="http://publications.europa.eu/ontology/cdm#concept_eurovoc"/>
+    <j.1:inScheme rdf:resource="http://eurovoc.europa.eu/100141"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://publications.europa.eu/resource/celex/32024R1689">
+    <rdf:type rdf:resource="http://publications.europa.eu/ontology/cdm#resource_legal"/>
+    <rdf:type rdf:resource="http://publications.europa.eu/ontology/cdm#work"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://publications.europa.eu/resource/celex/12016P041">
+    <rdf:type rdf:resource="http://publications.europa.eu/ontology/cdm#work"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://publications.europa.eu/resource/authority/treaty/TFEU_2016">
+    <rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+    <rdf:type rdf:resource="http://publications.europa.eu/ontology/cdm#concept_treaty"/>
+    <rdf:type rdf:resource="http://publications.europa.eu/ontology/cdm#concept"/>
+    <j.1:inScheme rdf:resource="http://publications.europa.eu/resource/authority/treaty"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://publications.europa.eu/resource/celex/31971R1182">
+    <rdf:type rdf:resource="http://publications.europa.eu/ontology/cdm#work"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://eurovoc.europa.eu/4038">
+    <rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+    <rdf:type rdf:resource="http://publications.europa.eu/ontology/cdm#concept"/>
+    <rdf:type rdf:resource="http://publications.europa.eu/ontology/cdm#concept_eurovoc"/>
+    <j.1:inScheme rdf:resource="http://eurovoc.europa.eu/100141"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://eurovoc.europa.eu/1439">
+    <rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+    <rdf:type rdf:resource="http://publications.europa.eu/ontology/cdm#concept"/>
+    <rdf:type rdf:resource="http://publications.europa.eu/ontology/cdm#concept_eurovoc"/>
+    <j.1:inScheme rdf:resource="http://eurovoc.europa.eu/100141"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://publications.europa.eu/resource/authority/subject-matter/RDT">
+    <rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+    <rdf:type rdf:resource="http://publications.europa.eu/ontology/cdm#concept"/>
+    <rdf:type rdf:resource="http://publications.europa.eu/ontology/cdm#subject-matter"/>
+    <j.1:inScheme rdf:resource="http://publications.europa.eu/resource/authority/subject-matter"/>
+  </rdf:Description>
+  <rdf:Description rdf:nodeID="A3">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Axiom"/>
+    <owl:annotatedSource rdf:resource="http://publications.europa.eu/resource/oj/L_202601755"/>
+    <owl:annotatedProperty rdf:resource="http://publications.europa.eu/ontology/cdm#resource_legal_based_on_resource_legal"/>
+    <owl:annotatedTarget rdf:resource="http://publications.europa.eu/resource/celex/32024R1689"/>
+    <j.2:comment_on_legal_basis>A101P6</j.2:comment_on_legal_basis>
+    <j.2:article>101</j.2:article>
+    <j.2:paragraph>6</j.2:paragraph>
+    <owl:annotatedProperty rdf:resource="http://publications.europa.eu/ontology/cdm#based_on"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://publications.europa.eu/resource/celex/32014R0910">
+    <rdf:type rdf:resource="http://publications.europa.eu/ontology/cdm#work"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://publications.europa.eu/resource/intproc/F23581D6B92255D719E607516B439034EC6A299D424D6141C29F43AA6F7D44F2">
+    <rdf:type rdf:resource="http://publications.europa.eu/ontology/cdm#entity_temporal"/>
+    <rdf:type rdf:resource="http://publications.europa.eu/ontology/cdm#period"/>
+    <rdf:type rdf:resource="http://publications.europa.eu/ontology/cdm#dossier"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://eurovoc.europa.eu/3299">
+    <rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+    <rdf:type rdf:resource="http://publications.europa.eu/ontology/cdm#concept"/>
+    <rdf:type rdf:resource="http://publications.europa.eu/ontology/cdm#concept_eurovoc"/>
+    <j.1:inScheme rdf:resource="http://eurovoc.europa.eu/100141"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://publications.europa.eu/resource/authority/resource-type/REG_IMPL">
+    <rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+    <rdf:type rdf:resource="http://publications.europa.eu/ontology/cdm#concept"/>
+    <rdf:type rdf:resource="http://publications.europa.eu/ontology/cdm#resource-type"/>
+    <j.1:inScheme rdf:resource="http://publications.europa.eu/resource/authority/resource-type"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://publications.europa.eu/resource/celex/32025R0454">
+    <rdf:type rdf:resource="http://publications.europa.eu/ontology/cdm#work"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://publications.europa.eu/resource/oj/L_202601755">
+    <j.0:title xml:lang="fr">COMMISSION IMPLEMENTING REGULATION (EU) …/... on detailed arrangements for the conduct of certain proceedings by the Commission pursuant to Regulation (EU) 2024/1689 of the European Parliament and of the Council</j.0:title>
+    <j.0:title xml:lang="en">COMMISSION IMPLEMENTING REGULATION (EU) …/... on detailed arrangements for the conduct of certain proceedings by the Commission pursuant to Regulation (EU) 2024/1689 of the European Parliament and of the Council</j.0:title>
+    <j.0:work_has_expression rdf:resource="http://publications.europa.eu/resource/oj/L_202601755.SWE"/>
+    <j.0:work_cites_work rdf:resource="http://publications.europa.eu/resource/celex/32024R2509"/>
+    <j.0:created_by rdf:resource="http://publications.europa.eu/resource/authority/corporate-body/COM"/>
+    <j.0:work_has_expression rdf:resource="http://publications.europa.eu/resource/oj/L_202601755.POL"/>
+    <j.0:date_document rdf:datatype="http://www.w3.org/2001/XMLSchema#date">2026-07-20</j.0:date_document>
+    <j.0:resource_legal_year rdf:datatype="http://www.w3.org/2001/XMLSchema#gYear">2026</j.0:resource_legal_year>
+    <j.0:work_has_expression rdf:resource="http://publications.europa.eu/resource/oj/L_202601755.DEU"/>
+    <j.0:date_creation_legacy rdf:datatype="http://www.w3.org/2001/XMLSchema#date">2026-07-21</j.0:date_creation_legacy>
+    <j.0:work_has_expression rdf:resource="http://publications.europa.eu/resource/oj/L_202601755.POR"/>
+    <j.0:is_about rdf:resource="http://eurovoc.europa.eu/c_8bf65f26"/>
+    <j.0:resource_legal_number_natural rdf:datatype="http://www.w3.org/2001/XMLSchema#positiveInteger">1755</j.0:resource_legal_number_natural>
+    <rdf:type rdf:resource="http://publications.europa.eu/ontology/cdm#work"/>
+    <j.0:work_is_about_concept_eurovoc rdf:resource="http://eurovoc.europa.eu/c_8bf65f26"/>
+    <j.0:work_has_expression rdf:resource="http://publications.europa.eu/resource/oj/L_202601755.ENG"/>
+    <j.0:work_date_creation_legacy rdf:datatype="http://www.w3.org/2001/XMLSchema#date">2026-07-21</j.0:work_date_creation_legacy>
+    <j.0:signatory_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Ursula VON DER LEYEN</j.0:signatory_name>
+    <j.0:is_about rdf:resource="http://eurovoc.europa.eu/3030"/>
+    <j.0:eea rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</j.0:eea>
+    <j.0:is_about rdf:resource="http://eurovoc.europa.eu/3636"/>
+    <j.0:resource_legal_repertoire rdf:datatype="http://www.w3.org/2001/XMLSchema#string">REP</j.0:resource_legal_repertoire>
+    <j.0:work_has_expression rdf:resource="http://publications.europa.eu/resource/oj/L_202601755.SLV"/>
+    <j.0:work_is_about_concept_eurovoc rdf:resource="http://eurovoc.europa.eu/3862"/>
+    <j.0:date rdf:datatype="http://www.w3.org/2001/XMLSchema#date">9999-12-31</j.0:date>
+    <j.0:based_on rdf:resource="http://publications.europa.eu/resource/celex/32024R1689"/>
+    <j.0:year rdf:datatype="http://www.w3.org/2001/XMLSchema#gYear">2026</j.0:year>
+    <j.0:resource_legal_number_natural_celex rdf:datatype="http://www.w3.org/2001/XMLSchema#positiveInteger">1755</j.0:resource_legal_number_natural_celex>
+    <j.0:identifier rdf:datatype="http://www.w3.org/2001/XMLSchema#string">celex:32026R1755</j.0:identifier>
+    <j.0:number_natural rdf:datatype="http://www.w3.org/2001/XMLSchema#positiveInteger">1755</j.0:number_natural>
+    <j.0:work_is_about_concept_eurovoc rdf:resource="http://eurovoc.europa.eu/c_5a195ffd"/>
+    <j.0:resource_legal_produced_by_dossier rdf:resource="http://publications.europa.eu/resource/intproc/F23581D6B92255D719E607516B439034EC6A299D424D6141C29F43AA6F7D44F2"/>
+    <rdf:type rdf:resource="http://publications.europa.eu/ontology/cdm#official-journal-act"/>
+    <j.0:repertoire rdf:datatype="http://www.w3.org/2001/XMLSchema#string">REP</j.0:repertoire>
+    <j.0:resource_legal_has_domain_reference_oj-act_concept_legal-act-domain rdf:resource="http://publications.europa.eu/resource/authority/legal-act-domain/EU"/>
+    <j.0:resource_legal_responsibility_of_agent rdf:resource="http://publications.europa.eu/resource/authority/corporate-body/CNECT"/>
+    <j.0:date_entry-into-force rdf:datatype="http://www.w3.org/2001/XMLSchema#date">2026-08-10</j.0:date_entry-into-force>
+    <j.0:subsubsection_oj rdf:datatype="http://www.w3.org/2001/XMLSchema#positiveInteger">6</j.0:subsubsection_oj>
+    <j.0:is_about rdf:resource="http://publications.europa.eu/resource/authority/dir-eu-legal-act/131030"/>
+    <j.0:reference rdf:datatype="http://www.w3.org/2001/XMLSchema#string">2026/1755</j.0:reference>
+    <j.0:is_about rdf:resource="http://eurovoc.europa.eu/3862"/>
+    <j.0:official-journal-act_year rdf:datatype="http://www.w3.org/2001/XMLSchema#gYear">2026</j.0:official-journal-act_year>
+    <j.0:work_is_about_concept_eurovoc rdf:resource="http://eurovoc.europa.eu/3030"/>
+    <j.0:date rdf:datatype="http://www.w3.org/2001/XMLSchema#date">2026-07-21</j.0:date>
+    <j.0:work_has_expression rdf:resource="http://publications.europa.eu/resource/oj/L_202601755.ELL"/>
+    <j.0:work_title xml:lang="fr">COMMISSION IMPLEMENTING REGULATION (EU) …/... on detailed arrangements for the conduct of certain proceedings by the Commission pursuant to Regulation (EU) 2024/1689 of the European Parliament and of the Council</j.0:work_title>
+    <j.0:work_cites_work rdf:resource="http://publications.europa.eu/resource/celex/31971R1182"/>
+    <j.0:work_title xml:lang="en">COMMISSION IMPLEMENTING REGULATION (EU) …/... on detailed arrangements for the conduct of certain proceedings by the Commission pursuant to Regulation (EU) 2024/1689 of the European Parliament and of the Council</j.0:work_title>
+    <j.0:resource_legal_manuscript_ref rdf:datatype="http://www.w3.org/2001/XMLSchema#string">C(2026)4997/4888529 - PE_2026_5161</j.0:resource_legal_manuscript_ref>
+    <j.0:resource_legal_is_about_concept_directory-code rdf:resource="http://publications.europa.eu/resource/authority/dir-eu-legal-act/131030"/>
+    <j.0:id_document rdf:datatype="http://www.w3.org/2001/XMLSchema#string">oj:L_202601755</j.0:id_document>
+    <j.0:work_has_expression rdf:resource="http://publications.europa.eu/resource/oj/L_202601755.EST"/>
+    <j.0:resource_legal_internal_number_year rdf:datatype="http://www.w3.org/2001/XMLSchema#year">2026</j.0:resource_legal_internal_number_year>
+    <j.0:cites rdf:resource="http://publications.europa.eu/resource/celex/31971R1182"/>
+    <j.0:cites rdf:resource="http://publications.europa.eu/resource/celex/12016E339"/>
+    <j.0:work_has_expression rdf:resource="http://publications.europa.eu/resource/oj/L_202601755.LAV"/>
+    <j.0:resource_legal_codified_version rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">false</j.0:resource_legal_codified_version>
+    <j.2:build_info rdf:datatype="http://www.w3.org/2001/XMLSchema#string">reception-ID: PO-20260721-59; environment: PROD; CERES: 4.30.0; IMMC2CDM: 3.2.3; workflow: OJABA_SIGNED_PDF_DELIVERIES; rules: oj-20260130-0; builddate: 2026-07-21T02:35:54.222;</j.2:build_info>
+    <j.0:work_has_expression rdf:resource="http://publications.europa.eu/resource/oj/L_202601755.ITA"/>
+    <j.0:id_celex rdf:datatype="http://www.w3.org/2001/XMLSchema#string">32026R1755</j.0:id_celex>
+    <j.0:is_about rdf:resource="http://publications.europa.eu/resource/authority/subject-matter/RDT"/>
+    <j.0:is_about rdf:resource="http://eurovoc.europa.eu/4038"/>
+    <j.0:number rdf:datatype="http://www.w3.org/2001/XMLSchema#positiveInteger">1755</j.0:number>
+    <j.0:id_document rdf:datatype="http://www.w3.org/2001/XMLSchema#string">celex:32026R1755</j.0:id_document>
+    <j.0:cites rdf:resource="http://publications.europa.eu/resource/celex/12016P041"/>
+    <j.0:is_about rdf:resource="http://eurovoc.europa.eu/2695"/>
+    <j.0:official-journal-act_date_publication rdf:datatype="http://www.w3.org/2001/XMLSchema#date">2026-07-21</j.0:official-journal-act_date_publication>
+    <j.0:work_is-about_concept rdf:resource="http://eurovoc.europa.eu/c_5a195ffd"/>
+    <j.0:resource_legal_is_about_subject-matter rdf:resource="http://publications.europa.eu/resource/authority/subject-matter/TECN"/>
+    <j.0:resource_legal_internal_number_prefix rdf:datatype="http://www.w3.org/2001/XMLSchema#string">C</j.0:resource_legal_internal_number_prefix>
+    <j.0:work_id_document rdf:datatype="http://www.w3.org/2001/XMLSchema#string">oj:L_202601755</j.0:work_id_document>
+    <j.0:official-journal-act_subsection_oj rdf:datatype="http://www.w3.org/2001/XMLSchema#string">b</j.0:official-journal-act_subsection_oj>
+    <j.0:subsection_oj rdf:datatype="http://www.w3.org/2001/XMLSchema#string">b</j.0:subsection_oj>
+    <j.0:work_is_about_concept_eurovoc rdf:resource="http://eurovoc.europa.eu/3636"/>
+    <rdf:type rdf:resource="http://publications.europa.eu/ontology/cdm#regulation_implementing"/>
+    <j.0:work_has_expression rdf:resource="http://publications.europa.eu/resource/oj/L_202601755.DAN"/>
+    <j.0:resource_legal_domain_reference_oj-act rdf:resource="http://publications.europa.eu/resource/authority/legal-act-domain/EU"/>
+    <j.0:work_is_about_concept_eurovoc rdf:resource="http://eurovoc.europa.eu/3299"/>
+    <j.0:identifier rdf:datatype="http://www.w3.org/2001/XMLSchema#string">32026R1755</j.0:identifier>
+    <j.0:created_by rdf:resource="http://publications.europa.eu/resource/authority/corporate-body/CNECT"/>
+    <j.0:work_is-about_concept rdf:resource="http://eurovoc.europa.eu/3299"/>
+    <j.0:resource_legal_signatory_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Ursula VON DER LEYEN</j.0:resource_legal_signatory_name>
+    <j.0:work_is-about_concept rdf:resource="http://eurovoc.europa.eu/4038"/>
+    <j.0:work_id_document rdf:datatype="http://www.w3.org/2001/XMLSchema#string">immc:C(2026)4997/4888529</j.0:work_id_document>
+    <j.0:resource_legal_eea rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</j.0:resource_legal_eea>
+    <j.0:work_has_expression rdf:resource="http://publications.europa.eu/resource/oj/L_202601755.FIN"/>
+    <j.0:produced_by rdf:resource="http://publications.europa.eu/resource/intproc/F23581D6B92255D719E607516B439034EC6A299D424D6141C29F43AA6F7D44F2"/>
+    <rdf:type rdf:resource="http://publications.europa.eu/ontology/cdm#legislation_secondary"/>
+    <j.0:work_has_expression rdf:resource="http://publications.europa.eu/resource/oj/L_202601755.NLD"/>
+    <j.0:official-journal-act_section_oj rdf:datatype="http://www.w3.org/2001/XMLSchema#string">II</j.0:official-journal-act_section_oj>
+    <j.0:resource_legal_date_entry-into-force rdf:datatype="http://www.w3.org/2001/XMLSchema#date">2026-08-10</j.0:resource_legal_date_entry-into-force>
+    <j.0:manuscript_ref rdf:datatype="http://www.w3.org/2001/XMLSchema#string">C(2026)4997/4888529 - PE_2026_5161</j.0:manuscript_ref>
+    <j.0:resource_legal_based_on_resource_legal rdf:resource="http://publications.europa.eu/resource/celex/32024R1689"/>
+    <j.0:work_is_about_concept_eurovoc rdf:resource="http://eurovoc.europa.eu/2695"/>
+    <j.0:identifier rdf:datatype="http://www.w3.org/2001/XMLSchema#string">oj:L_202601755</j.0:identifier>
+    <j.0:work_reference_document rdf:datatype="http://www.w3.org/2001/XMLSchema#string">2026/1755</j.0:work_reference_document>
+    <j.0:work_is-about_concept rdf:resource="http://eurovoc.europa.eu/1439"/>
+    <j.0:work_has_expression rdf:resource="http://publications.europa.eu/resource/oj/L_202601755.LIT"/>
+    <j.0:signatory_function rdf:datatype="http://www.w3.org/2001/XMLSchema#string">President</j.0:signatory_function>
+    <j.0:date_end-of-validity rdf:datatype="http://www.w3.org/2001/XMLSchema#date">9999-12-31</j.0:date_end-of-validity>
+    <j.0:official-journal-act_subsubsection_oj rdf:datatype="http://www.w3.org/2001/XMLSchema#positiveInteger">6</j.0:official-journal-act_subsubsection_oj>
+    <j.0:resource_legal_is_about_concept_directory-code rdf:resource="http://publications.europa.eu/resource/authority/dir-eu-legal-act/1330"/>
+    <j.0:cites rdf:resource="http://publications.europa.eu/resource/celex/32014R0910"/>
+    <j.0:cites rdf:resource="http://publications.europa.eu/resource/celex/32025R0454"/>
+    <j.0:work_is-about_concept rdf:resource="http://eurovoc.europa.eu/c_8bf65f26"/>
+    <j.0:resource_legal_id_celex rdf:datatype="http://www.w3.org/2001/XMLSchema#string">32026R1755</j.0:resource_legal_id_celex>
+    <j.0:internal_number_sequential_number rdf:datatype="http://www.w3.org/2001/XMLSchema#positiveInteger">4997</j.0:internal_number_sequential_number>
+    <j.0:is_about rdf:resource="http://publications.europa.eu/resource/authority/dir-eu-legal-act/132060"/>
+    <j.0:number_natural_celex rdf:datatype="http://www.w3.org/2001/XMLSchema#positiveInteger">1755</j.0:number_natural_celex>
+    <j.0:id_sector rdf:datatype="http://www.w3.org/2001/XMLSchema#string">3</j.0:id_sector>
+    <j.0:id_document rdf:datatype="http://www.w3.org/2001/XMLSchema#string">eli:reg_impl/2026/1755/oj</j.0:id_document>
+    <j.0:work_cites_work rdf:resource="http://publications.europa.eu/resource/celex/32014R0910"/>
+    <j.0:has rdf:resource="http://publications.europa.eu/resource/authority/resource-type/REG_IMPL"/>
+    <j.0:work_has_expression rdf:resource="http://publications.europa.eu/resource/oj/L_202601755.CES"/>
+    <j.0:official-journal-act_number rdf:datatype="http://www.w3.org/2001/XMLSchema#positiveInteger">1755</j.0:official-journal-act_number>
+    <j.0:durability rdf:datatype="http://www.w3.org/2001/XMLSchema#string">DUR</j.0:durability>
+    <j.0:based_on rdf:resource="http://publications.europa.eu/resource/authority/treaty/TFEU_2016"/>
+    <j.0:work_date_document rdf:datatype="http://www.w3.org/2001/XMLSchema#date">2026-07-20</j.0:work_date_document>
+    <j.0:date rdf:datatype="http://www.w3.org/2001/XMLSchema#date">2026-07-20</j.0:date>
+    <j.0:resource_legal_signatory_function rdf:datatype="http://www.w3.org/2001/XMLSchema#string">President</j.0:resource_legal_signatory_function>
+    <j.0:reference_document rdf:datatype="http://www.w3.org/2001/XMLSchema#string">2026/1755</j.0:reference_document>
+    <j.0:work_is_about_concept_eurovoc rdf:resource="http://eurovoc.europa.eu/4038"/>
+    <j.0:identifier rdf:datatype="http://www.w3.org/2001/XMLSchema#anyURI">http://data.europa.eu/eli/reg_impl/2026/1755/oj</j.0:identifier>
+    <j.0:resource_legal_comment_internal rdf:datatype="http://www.w3.org/2001/XMLSchema#string">MAN2</j.0:resource_legal_comment_internal>
+    <rdf:type rdf:resource="http://publications.europa.eu/ontology/cdm#resource_legal"/>
+    <j.0:resource_legal_reference_oj-act rdf:datatype="http://www.w3.org/2001/XMLSchema#string">2026/1755</j.0:resource_legal_reference_oj-act>
+    <j.0:resource_legal_is_about_concept_directory-code rdf:resource="http://publications.europa.eu/resource/authority/dir-eu-legal-act/132060"/>
+    <j.0:work_created_by_agent rdf:resource="http://publications.europa.eu/resource/authority/corporate-body/COM"/>
+    <j.0:internal_number_prefix rdf:datatype="http://www.w3.org/2001/XMLSchema#string">C</j.0:internal_number_prefix>
+    <j.0:part_of rdf:resource="http://publications.europa.eu/resource/authority/document-collection/OJ-L"/>
+    <j.0:work_has_expression rdf:resource="http://publications.europa.eu/resource/oj/L_202601755.GLE"/>
+    <j.0:work_has_expression rdf:resource="http://publications.europa.eu/resource/oj/L_202601755.HRV"/>
+    <j.0:is_about rdf:resource="http://publications.europa.eu/resource/authority/dir-eu-legal-act/1330"/>
+    <j.0:responsibility_of rdf:resource="http://publications.europa.eu/resource/authority/corporate-body/CNECT"/>
+    <j.0:work_has_expression rdf:resource="http://publications.europa.eu/resource/oj/L_202601755.MLT"/>
+    <j.0:internal_number_year rdf:datatype="http://www.w3.org/2001/XMLSchema#year">2026</j.0:internal_number_year>
+    <j.0:comment_internal rdf:datatype="http://www.w3.org/2001/XMLSchema#string">MAN2</j.0:comment_internal>
+    <j.0:id_document rdf:datatype="http://www.w3.org/2001/XMLSchema#string">immc:C(2026)4997/4888529</j.0:id_document>
+    <j.0:work_has_expression rdf:resource="http://publications.europa.eu/resource/oj/L_202601755.HUN"/>
+    <j.0:resource_legal_based_on_concept_treaty rdf:resource="http://publications.europa.eu/resource/authority/treaty/TFEU_2016"/>
+    <j.0:work_is-about_concept rdf:resource="http://eurovoc.europa.eu/3862"/>
+    <j.0:official-journal-act_part_of_collection_document rdf:resource="http://publications.europa.eu/resource/authority/document-collection/OJ-L"/>
+    <j.0:type rdf:datatype="http://www.w3.org/2001/XMLSchema#string">R</j.0:type>
+    <j.0:work_is-about_concept rdf:resource="http://eurovoc.europa.eu/3636"/>
+    <j.0:cites rdf:resource="http://publications.europa.eu/resource/celex/32024R2509"/>
+    <j.0:work_has_expression rdf:resource="http://publications.europa.eu/resource/oj/L_202601755.SPA"/>
+    <j.0:official-journal-act_durability rdf:datatype="http://www.w3.org/2001/XMLSchema#string">DUR</j.0:official-journal-act_durability>
+    <j.0:work_has_expression rdf:resource="http://publications.europa.eu/resource/oj/L_202601755.SLK"/>
+    <j.0:date rdf:datatype="http://www.w3.org/2001/XMLSchema#date">2026-08-10</j.0:date>
+    <j.0:is_about rdf:resource="http://eurovoc.europa.eu/3299"/>
+    <j.0:work_id_document rdf:datatype="http://www.w3.org/2001/XMLSchema#string">celex:32026R1755</j.0:work_id_document>
+    <j.0:is_about rdf:resource="http://eurovoc.europa.eu/c_5a195ffd"/>
+    <j.0:eli rdf:datatype="http://www.w3.org/2001/XMLSchema#anyURI">http://data.europa.eu/eli/reg_impl/2026/1755/oj</j.0:eli>
+    <j.0:work_has_expression rdf:resource="http://publications.europa.eu/resource/oj/L_202601755.RON"/>
+    <j.0:identifier rdf:datatype="http://www.w3.org/2001/XMLSchema#string">immc:C(2026)4997/4888529</j.0:identifier>
+    <j.0:work_has_expression rdf:resource="http://publications.europa.eu/resource/oj/L_202601755.BUL"/>
+    <j.0:is_about rdf:resource="http://publications.europa.eu/resource/authority/subject-matter/TECN"/>
+    <j.0:work_has_expression rdf:resource="http://publications.europa.eu/resource/oj/L_202601755.FRA"/>
+    <j.0:work_created_by_agent rdf:resource="http://publications.europa.eu/resource/authority/corporate-body/CNECT"/>
+    <j.0:work_cites_work rdf:resource="http://publications.europa.eu/resource/celex/12016P041"/>
+    <j.0:work_cites_work rdf:resource="http://publications.europa.eu/resource/celex/32025R0454"/>
+    <j.0:work_is-about_concept rdf:resource="http://eurovoc.europa.eu/2695"/>
+    <j.0:version rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1.38</j.0:version>
+    <j.0:resource_legal_is_about_subject-matter rdf:resource="http://publications.europa.eu/resource/authority/subject-matter/MARI"/>
+    <j.0:work_is_about_concept_eurovoc rdf:resource="http://eurovoc.europa.eu/1439"/>
+    <j.0:work_version rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1.38</j.0:work_version>
+    <j.0:identifier rdf:datatype="http://www.w3.org/2001/XMLSchema#string">eli:reg_impl/2026/1755/oj</j.0:identifier>
+    <j.0:resource_legal_id_sector rdf:datatype="http://www.w3.org/2001/XMLSchema#string">3</j.0:resource_legal_id_sector>
+    <j.0:resource_legal_eli rdf:datatype="http://www.w3.org/2001/XMLSchema#anyURI">http://data.europa.eu/eli/reg_impl/2026/1755/oj</j.0:resource_legal_eli>
+    <j.0:codified_version rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">false</j.0:codified_version>
+    <j.0:work_cites_work rdf:resource="http://publications.europa.eu/resource/celex/12016E339"/>
+    <j.0:has rdf:resource="http://publications.europa.eu/resource/authority/legal-act-domain/EU"/>
+    <j.0:work_has_resource-type rdf:resource="http://publications.europa.eu/resource/authority/resource-type/REG_IMPL"/>
+    <j.0:date_publication rdf:datatype="http://www.w3.org/2001/XMLSchema#date">2026-07-21</j.0:date_publication>
+    <j.0:work_id_document rdf:datatype="http://www.w3.org/2001/XMLSchema#string">eli:reg_impl/2026/1755/oj</j.0:work_id_document>
+    <j.0:section_oj rdf:datatype="http://www.w3.org/2001/XMLSchema#string">II</j.0:section_oj>
+    <j.0:work_is-about_concept rdf:resource="http://eurovoc.europa.eu/3030"/>
+    <j.0:is_about rdf:resource="http://eurovoc.europa.eu/1439"/>
+    <j.0:resource_legal_is_about_subject-matter rdf:resource="http://publications.europa.eu/resource/authority/subject-matter/RDT"/>
+    <j.0:resource_legal_type rdf:datatype="http://www.w3.org/2001/XMLSchema#string">R</j.0:resource_legal_type>
+    <j.0:resource_legal_date_end-of-validity rdf:datatype="http://www.w3.org/2001/XMLSchema#date">9999-12-31</j.0:resource_legal_date_end-of-validity>
+    <j.0:is_about rdf:resource="http://publications.europa.eu/resource/authority/subject-matter/MARI"/>
+    <j.0:resource_legal_internal_number_sequential_number rdf:datatype="http://www.w3.org/2001/XMLSchema#positiveInteger">4997</j.0:resource_legal_internal_number_sequential_number>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://publications.europa.eu/resource/authority/dir-eu-legal-act/1330">
+    <rdf:type rdf:resource="http://publications.europa.eu/ontology/cdm#concept_directory-code"/>
+    <rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+    <rdf:type rdf:resource="http://publications.europa.eu/ontology/cdm#concept"/>
+    <j.1:inScheme rdf:resource="http://publications.europa.eu/resource/authority/dir-eu-legal-act"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://publications.europa.eu/resource/authority/legal-act-domain/EU">
+    <rdf:type rdf:resource="http://publications.europa.eu/ontology/cdm#legal-act-domain"/>
+    <rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+    <rdf:type rdf:resource="http://publications.europa.eu/ontology/cdm#concept"/>
+    <j.1:inScheme rdf:resource="http://publications.europa.eu/resource/authority/legal-act-domain"/>
+  </rdf:Description>
+</rdf:RDF>

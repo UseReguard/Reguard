@@ -1,0 +1,136 @@
+name: compliance-article-12-1
+
+# Workflow manually triggered. PR / push auto-runs are NOT enabled
+# at this stage. See audit/article_12_1_pipeline_report.md for the
+# reproducibility contract.
+
+on:
+  workflow_dispatch:
+    inputs:
+      repository:
+        description: "target repository (owner/name)"
+        required: true
+        default: "SWE-agent/mini-swe-agent"
+        type: string
+      sha:
+        description: "exact commit SHA to check out"
+        required: true
+        default: "25941c89cfbc91eb40b3f8756348c91d9977d57e"
+        type: string
+
+# Strictly read-only. The probe must never be granted write
+# permissions against the host repo.
+permissions:
+  contents: read
+
+jobs:
+  article-12-1:
+    name: EU AI Act Article 12(1) compliance
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout compliance-tool
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.repository }}
+          path: compliance-tool
+          fetch-depth: 0
+
+      - name: Checkout target repository at exact SHA
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ inputs.repository }}
+          ref: ${{ inputs.sha }}
+          path: target
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install compliance-tool
+        working-directory: compliance-tool
+        run: |
+          python -m pip install --upgrade pip
+          # The tool is currently source-tree only. We don't pip-install
+          # itself; we add the src/ directory to PYTHONPATH for the run.
+          echo "PYTHONPATH=$PYTHONPATH:$GITHUB_WORKSPACE/compliance-tool/src" >> $GITHUB_ENV
+
+      - name: Run Article 12(1) check
+        working-directory: compliance-tool
+        env:
+          PYTHONUNBUFFERED: "1"
+          # no LLM creds; the adapters use deterministic stubs
+        run: |
+          set -uo pipefail
+          set +e
+          python scripts/compliance-check.py \
+            --repo "${{ inputs.repository }}" \
+            --sha "${{ inputs.sha }}" \
+            --repo-path "$GITHUB_WORKSPACE/target" \
+            --requirement AI_ACT_12_1_AUTOMATIC_EVENT_LOGGING \
+            --output compliance-result.json
+          EXIT_CODE=$?
+          echo "exit_code=$EXIT_CODE" >> $GITHUB_OUTPUT
+          exit $EXIT_CODE
+
+      - name: Write job summary
+        if: always()
+        working-directory: compliance-tool
+        env:
+          INPUT_REPOSITORY: ${{ inputs.repository }}
+          INPUT_SHA: ${{ inputs.sha }}
+        run: |
+          {
+            echo "## EU AI Act Article 12(1) compliance"
+            echo
+            echo "| Field | Value |"
+            echo "|---|---|"
+            if [ -f compliance-result.json ]; then
+              REPO=$(python -c "import json,sys; print(json.load(open('compliance-result.json'))['repository'])")
+              SHA=$(python -c "import json,sys; print(json.load(open('compliance-result.json'))['sha'])")
+              REQ=$(python -c "import json,sys; print(json.load(open('compliance-result.json'))['requirement_id'])")
+              STATUS=$(python -c "import json,sys; print(json.load(open('compliance-result.json'))['status'])")
+              ADAPTER=$(python -c "import json,sys; print(json.load(open('compliance-result.json'))['adapter_name'])")
+              ADAPTER_V=$(python -c "import json,sys; print(json.load(open('compliance-result.json'))['adapter_version'])")
+              REQ_V=$(python -c "import json,sys; print(json.load(open('compliance-result.json'))['requirement_version'])")
+              RT_V=$(python -c "import json,sys; print(json.load(open('compliance-result.json'))['runtime_version'])")
+              EVT=$(python -c "import json,sys; print(json.load(open('compliance-result.json'))['event_count'])")
+              ORIGINS=$(python -c "import json,sys; print(', '.join(json.load(open('compliance-result.json'))['evidence_origins']))")
+              DUR=$(python -c "import json,sys; print(json.load(open('compliance-result.json'))['duration_seconds'])")
+              echo "| Repository | $REPO |"
+              echo "| SHA | $SHA |"
+              echo "| Requirement | $REQ |"
+              echo "| Status | $STATUS |"
+              echo "| Adapter | $ADAPTER |"
+              echo "| Adapter version | $ADAPTER_V |"
+              echo "| Requirement version | $REQ_V |"
+              echo "| Runtime version | $RT_V |"
+              echo "| Event count | $EVT |"
+              echo "| Evidence origins | $ORIGINS |"
+              echo "| Duration (s) | $DUR |"
+            else
+              echo "| Repository | $INPUT_REPOSITORY |"
+              echo "| SHA | $INPUT_SHA |"
+              echo "| Status | UNKNOWN |"
+              echo "| (compliance-result.json missing) | |"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload compliance-result.json
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: article-12-1-${{ inputs.repository }}-${{ inputs.sha }}
+          path: compliance-tool/compliance-result.json
+          if-no-files-found: ignore
+          retention-days: 30
+
+      - name: Upload evidence bundle
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: article-12-1-evidence-${{ inputs.repository }}-${{ inputs.sha }}
+          path: compliance-tool/evidence
+          if-no-files-found: ignore
+          retention-days: 30

@@ -1,0 +1,33 @@
+# Python bytecode / caches
+__pycache__/
+__pycache__
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Build / install
+build/
+dist/
+*.egg-info/
+*.egg
+
+# Local environment
+.venv/
+venv/
+env/
+
+# Editor
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Project-local artefacts that should not be tracked
+# (kept outside the repo, but listed here for safety if a copy lands in-tree)
+data/*.db.backup-*
+data/*.sqlite-journal

@@ -1,0 +1,262 @@
+[
+  {
+    "full_name": "ClickHouse/nerve",
+    "html_url": "https://github.com/ClickHouse/nerve",
+    "clone_url": "https://github.com/ClickHouse/nerve.git",
+    "agent_category": "agent_framework",
+    "primary_language": "Python",
+    "stars": 76,
+    "default_branch": null,
+    "github_id": 1179238363
+  },
+  {
+    "full_name": "The-Pocket/PocketFlow",
+    "html_url": "https://github.com/The-Pocket/PocketFlow",
+    "clone_url": "https://github.com/The-Pocket/PocketFlow.git",
+    "agent_category": "agent_framework",
+    "primary_language": "Python",
+    "stars": 11135,
+    "default_branch": null,
+    "github_id": 907624056
+  },
+  {
+    "full_name": "TransformerOptimus/SuperAGI",
+    "html_url": "https://github.com/TransformerOptimus/SuperAGI",
+    "clone_url": "https://github.com/TransformerOptimus/SuperAGI.git",
+    "agent_category": "agent_framework",
+    "primary_language": "Python",
+    "stars": 17660,
+    "default_branch": null,
+    "github_id": 640182997
+  },
+  {
+    "full_name": "LvcidPsyche/auto-browser",
+    "html_url": "https://github.com/LvcidPsyche/auto-browser",
+    "clone_url": "https://github.com/LvcidPsyche/auto-browser.git",
+    "agent_category": "browser_agent",
+    "primary_language": "Python",
+    "stars": 776,
+    "default_branch": null,
+    "github_id": 1176557412
+  },
+  {
+    "full_name": "browser-use/browser-use",
+    "html_url": "https://github.com/browser-use/browser-use",
+    "clone_url": "https://github.com/browser-use/browser-use.git",
+    "agent_category": "browser_agent",
+    "primary_language": "Python",
+    "stars": 111105,
+    "default_branch": null,
+    "github_id": 881458615
+  },
+  {
+    "full_name": "SWE-agent/mini-swe-agent",
+    "html_url": "https://github.com/SWE-agent/mini-swe-agent",
+    "clone_url": "https://github.com/SWE-agent/mini-swe-agent.git",
+    "agent_category": "coding_agent",
+    "primary_language": "Python",
+    "stars": 6787,
+    "default_branch": null,
+    "github_id": 1010318950
+  },
+  {
+    "full_name": "besimple-oss/broccoli",
+    "html_url": "https://github.com/besimple-oss/broccoli",
+    "clone_url": "https://github.com/besimple-oss/broccoli.git",
+    "agent_category": "coding_agent",
+    "primary_language": "Python",
+    "stars": 285,
+    "default_branch": null,
+    "github_id": 1210870781
+  },
+  {
+    "full_name": "gptme/gptme",
+    "html_url": "https://github.com/gptme/gptme",
+    "clone_url": "https://github.com/gptme/gptme.git",
+    "agent_category": "coding_agent",
+    "primary_language": "Python",
+    "stars": 4399,
+    "default_branch": null,
+    "github_id": 618514446
+  },
+  {
+    "full_name": "he-yufeng/CoreCoder",
+    "html_url": "https://github.com/he-yufeng/CoreCoder",
+    "clone_url": "https://github.com/he-yufeng/CoreCoder.git",
+    "agent_category": "coding_agent",
+    "primary_language": "Python",
+    "stars": 1678,
+    "default_branch": null,
+    "github_id": 1198829864
+  },
+  {
+    "full_name": "krishagarwal314/CodeJury",
+    "html_url": "https://github.com/krishagarwal314/CodeJury",
+    "clone_url": "https://github.com/krishagarwal314/CodeJury.git",
+    "agent_category": "coding_agent",
+    "primary_language": "Python",
+    "stars": 142,
+    "default_branch": null,
+    "github_id": 1310889382
+  },
+  {
+    "full_name": "linora-u/AgentLoom",
+    "html_url": "https://github.com/linora-u/AgentLoom",
+    "clone_url": "https://github.com/linora-u/AgentLoom.git",
+    "agent_category": "coding_agent",
+    "primary_language": "Python",
+    "stars": 119,
+    "default_branch": null,
+    "github_id": 1228917479
+  },
+  {
+    "full_name": "TurixAI/TuriX-CUA",
+    "html_url": "https://github.com/TurixAI/TuriX-CUA",
+    "clone_url": "https://github.com/TurixAI/TuriX-CUA.git",
+    "agent_category": "computer_use_agent",
+    "primary_language": "Python",
+    "stars": 3156,
+    "default_branch": null,
+    "github_id": 1031738741
+  },
+  {
+    "full_name": "goruck/home-generative-agent",
+    "html_url": "https://github.com/goruck/home-generative-agent",
+    "clone_url": "https://github.com/goruck/home-generative-agent.git",
+    "agent_category": "computer_use_agent",
+    "primary_language": "Python",
+    "stars": 288,
+    "default_branch": null,
+    "github_id": 840302332
+  },
+  {
+    "full_name": "katanaml/sparrow",
+    "html_url": "https://github.com/katanaml/sparrow",
+    "clone_url": "https://github.com/katanaml/sparrow.git",
+    "agent_category": "computer_use_agent",
+    "primary_language": "Python",
+    "stars": 5204,
+    "default_branch": null,
+    "github_id": 445768278
+  },
+  {
+    "full_name": "Significant-Gravitas/AutoGPT",
+    "html_url": "https://github.com/Significant-Gravitas/AutoGPT",
+    "clone_url": "https://github.com/Significant-Gravitas/AutoGPT.git",
+    "agent_category": "general_agent",
+    "primary_language": "Python",
+    "stars": 186910,
+    "default_branch": null,
+    "github_id": 614765452
+  },
+  {
+    "full_name": "aiwaves-cn/agents",
+    "html_url": "https://github.com/aiwaves-cn/agents",
+    "clone_url": "https://github.com/aiwaves-cn/agents.git",
+    "agent_category": "general_agent",
+    "primary_language": "Python",
+    "stars": 5957,
+    "default_branch": null,
+    "github_id": 667645956
+  },
+  {
+    "full_name": "edmar/whenx",
+    "html_url": "https://github.com/edmar/whenx",
+    "clone_url": "https://github.com/edmar/whenx.git",
+    "agent_category": "general_agent",
+    "primary_language": "Python",
+    "stars": 52,
+    "default_branch": null,
+    "github_id": 661830864
+  },
+  {
+    "full_name": "FoundationAgents/MetaGPT",
+    "html_url": "https://github.com/FoundationAgents/MetaGPT",
+    "clone_url": "https://github.com/FoundationAgents/MetaGPT.git",
+    "agent_category": "multi_agent",
+    "primary_language": "Python",
+    "stars": 70053,
+    "default_branch": null,
+    "github_id": 660551251
+  },
+  {
+    "full_name": "HKUDS/nanobot",
+    "html_url": "https://github.com/HKUDS/nanobot",
+    "clone_url": "https://github.com/HKUDS/nanobot.git",
+    "agent_category": "multi_agent",
+    "primary_language": "Python",
+    "stars": 47436,
+    "default_branch": null,
+    "github_id": 1147094660
+  },
+  {
+    "full_name": "massgen/MassGen",
+    "html_url": "https://github.com/massgen/MassGen",
+    "clone_url": "https://github.com/massgen/MassGen.git",
+    "agent_category": "multi_agent",
+    "primary_language": "Python",
+    "stars": 1122,
+    "default_branch": null,
+    "github_id": 1021913531
+  },
+  {
+    "full_name": "microsoft/agent-framework",
+    "html_url": "https://github.com/microsoft/agent-framework",
+    "clone_url": "https://github.com/microsoft/agent-framework.git",
+    "agent_category": "multi_agent",
+    "primary_language": "Python",
+    "stars": 13137,
+    "default_branch": null,
+    "github_id": 974445592
+  },
+  {
+    "full_name": "opensquilla/opensquilla",
+    "html_url": "https://github.com/opensquilla/opensquilla",
+    "clone_url": "https://github.com/opensquilla/opensquilla.git",
+    "agent_category": "other_agent",
+    "primary_language": "Python",
+    "stars": 6693,
+    "default_branch": null,
+    "github_id": 1231170332
+  },
+  {
+    "full_name": "HKUDS/Vibe-Trading",
+    "html_url": "https://github.com/HKUDS/Vibe-Trading",
+    "clone_url": "https://github.com/HKUDS/Vibe-Trading.git",
+    "agent_category": "tool_using_agent",
+    "primary_language": "Python",
+    "stars": 31807,
+    "default_branch": null,
+    "github_id": 1198306812
+  },
+  {
+    "full_name": "deepset-ai/haystack",
+    "html_url": "https://github.com/deepset-ai/haystack",
+    "clone_url": "https://github.com/deepset-ai/haystack.git",
+    "agent_category": "tool_using_agent",
+    "primary_language": "Python",
+    "stars": 26325,
+    "default_branch": null,
+    "github_id": 221654678
+  },
+  {
+    "full_name": "district-solutions/open-agent-tools-coder",
+    "html_url": "https://github.com/district-solutions/open-agent-tools-coder",
+    "clone_url": "https://github.com/district-solutions/open-agent-tools-coder.git",
+    "agent_category": "tool_using_agent",
+    "primary_language": "Python",
+    "stars": 5,
+    "default_branch": null,
+    "github_id": 1237045092
+  },
+  {
+    "full_name": "OpenNSWM-Lab/FAROS",
+    "html_url": "https://github.com/OpenNSWM-Lab/FAROS",
+    "clone_url": "https://github.com/OpenNSWM-Lab/FAROS.git",
+    "agent_category": "workflow_agent",
+    "primary_language": "Python",
+    "stars": 3002,
+    "default_branch": null,
+    "github_id": 1237570742
+  }
+]

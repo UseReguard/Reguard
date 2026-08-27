@@ -1,0 +1,142 @@
+[
+  {
+    "full_name": "yanshengjia/ml-road",
+    "verdict": "REJECT",
+    "reason": "Curated list of ML/AI courses, books, and resources, not a Python agent implementation.",
+    "is_false_positive": true,
+    "category_match": "not_agent"
+  },
+  {
+    "full_name": "aipotheosis-labs/aci",
+    "verdict": "REJECT",
+    "reason": "Open-source tool-calling platform exposing 600+ integrations via MCP server; infrastructure for agents, not an agent runtime itself.",
+    "is_false_positive": true,
+    "category_match": "not_agent"
+  },
+  {
+    "full_name": "aiming-lab/MetaClaw",
+    "verdict": "ACCEPT",
+    "reason": "Substantive Python agent runtime with skills mode, persistent memory, RL training, multi-claw plugin integration, and its own CLI.",
+    "is_false_positive": false,
+    "category_match": "other_agent"
+  },
+  {
+    "full_name": "liaohch3/claude-tap",
+    "verdict": "REJECT",
+    "reason": "Local proxy and trace viewer for inspecting coding-agent API traffic; observability tool, not an agent runtime.",
+    "is_false_positive": true,
+    "category_match": "not_agent"
+  },
+  {
+    "full_name": "open-webui/open-terminal",
+    "verdict": "REJECT",
+    "reason": "Self-hosted remote terminal/sandbox REST API for agents to execute commands; infrastructure, not an agent runtime.",
+    "is_false_positive": true,
+    "category_match": "not_agent"
+  },
+  {
+    "full_name": "OpenNSWM-Lab/FAROS",
+    "verdict": "ACCEPT",
+    "reason": "Blueprint-driven AutoResearch Python runtime orchestrating idea-to-paper workflows via capabilities, profiles, and providers.",
+    "is_false_positive": false,
+    "category_match": "workflow_agent"
+  },
+  {
+    "full_name": "wquguru/harness-books",
+    "verdict": "REJECT",
+    "reason": "Two online books about Claude Code/Codex harness engineering; documentation, not a Python agent implementation.",
+    "is_false_positive": true,
+    "category_match": "not_agent"
+  },
+  {
+    "full_name": "agno-agi/dash",
+    "verdict": "ACCEPT",
+    "reason": "Self-learning data agent in Python using Agno framework with text-to-SQL, six context layers, and self-improving loop.",
+    "is_false_positive": false,
+    "category_match": "other_agent"
+  },
+  {
+    "full_name": "K-Dense-AI/claude-scientific-writer",
+    "verdict": "ACCEPT",
+    "reason": "Deep-research Python scientific writing tool with real-time literature search, paper drafting, and document generation workflows.",
+    "is_false_positive": false,
+    "category_match": "other_agent"
+  },
+  {
+    "full_name": "dsphper/lanhu-mcp",
+    "verdict": "REJECT",
+    "reason": "MCP server exposing Lanhu design collaboration tools to AI IDEs; MCP-server-only, not an agent runtime.",
+    "is_false_positive": true,
+    "category_match": "not_agent"
+  },
+  {
+    "full_name": "melih-unsal/DemoGPT",
+    "verdict": "ACCEPT",
+    "reason": "Python framework on LangChain for auto-generating LLM agent pipelines with tools, RAG, and an AgentHub.",
+    "is_false_positive": false,
+    "category_match": "other_agent"
+  },
+  {
+    "full_name": "czl9707/build-your-own-openclaw",
+    "verdict": "REJECT",
+    "reason": "Step-by-step tutorial/walkthrough for building an agent clone of OpenClaw; workshop content, not a substantive agent runtime.",
+    "is_false_positive": true,
+    "category_match": "not_agent"
+  },
+  {
+    "full_name": "LjyYano/Thinking_in_Java_MindMapping",
+    "verdict": "REJECT",
+    "reason": "Personal notes vault covering Java, AI, books, movies, and life; no agent implementation.",
+    "is_false_positive": true,
+    "category_match": "not_agent"
+  },
+  {
+    "full_name": "mims-harvard/ToolUniverse",
+    "verdict": "REJECT",
+    "reason": "Library of 600+ scientific tools exposed via MCP server and Python SDK for AI scientists; tool universe, not an agent runtime.",
+    "is_false_positive": true,
+    "category_match": "not_agent"
+  },
+  {
+    "full_name": "Priivacy-ai/spec-kitty",
+    "verdict": "ACCEPT",
+    "reason": "Python CLI orchestrating multi-agent coding workflows with spec/plan/tasks stages, git worktrees, kanban, and review gates.",
+    "is_false_positive": false,
+    "category_match": "workflow_agent"
+  },
+  {
+    "full_name": "video-db/Director",
+    "verdict": "ACCEPT",
+    "reason": "Python framework for building video agents that reason over media (search, edit, compile, generate) using VideoDB infrastructure.",
+    "is_false_positive": false,
+    "category_match": "other_agent"
+  },
+  {
+    "full_name": "agi-inc/agent-protocol",
+    "verdict": "REJECT",
+    "reason": "Common REST/OpenAPI specification for inter-agent communication plus SDK; a protocol, not an agent runtime.",
+    "is_false_positive": true,
+    "category_match": "not_agent"
+  },
+  {
+    "full_name": "ray-r-ren/agent-apprenticeship",
+    "verdict": "ACCEPT",
+    "reason": "Substantive agent ecosystem in Python/Node with workflow loops, mentor/apprentice agents, episodic memory, and training signals.",
+    "is_false_positive": false,
+    "category_match": "workflow_agent"
+  },
+  {
+    "full_name": "nvk/llm-wiki",
+    "verdict": "ACCEPT",
+    "reason": "Multi-agent research plugin/runtime providing parallel research, thesis-driven investigation, and wiki compilation across agents.",
+    "is_false_positive": false,
+    "category_match": "multi_agent"
+  },
+  {
+    "full_name": "RUC-NLPIR/Arbor",
+    "verdict": "ACCEPT",
+    "reason": "Generalist autonomous Python research agent that proposes hypotheses, runs experiments, and grows a hypothesis tree.",
+    "is_false_positive": false,
+    "category_match": "general_agent"
+  }
+]
