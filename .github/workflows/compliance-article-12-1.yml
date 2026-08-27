@@ -122,7 +122,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           # Artifact names must not contain "/". Replace with "__".
-          name: article-12-1-${{ inputs.repository }}/${{ inputs.sha }}
+          name: article-12-1-${{ inputs.repository // '/' '-' }}-${{ inputs.sha }}
           path: compliance-tool/compliance-result.json
           if-no-files-found: ignore
           retention-days: 30
@@ -131,7 +131,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: article-12-1-evidence-${{ inputs.repository }}/${{ inputs.sha }}
+          name: article-12-1-evidence-${{ inputs.repository // '/' '-' }}-${{ inputs.sha }}
           path: compliance-tool/evidence
           if-no-files-found: ignore
           retention-days: 30
