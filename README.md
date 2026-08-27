@@ -13,15 +13,23 @@ attached to a specific Git commit SHA.
 Reguard does not certify legal compliance. It tests one
 technical property at a time and reports what it observed.
 
-This project is **source-visible proprietary software**. The
-source is published for inspection and security review only.
-No license is granted to execute, modify, distribute, host,
-or commercially use the software except under a separate
-written commercial agreement with the copyright holder. A
-hosted free manual-check service and a paid GitHub App for
-continuous automated checks are planned but are not yet
-available. See [`LICENSE`](./LICENSE) and
-[`docs/licensing.md`](./docs/licensing.md).
+Reguard's core engine in this repository is **open source**
+under the **GNU Affero General Public License, version 3
+(AGPL-3.0-only)**. Subject to the AGPL terms, anyone may
+inspect the source, run the engine, modify it, and
+redistribute it in source or compiled form. See
+[`LICENSE`](./LICENSE) for the binding text and
+[`docs/licensing.md`](./docs/licensing.md) for the
+architectural and commercial framing.
+
+**Reguard Cloud** is the planned managed commercial product
+layer on top of the engine: hosted execution, GitHub App
+integration, multi-tenant accounts, history, alerts, and
+reporting. Reguard Cloud is **not yet available**; its
+pricing, scope, and license boundary require qualified
+legal review and design-partner validation before launch.
+See [`docs/product-model.md`](./docs/product-model.md) and
+[`docs/design-partner-plan.md`](./docs/design-partner-plan.md).
 
 The product name `Reguard` is a **provisional working name**
 pending trademark and naming-collision review. It must not
@@ -200,15 +208,19 @@ not embed target-specific logic.
 The intended next step on the GitHub side is:
 
 ```
-GitHub App
+GitHub App (Reguard Cloud, paid tier)
   -> repository event
-    -> exact SHA checkout
-      -> Reguard runtime checks
-        -> structured evidence
-          -> GitHub Check Run
+    -> entitlement check
+      -> exact SHA checkout
+        -> Reguard engine (open source)
+          -> structured evidence
+            -> GitHub Check Run
 ```
 
-The GitHub App does not yet exist.
+The GitHub App is part of Reguard Cloud. It does not yet
+exist. See [`docs/architecture.md`](./docs/architecture.md)
+for the planned separation between the open-source engine
+and the managed Cloud layer.
 
 ## Roadmap
 

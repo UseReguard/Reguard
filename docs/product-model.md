@@ -32,7 +32,9 @@ specific implemented controls.
 ## Free tier (provisional)
 
 The free experience is a hosted manual check on our
-infrastructure. No software license is granted.
+infrastructure. AGPL already grants the right to execute the
+engine; the free hosted service is a product-acquisition
+channel, not a license boundary.
 
 Scope:
 
@@ -54,11 +56,12 @@ Design intent: a free user gets one real, useful result, sees
 the determinism and the evidence format, and can show the
 artifact to a colleague or security reviewer.
 
-## Paid tier (provisional)
+## Paid tier (Reguard Cloud, provisional)
 
-The paid experience is automated GitHub-native continuous
-monitoring, gated by a commercial agreement (see
-`docs/licensing.md`).
+The paid product is **Reguard Cloud**: managed execution,
+automation, persistence, and operational convenience. The
+right to execute the checker is granted by AGPL; the paid
+product does not resell that right.
 
 Scope:
 
@@ -73,11 +76,35 @@ Scope:
 - evidence retention;
 - status checks and merge-gating through GitHub Checks;
 - notifications and alerting;
+- organization policies;
+- reporting and evidence exports;
+- managed adapter compatibility;
+- support;
 - an organization dashboard later.
 
 Pricing is not defined yet. Pricing will be set after the
 design-partner plan (see `docs/design-partner-plan.md`)
 produces enough signal to know what to charge.
+
+## Open-source engine (in this repository)
+
+The Reguard engine in this repository is open source under
+AGPL-3.0. Anyone may, under AGPL terms:
+
+- run checks locally;
+- inspect every requirement implementation;
+- inspect the evidence and assertion logic;
+- write new adapters or requirement tests;
+- run the engine in their own CI or as part of an internal
+  automation;
+- modify the engine, subject to AGPL's copyleft
+  obligations;
+- redistribute the engine, in source or compiled form.
+
+The Reguard engine is not artificially disabled to force
+conversion to the paid Cloud product. Code that can
+reasonably live in the open-source engine stays in the
+open-source engine.
 
 ## Initial ideal customer profile
 
@@ -148,9 +175,10 @@ close. These are deliberately blocked, not parking-lot items.
 
 - [ ] trademark, domain, and name-collision review for the
       product name;
-- [ ] qualified legal review of the `LICENSE`, hosted
-      service terms, paid subscription agreement, and
-      contributor license agreement;
+- [ ] qualified legal review of the AGPL boundary for
+      Reguard Cloud, the contributor / CLA strategy, any
+      future dual-licensing option, and the hosted-service
+      terms;
 - [ ] at least three design partners connected or with a
       real agent repository submitted through the free
       service (see `docs/design-partner-plan.md`);
@@ -166,8 +194,8 @@ close. These are deliberately blocked, not parking-lot items.
 
 It is not:
 
-- an open-source product;
-- a self-hosted free checker for everyone;
+- a permission-gate around running the checker (AGPL grants
+  that);
 - a one-size-fits-all compliance platform;
 - a replacement for legal review or conformity
   assessment;

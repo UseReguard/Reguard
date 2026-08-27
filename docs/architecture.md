@@ -2,17 +2,71 @@
 
 This document sketches two future architectures:
 
-1. the hosted free manual-check service;
-2. the paid GitHub App for continuous automated checks.
+1. the hosted free manual-check service (Reguard Cloud,
+   free tier);
+2. the paid GitHub App for continuous automated checks
+   (Reguard Cloud, paid tier).
 
 Both architectures are **proposals only**. They describe a
 future separation of concerns. Neither has been built, and
 neither should be built before the design-partner phase
 (see `docs/design-partner-plan.md`) validates demand.
 
-Both architectures share the same invariant: the existing
-deterministic compliance engine remains the source of
-truth. The new components are only thin shells around it.
+The compliance engine itself is open source (AGPL-3.0,
+see `docs/licensing.md`). The architectures below describe
+Reguard Cloud: the orchestrated, managed product layer
+that calls the engine as a library.
+
+## Architectural boundary
+
+The repository contains the open-source engine. Reguard
+Cloud and the GitHub App will live in a separate codebase
+or package. The split is a **product** decision, not an
+automatic **license** decision.
+
+In other words: putting orchestration code in a separate
+package does not automatically exempt it from the AGPL
+copyleft obligation that arises when it links with or
+extends the engine. Whether Reguard Cloud ends up under
+AGPL or under a separately-negotiated commercial license is
+a question for qualified legal review at the time the
+Cloud code is published. This document does not commit to
+either outcome.
+
+The split below is described as a product boundary, with
+the explicit reminder that the license boundary may be
+different.
+
+## What the open-source engine is
+
+This repository. Anyone can, under AGPL terms:
+
+- run `scripts/compliance-check.py` locally against any
+  pinned SHA they choose;
+- call `compliance.pipeline.run_one()` /
+  `compliance.pipeline.run_path_mode()` from their own
+  automation;
+- write and ship new adapters in `src/compliance/adapters/`;
+- write and ship new requirement tests in
+  `src/compliance/requirements/`;
+- use the GitHub Actions workflow
+  (`.github/workflows/compliance-article-12-1.yml`)
+  unchanged in their own forks or repositories.
+
+The engine does not require any cloud-side component to
+function. Local, CI, and self-hosted automation are
+first-class paths under AGPL, not degraded fallbacks.
+
+## What Reguard Cloud is
+
+Reguard Cloud is the managed product layer around the
+engine. Its scope is operational, not licensing:
+multi-tenant accounts, hosted execution, GitHub App,
+scheduled triggers, persistence, alerting, regression
+history, and reporting. The engine is invoked as a
+library. Architectural rules below ensure Cloud does not
+sully the engine's licensing position through accidental
+coupling.
 
 ## 1. Hosted free manual-check service
 
@@ -32,18 +86,16 @@ browser
 
 ### Components
 
-- **Frontend**: a single-page form. Accepts a `git://` URL
-  or `https://github.com/owner/name` URL, optionally a
-  commit SHA, and a recaptcha or equivalent anti-abuse
-  signal.
+- **Frontend**: a single-page form. Accepts a
+  `https://github.com/owner/name` URL, optionally a commit
+  SHA, and a captcha or equivalent anti-abuse signal.
 - **Backend**: a thin service that validates the URL,
   looks up the repository metadata, and enqueues a job.
 - **Job runner**: an isolated worker that performs the
-  same steps the local CLI performs today:
-  clone the repository at the requested SHA into an
-  ephemeral workspace; invoke
-  `scripts/compliance-check.py`; collect the resulting
-  JSON; capture the evidence bundle.
+  same steps the local CLI performs today: clone the
+  repository at the requested SHA into an ephemeral
+  workspace; invoke `scripts/compliance-check.py`;
+  collect the resulting JSON; capture the evidence bundle.
 - **Persistence**: an append-only table of submitted
   checks, results, and evidence paths, separate from the
   development SQLite database used to track the engine
@@ -61,9 +113,9 @@ browser
 
 ### What is not built
 
-- the queue (we use a simple in-process or short-lived
-  worker at first);
-- the user-account system (no logins for free users);
+- the queue (a simple in-process or short-lived worker at
+  first);
+- a user-account system (no logins for free users);
 - rate-limiting infrastructure beyond a basic per-IP
   cap;
 - payment integration (this is the free tier);
@@ -161,11 +213,14 @@ design.
 
 ## Summary
 
-Both future products are thin shells over the existing
-engine. The free tier wires a browser form to a runner.
-The paid tier wires a GitHub App to the same runner
-through an entitlement check. The compliance engine itself
-is unchanged in both cases.
+The Reguard engine in this repository is open source under
+AGPL-3.0. Reguard Cloud and the GitHub App are planned
+managed products that wrap that engine in a hosted
+service. Putting Cloud in a separate package is a product
+decision, not an automatic license boundary; whether Cloud
+ends up AGPL or under a separately-negotiated commercial
+license is a legal-review question we have not yet
+answered.
 
 The full SaaS dashboard is a later milestone that depends
 on the design-partner phase succeeding (see
