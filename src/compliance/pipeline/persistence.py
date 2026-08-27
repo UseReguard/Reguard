@@ -1,15 +1,18 @@
 """Persist RunRecord into compliance_runtime_runs.
 
 Schema version is pinned at 1. Re-running the same repo + requirement
-+ sha + scenario + adapter is a no-op thanks to the unique dedup index.
++ sha + scenario + adapter is a no-op thanks to the unique dedup index;
+the loader returns the previously persisted row rather than letting
+the insert fire.
 """
 from __future__ import annotations
 
+import json
 import sqlite3
 from pathlib import Path
 from typing import Iterable
 
-from .types import RunRecord
+from .types import Evidence, RepositoryTarget, Result, RunRecord, RunStatus
 
 
 def default_db_path() -> Path:
@@ -26,6 +29,9 @@ def insert_run(db_path: Path, record: RunRecord) -> int:
 
     Raises sqlite3.IntegrityError if the dedup unique index fires
     (same repo + requirement + sha + scenario + adapter triple).
+    Callers that want idempotent behaviour should check
+    `load_run_by_dedup_key` first; that avoids the IntegrityError
+    path entirely.
     """
     conn = sqlite3.connect(db_path)
     try:
@@ -62,6 +68,94 @@ def insert_run(db_path: Path, record: RunRecord) -> int:
         )
         conn.commit()
         return int(cur.lastrowid)
+    finally:
+        conn.close()
+
+
+def _row_to_record(row: sqlite3.Row) -> RunRecord:
+    """Reconstruct a RunRecord from a sqlite3.Row.
+
+    The two JSON columns are deserialised into their dataclass types
+    using ``__init__``. Everything else is taken verbatim from the
+    row columns.
+    """
+    evidence = Evidence(**json.loads(row["evidence_json"]))
+    result = Result(**json.loads(row["result_json"]))
+    return RunRecord(
+        repository=RepositoryTarget(
+            repository_id=row["repository_id"],
+            full_name=row["repo_full_name"],
+            sha=row["repo_sha"],
+            branch=row["repo_branch"],
+        ),
+        requirement_id=row["requirement_id"],
+        requirement_version=row["requirement_version"],
+        runtime_version=row["runtime_version"],
+        adapter_name=row["adapter_name"],
+        adapter_version=row["adapter_version"],
+        scenario_id=row["scenario_id"],
+        status=RunStatus(row["status"]),
+        reason=row["reason"],
+        result=result,
+        evidence=evidence,
+        started_at=row["started_at"],
+        completed_at=row["completed_at"],
+        duration_seconds=row["duration_seconds"],
+    )
+
+
+def load_run_by_dedup_key(
+    db_path: Path,
+    *,
+    repository_id: int,
+    requirement_id: str,
+    requirement_version: str,
+    repo_sha: str,
+    scenario_id: str,
+    adapter_name: str,
+    adapter_version: str,
+) -> RunRecord | None:
+    """Return the previously persisted RunRecord for this dedup key.
+
+    The dedup key mirrors the unique index in
+    migrations/005_compliance_runtime_runs.sql: every column that
+    identifies "the same run" is included.
+
+    Returns None if no row exists. Used by `run_one` to short-circuit
+    re-runs: if a row is already there, the previously persisted
+    result is returned without re-running the probe or re-inserting.
+    The unique index then never fires for legitimate reruns.
+    """
+    conn = sqlite3.connect(db_path)
+    conn.row_factory = sqlite3.Row
+    try:
+        cur = conn.execute(
+            """
+            SELECT * FROM compliance_runtime_runs
+            WHERE repository_id = ?
+              AND requirement_id = ?
+              AND requirement_version = ?
+              AND repo_sha = ?
+              AND scenario_id = ?
+              AND adapter_name = ?
+              AND adapter_version = ?
+            ORDER BY created_at DESC
+            LIMIT 1
+            """,
+            (
+                repository_id,
+                requirement_id,
+                requirement_version,
+                repo_sha,
+                scenario_id,
+                adapter_name,
+                adapter_version,
+            ),
+        )
+        row = cur.fetchone()
+        if row is None:
+            return None
+        return _row_to_record(row)
     finally:
         conn.close()
 

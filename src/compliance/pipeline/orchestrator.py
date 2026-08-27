@@ -342,13 +342,61 @@ def run_probe(
     )
 
 
+def _with_probe_status(evidence: Evidence, outputs: ProbeOutputs, status: str) -> Evidence:
+    """Return a copy of evidence with probe_status stamped on extra.
+
+    Evidence is frozen; we must construct a new instance. The
+    adapter-owned fields (events, agent_class, agent_version,
+    schema_version) are preserved.
+    """
+    new_extra = dict(evidence.extra)
+    new_extra["probe_status"] = status
+    new_extra["probe_returncode"] = outputs.returncode
+    return Evidence(
+        schema_version=evidence.schema_version,
+        events=evidence.events,
+        agent_class=evidence.agent_class,
+        agent_version=evidence.agent_version,
+        extra=new_extra,
+    )
+
+
 def collect_evidence(
     *,
     adapter: RepoAdapter,
     scenario: Scenario,
     outputs: ProbeOutputs,
 ) -> Evidence:
-    """Translate the probe outputs into a normalised Evidence object."""
+    """Translate the probe outputs into a normalised Evidence object.
+
+    The returned Evidence always carries ``extra.probe_status`` with one
+    of:
+
+        ``ok``             the probe ran cleanly and produced a trajectory
+        ``probe_failed``   the subprocess returned non-zero
+        ``no_trajectory``  no trajectory file was written
+        ``adapter_raised`` the adapter could not parse the trajectory
+
+    Probe-level failures surface as ``ERROR`` verdicts in the
+    requirement test (not ``FAIL``); the compliance decision is only
+    made when the probe actually executed.
+    """
+    if outputs.returncode != 0:
+        return Evidence(
+            schema_version=EVIDENCE_SCHEMA_VERSION,
+            events=(),
+            agent_class=adapter.resolve_agent(""),
+            agent_version="unknown",
+            extra={
+                "probe_status": "probe_failed",
+                "probe_returncode": outputs.returncode,
+                "reason": (
+                    f"probe returned {outputs.returncode}; "
+                    f"stderr={outputs.stderr_log[:400]!r}"
+                ),
+            },
+        )
+
     if not outputs.trajectory_path.exists():
         return Evidence(
             schema_version=EVIDENCE_SCHEMA_VERSION,
@@ -356,21 +404,28 @@ def collect_evidence(
             agent_class=adapter.resolve_agent(""),
             agent_version="unknown",
             extra={
+                "probe_status": "no_trajectory",
+                "probe_returncode": outputs.returncode,
                 "reason": (
-                    f"probe returned {outputs.returncode}; "
-                    f"no trajectory written. "
-                    f"stderr={outputs.stderr_log[:400]!r}"
-                )
+                    f"probe returned {outputs.returncode} "
+                    f"but no trajectory was written"
+                ),
             },
         )
 
     try:
-        return adapter.parse_trajectory(str(outputs.trajectory_path), scenario)
+        evidence = adapter.parse_trajectory(str(outputs.trajectory_path), scenario)
     except Exception as exc:  # noqa: BLE001
         return Evidence(
             schema_version=EVIDENCE_SCHEMA_VERSION,
             events=(),
             agent_class=adapter.resolve_agent(""),
             agent_version="unknown",
-            extra={"reason": f"adapter.parse_trajectory raised: {exc!r}"},
+            extra={
+                "probe_status": "adapter_raised",
+                "probe_returncode": outputs.returncode,
+                "reason": f"adapter.parse_trajectory raised: {exc!r}",
+            },
         )
+
+    return _with_probe_status(evidence, outputs, "ok")

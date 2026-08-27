@@ -50,11 +50,18 @@ class RequirementTest(ABC):
 
         The reduction rule is intentionally simple and deterministic:
 
-            any ERROR evidence -> ERROR
-            no events at all    -> UNKNOWN
-            all checks PASSED   -> PASS
-            some checks failed  -> FAIL
-            adapter said n/a    -> UNSUPPORTED  (handled in adapter layer)
+            probe did not run cleanly -> ERROR
+            any schema mismatch       -> ERROR
+            no events at all           -> UNKNOWN
+            all checks PASSED          -> PASS
+            some checks failed         -> FAIL
+            adapter said n/a           -> UNSUPPORTED  (handled in adapter layer)
+
+        The probe-cleanly check distinguishes engine failures from
+        compliance failures: a probe that crashed, never wrote a
+        trajectory, or tripped the adapter parser is a setup problem,
+        not evidence that the system under test violated the
+        requirement. Those map to ERROR, never FAIL.
         """
         if evidence.schema_version != RESULT_SCHEMA_VERSION:
             return Result(
@@ -66,6 +73,23 @@ class RequirementTest(ABC):
                 ),
                 checks=(),
                 summary={"evidence_schema_version": evidence.schema_version},
+            )
+
+        probe_status = evidence.extra.get("probe_status")
+        if probe_status is not None and probe_status != "ok":
+            return Result(
+                schema_version=RESULT_SCHEMA_VERSION,
+                status=RunStatus.ERROR,
+                reason=(
+                    f"probe did not run cleanly: {probe_status!r}; "
+                    f"{evidence.extra.get('reason', '')}"
+                ).strip(),
+                checks=(),
+                summary={
+                    "probe_status": probe_status,
+                    "probe_returncode": evidence.extra.get("probe_returncode"),
+                    "event_count": len(evidence.events),
+                },
             )
 
         if not evidence.events:

@@ -38,7 +38,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "src"))
 
 from compliance.adapters import get_adapter
-from compliance.pipeline.persistence import insert_run
+from compliance.pipeline.persistence import insert_run, load_run_by_dedup_key
 from compliance.requirements.ai_act.article_12_1 import (
     Article121AutomaticLoggingTest,
 )
@@ -289,8 +289,8 @@ def test_t14_registry_exposes_article_121():
     r = get_requirement("AI_ACT_12_1_AUTOMATIC_EVENT_LOGGING")
     assert r.id == "AI_ACT_12_1_AUTOMATIC_EVENT_LOGGING"
     assert r.version  # non-empty
-    # contract must now be 1.1.0
-    assert r.version == "1.1.0"
+    # contract must now be 1.2.0
+    assert r.version == "1.2.0"
 
 
 # ----- T15 -----
@@ -344,3 +344,114 @@ def test_t15_persistence_roundtrip_and_dedup(tmp_path: Path):
         assert result_loaded["schema_version"] == "2"
     finally:
         conn.close()
+
+
+# ----- T16 -----
+def test_t16_probe_failed_maps_to_error():
+    """Probe subprocess returned non-zero -> ERROR, never FAIL.
+
+    The probe_status short-circuit fires before any of the 5
+    compliance checks; even with no events, the verdict is ERROR.
+    """
+    ev = _ev([], probe_status="probe_failed", probe_returncode=1)
+    result = _REQ.evaluate(ev)
+    assert result.status == RunStatus.ERROR
+    assert "probe_failed" in result.reason
+    # No checks were run; the error short-circuits.
+    assert result.checks == ()
+
+
+# ----- T17 -----
+def test_t17_no_trajectory_maps_to_error():
+    """Probe ran cleanly but wrote no trajectory -> ERROR."""
+    ev = _ev([], probe_status="no_trajectory", probe_returncode=0)
+    result = _REQ.evaluate(ev)
+    assert result.status == RunStatus.ERROR
+    assert "no_trajectory" in result.reason
+
+
+# ----- T18 -----
+def test_t18_adapter_raised_maps_to_error():
+    """Adapter could not parse the trajectory -> ERROR."""
+    ev = _ev([], probe_status="adapter_raised", probe_returncode=0)
+    result = _REQ.evaluate(ev)
+    assert result.status == RunStatus.ERROR
+    assert "adapter_raised" in result.reason
+
+
+# ----- T19 -----
+def test_t19_probe_status_ok_falls_through_to_checks():
+    """probe_status='ok' is the normal path; the short-circuit does
+    not fire and the 5 compliance checks run as before."""
+    ev = _ev_step_tool_exit()
+    # Stamp probe_status='ok' explicitly (the default in real runs;
+    # _ev() does not add it so this is also a regression test).
+    ev.extra["probe_status"] = "ok"
+    result = _REQ.evaluate(ev)
+    assert result.status == RunStatus.PASS
+
+
+# ----- T20 -----
+def test_t20_load_run_by_dedup_key_roundtrip(tmp_path: Path):
+    """Persisting then loading by dedup key returns the same
+    RunRecord; the loader is the idempotency primitive used by
+    run_one() to short-circuit reruns."""
+    db_path = tmp_path / "test.db"
+    schema_sql = (ROOT / "migrations" / "005_compliance_runtime_runs.sql").read_text()
+    conn = sqlite3.connect(db_path)
+    try:
+        conn.executescript(schema_sql)
+        conn.commit()
+    finally:
+        conn.close()
+
+    evidence = _ev_step_tool_exit()
+    result = _REQ.evaluate(evidence)
+    record = RunRecord(
+        repository=RepositoryTarget(
+            repository_id=999, full_name="owner/test", sha="abc123", branch="main"
+        ),
+        requirement_id=_REQ.id,
+        requirement_version=_REQ.version,
+        runtime_version="1.0.0",
+        adapter_name="test",
+        adapter_version="1.0.0",
+        scenario_id="test",
+        status=result.status,
+        reason=result.reason,
+        result=result,
+        evidence=evidence,
+        started_at="2026-08-27T00:00:00Z",
+        completed_at="2026-08-27T00:00:01Z",
+        duration_seconds=1.0,
+    )
+    rid = insert_run(db_path, record)
+    assert rid > 0
+
+    # Lookup by dedup key returns the same row, reconstructed.
+    loaded = load_run_by_dedup_key(
+        db_path,
+        repository_id=record.repository.repository_id,
+        requirement_id=record.requirement_id,
+        requirement_version=record.requirement_version,
+        repo_sha=record.repository.sha,
+        scenario_id=record.scenario_id,
+        adapter_name=record.adapter_name,
+        adapter_version=record.adapter_version,
+    )
+    assert loaded is not None
+    assert loaded.status == RunStatus.PASS
+    assert loaded.repository.sha == "abc123"
+    assert loaded.evidence.schema_version == EVIDENCE_SCHEMA_VERSION
+
+    # A different SHA returns None.
+    assert load_run_by_dedup_key(
+        db_path,
+        repository_id=999,
+        requirement_id=record.requirement_id,
+        requirement_version=record.requirement_version,
+        repo_sha="different",
+        scenario_id=record.scenario_id,
+        adapter_name=record.adapter_name,
+        adapter_version=record.adapter_version,
+    ) is None

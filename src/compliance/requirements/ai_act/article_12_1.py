@@ -26,6 +26,15 @@ includes any HARNESS_GENERATED event, the corresponding check fails.
 
 Assertion contract — all must hold for PASS:
 
+    0. PROBE_RAN_CLEANLY  (engine precondition)
+       evidence.extra.probe_status must be unset or "ok". A
+       probe_status of "probe_failed", "no_trajectory",
+       or "adapter_raised" indicates the engine could not even drive
+       the agent under test, so the compliance decision is undefined.
+       This is reported as ERROR, never FAIL — FAIL is reserved for
+       a successful, valid execution whose observed behaviour
+       deterministically violates the requirement.
+
     1. AT_LEAST_ONE_EVENT
        evidence.events contains >= 1 non-error event.
 
@@ -107,7 +116,7 @@ def _terminal_exit_status(terminal_events: list[dict]) -> str:
 
 class Article121AutomaticLoggingTest(RequirementTest):
     id = "AI_ACT_12_1_AUTOMATIC_EVENT_LOGGING"
-    version = "1.1.0"
+    version = "1.2.0"
 
     def assert_evidence(self, evidence: Evidence) -> Iterable[CheckResult]:
         events = list(evidence.events)

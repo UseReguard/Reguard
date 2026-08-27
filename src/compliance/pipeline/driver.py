@@ -31,7 +31,11 @@ from pathlib import Path
 
 from . import RUNTIME_VERSION
 from .orchestrator import ProbeOutputs, collect_evidence, run_probe
-from .persistence import default_db_path, insert_run
+from .persistence import (
+    default_db_path,
+    insert_run,
+    load_run_by_dedup_key,
+)
 from .types import (
     Evidence,
     RepositoryTarget,
@@ -242,7 +246,22 @@ def _run_pipeline(
         try:
             insert_run(db_path, record)
         except sqlite3.IntegrityError:
-            record = _attach_dedup_reason(record)
+            # Race: someone inserted between the pre-probe lookup
+            # above and this insert. Idempotent return — load and
+            # return the existing row instead of fabricating a
+            # synthetic ERROR.
+            existing = load_run_by_dedup_key(
+                db_path,
+                repository_id=record.repository.repository_id,
+                requirement_id=record.requirement_id,
+                requirement_version=record.requirement_version,
+                repo_sha=record.repository.sha,
+                scenario_id=record.scenario_id,
+                adapter_name=record.adapter_name,
+                adapter_version=record.adapter_version,
+            )
+            if existing is not None:
+                record = existing
 
     return record, evidence_path
 
@@ -259,10 +278,18 @@ def run_one(
     Clones the repository at `sha` into a temporary directory,
     runs the probe, asserts, and persists.
 
+    Idempotent: if a row already exists for this exact (repository,
+    requirement, version, sha, scenario, adapter) combination, that
+    previously persisted record is returned and the probe is not
+    re-run. CI reruns against the same pinned SHAs therefore skip
+    the expensive probe work.
+
     `keep_repo=True` skips the tempdir cleanup; useful for debugging.
     """
     db_path = default_db_path()
     repo_row = _lookup_repo(db_path, full_name)
+    adapter = get_adapter(full_name)
+    requirement = get_requirement(requirement_id)
 
     target = RepositoryTarget(
         repository_id=repo_row.repository_id,
@@ -270,6 +297,22 @@ def run_one(
         sha=sha,
         branch=repo_row.default_branch,
     )
+
+    # Pre-probe idempotency check. The dedup key is fully determined
+    # by inputs we already have; if a row exists, return it and
+    # skip the clone + probe entirely.
+    existing = load_run_by_dedup_key(
+        db_path,
+        repository_id=target.repository_id,
+        requirement_id=requirement.id,
+        requirement_version=requirement.version,
+        repo_sha=target.sha,
+        scenario_id=DEFAULT_SCENARIO_12_1.scenario_id,
+        adapter_name=adapter.name,
+        adapter_version=adapter.version,
+    )
+    if existing is not None:
+        return existing
 
     repo_checkout = _clone_to_tempdir(full_name, sha)
     try:
@@ -342,38 +385,6 @@ def run_path_mode(
         evidence_output_dir=evidence_output_dir,
         work_root_parent=None,
         persist=persist,
-    )
-
-
-def _attach_dedup_reason(record: RunRecord) -> RunRecord:
-    """If the dedup index fires, return an ERROR record explaining why."""
-    new_status = RunStatus.ERROR
-    new_reason = (
-        "duplicate (repository_id, requirement, sha, scenario, adapter) "
-        "triple — already recorded; refusing to overwrite"
-    )
-    new_result = Result(
-        schema_version=record.result.schema_version,
-        status=new_status,
-        reason=new_reason,
-        checks=record.result.checks,
-        summary={**record.result.summary, "dedup": True},
-    )
-    return RunRecord(
-        repository=record.repository,
-        requirement_id=record.requirement_id,
-        requirement_version=record.requirement_version,
-        runtime_version=record.runtime_version,
-        adapter_name=record.adapter_name,
-        adapter_version=record.adapter_version,
-        scenario_id=record.scenario_id,
-        status=new_status,
-        reason=new_reason,
-        result=new_result,
-        evidence=record.evidence,
-        started_at=record.started_at,
-        completed_at=record.completed_at,
-        duration_seconds=record.duration_seconds,
     )
 
 
