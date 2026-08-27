@@ -117,12 +117,20 @@ jobs:
             fi
           } >> "$GITHUB_STEP_SUMMARY"
 
+      - name: Compute slug-safe artifact name
+        if: always()
+        id: slug
+        run: |
+          SLUG_REPO=$(echo "${{ inputs.repository }}" | tr '/' '-')
+          SHORT_SHA=$(echo "${{ inputs.sha }}" | cut -c1-12)
+          echo "slug_repo=${SLUG_REPO}" >> "$GITHUB_OUTPUT"
+          echo "short_sha=${SHORT_SHA}" >> "$GITHUB_OUTPUT"
+
       - name: Upload compliance-result.json
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          # Artifact names must not contain "/". Replace with "__".
-          name: article-12-1-${{ replace(inputs.repository, '/', '-') }}-${{ inputs.sha }}
+          name: article-12-1-${{ steps.slug.outputs.slug_repo }}-${{ steps.slug.outputs.short_sha }}
           path: compliance-tool/compliance-result.json
           if-no-files-found: ignore
           retention-days: 30
@@ -131,7 +139,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: article-12-1-evidence-${{ replace(inputs.repository, '/', '-') }}-${{ inputs.sha }}
+          name: article-12-1-evidence-${{ steps.slug.outputs.slug_repo }}-${{ steps.slug.outputs.short_sha }}
           path: compliance-tool/evidence
           if-no-files-found: ignore
           retention-days: 30
