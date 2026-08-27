@@ -1,7 +1,7 @@
 [project]
-name = "compliance-tool"
+name = "Reguard"
 version = "0.1.0"
-description = "EU AI compliance assessment tool — law corpus + repository scanning pipeline"
+description = "Deterministic runtime compliance checks for AI agents"
 requires-python = ">=3.12"
 dependencies = [
     "sqlalchemy>=2.0",

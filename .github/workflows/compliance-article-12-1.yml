@@ -28,11 +28,11 @@ jobs:
     name: EU AI Act Article 12(1) compliance
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout compliance-tool
+      - name: Checkout Reguard
         uses: actions/checkout@v4
         with:
           repository: ${{ github.repository }}
-          path: compliance-tool
+          path: Reguard
           fetch-depth: 0
 
       - name: Checkout target repository at exact SHA
@@ -48,16 +48,16 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install compliance-tool
-        working-directory: compliance-tool
+      - name: Install Reguard
+        working-directory: Reguard
         run: |
           python -m pip install --upgrade pip
           # The tool is currently source-tree only. We don't pip-install
           # itself; we add the src/ directory to PYTHONPATH for the run.
-          echo "PYTHONPATH=$PYTHONPATH:$GITHUB_WORKSPACE/compliance-tool/src" >> $GITHUB_ENV
+          echo "PYTHONPATH=$PYTHONPATH:$GITHUB_WORKSPACE/Reguard/src" >> $GITHUB_ENV
 
       - name: Run Article 12(1) check
-        working-directory: compliance-tool
+        working-directory: Reguard
         env:
           PYTHONUNBUFFERED: "1"
           # no LLM creds; the adapters use deterministic stubs
@@ -76,7 +76,7 @@ jobs:
 
       - name: Write job summary
         if: always()
-        working-directory: compliance-tool
+        working-directory: Reguard
         env:
           INPUT_REPOSITORY: ${{ inputs.repository }}
           INPUT_SHA: ${{ inputs.sha }}
@@ -131,7 +131,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: article-12-1-${{ steps.slug.outputs.slug_repo }}-${{ steps.slug.outputs.short_sha }}
-          path: compliance-tool/compliance-result.json
+          path: Reguard/compliance-result.json
           if-no-files-found: ignore
           retention-days: 30
 
@@ -140,6 +140,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: article-12-1-evidence-${{ steps.slug.outputs.slug_repo }}-${{ steps.slug.outputs.short_sha }}
-          path: compliance-tool/evidence
+          path: Reguard/evidence
           if-no-files-found: ignore
           retention-days: 30
