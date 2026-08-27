@@ -1,15 +1,19 @@
 """Adapter for he-yufeng/CoreCoder.
 
+Recording category: D (framework exposes only ephemeral in-memory state).
+
 Reconnaissance notes
 --------------------
-  - CoreCoder does NOT auto-persist a trajectory. `Agent.messages`
-    lives in memory only and is the canonical execution record.
-  - During Agent.chat() the agent appends to self.messages on every
-    round (lines: user message, assistant tool_calls, tool replies,
-    final assistant message). That list is the system's own
-    execution record.
-  - The probe EXPORTS that record to disk. The system created it;
-    the harness only serialises it. Origin = SYSTEM_STATE_EXPORTED_BY_HARNESS.
+CoreCoder does NOT auto-persist a trajectory. `Agent.messages` lives in
+memory only and is the canonical execution record. During `Agent.chat`
+the agent appends to `self.messages` on every round (user message,
+assistant tool_calls, tool replies, final assistant message). That
+list is the system's own execution record.
+
+The list ends with the last assistant tool-call message; there is no
+framework-emitted terminal event. Under v1.3 we do NOT synthesise a
+terminal `exit` event. The harness writes the trajectory JSON itself,
+which is why the persistent durable artifact is harness-side.
 
 Provenance
 ----------
@@ -19,9 +23,12 @@ Every event stamped on the Evidence bundle carries:
     producer   = "corecoder.agent.Agent.messages"
     collector  = "corecoder_adapter_v1"
 
-The probe never invents events. If the trajectory file is missing
-or corrupt the adapter returns an empty event list with the reason
-in extra, and the requirement test will return UNKNOWN.
+Extra metadata (v1.3 contract):
+
+    recording_category         = "D"
+    framework_persists_durably  = False
+    framework_artifact_paths   = ()
+    harness_artifact_paths     = (trajectory_path,)
 """
 from __future__ import annotations
 
@@ -39,6 +46,14 @@ from .base import AdapterCapabilities, RepoAdapter
 
 _COLLECTOR = "corecoder_adapter_v1"
 _PRODUCER = "corecoder.agent.Agent.messages"
+
+
+# Trajectory message role -> normalised Evidence.kind.
+_ROLE_KIND_MAP: dict[str, str] = {
+    "user": "step",
+    "assistant": "step",
+    "tool": "tool",
+}
 
 
 class CoreCoderAdapter(RepoAdapter):
@@ -71,6 +86,10 @@ class CoreCoderAdapter(RepoAdapter):
                 agent_version="unknown",
                 extra={
                     "reason": f"trajectory file missing: {trajectory_path}",
+                    "recording_category": "D",
+                    "framework_persists_durably": False,
+                    "framework_artifact_paths": [],
+                    "harness_artifact_paths": [],
                     "origin": EvidenceOrigin.SYSTEM_STATE_EXPORTED_BY_HARNESS.value,
                     "producer": _PRODUCER,
                     "collector": _COLLECTOR,
@@ -87,6 +106,10 @@ class CoreCoderAdapter(RepoAdapter):
                 agent_version="unknown",
                 extra={
                     "reason": f"trajectory parse error: {exc}",
+                    "recording_category": "D",
+                    "framework_persists_durably": False,
+                    "framework_artifact_paths": [],
+                    "harness_artifact_paths": [],
                     "origin": EvidenceOrigin.SYSTEM_STATE_EXPORTED_BY_HARNESS.value,
                     "producer": _PRODUCER,
                     "collector": _COLLECTOR,
@@ -97,36 +120,34 @@ class CoreCoderAdapter(RepoAdapter):
         messages = data.get("messages") or []
         for idx, msg in enumerate(messages):
             role = msg.get("role", "?")
+            if role not in _ROLE_KIND_MAP:
+                continue
+            kind = _ROLE_KIND_MAP[role]
             events.append({
-                "kind": "step",
+                "kind": kind,
                 "ts": "",
-                "name": f"message[{idx}]",
+                "name": f"message[{idx}]:{role}",
                 "content": json.dumps(msg, sort_keys=True),
                 "role": role,
                 "origin": EvidenceOrigin.SYSTEM_STATE_EXPORTED_BY_HARNESS.value,
                 "producer": _PRODUCER,
                 "collector": _COLLECTOR,
-                "type": "agent_step",
+                "type": "agent_message",
             })
 
-        events.append({
-            "kind": "exit",
-            "ts": "",
-            "name": "agent_chat",
-            "content": "",
-            "model": data.get("model", ""),
-            "origin": EvidenceOrigin.SYSTEM_STATE_EXPORTED_BY_HARNESS.value,
-            "producer": _PRODUCER,
-            "collector": _COLLECTOR,
-            "type": "agent_exit",
-        })
-
+        # The durable trajectory JSON was written by the harness,
+        # not by CoreCoder. The framework did not produce any
+        # persistent artifact.
         return Evidence(
             schema_version=EVIDENCE_SCHEMA_VERSION,
             events=tuple(events),
             agent_class="corecoder.agent.Agent",
             agent_version=str(data.get("corecoder_version", "")),
             extra={
+                "recording_category": "D",
+                "framework_persists_durably": False,
+                "framework_artifact_paths": [],
+                "harness_artifact_paths": [str(path)] if path.exists() else [],
                 "model": data.get("model", ""),
                 "scenario_id": scenario.scenario_id,
                 "final_response": data.get("final_response", ""),

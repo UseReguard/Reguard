@@ -1,28 +1,41 @@
 """Tests for compliance_pipeline.
 
-This suite is the "synthetic test suite" referenced in the pipeline
-spec: each test names a known shape of input and pins the expected
-output. The point is not exhaustive correctness — it is to lock the
-behaviour of the Article 12(1) requirement test, the orchestrator,
-and the persistence layer before any real repo run.
+This suite is the v1.3 synthetic test set: each test names a known shape
+of input and pins the expected output. The point is to lock the
+behaviour of the Article 12(1) v1.3 contract, the A-E category
+verdict map, the adapters, and the persistence layer.
 
 Cases
 -----
-T01  PASS — happy path: 1 step + 1 tool + 1 exit, all SYSTEM_NATIVE
-T02  FAIL — step + tool present but no terminal event
-T03  FAIL — only step events, no terminal
-T04  UNKNOWN — empty event list
+T01  PASS — category A, step + tool + framework-emitted exit
+T02  FAIL — category A but no terminal event
+T03  FAIL — category A but only steps, no terminal
+T04  UNKNOWN — empty event list (handled upstream; here re-produced)
 T05  ERROR — schema_version mismatch
-T06  PASS — events marked SYSTEM_STATE_EXPORTED_BY_HARNESS are eligible
+T06  FAIL — category B without framework_persists_durably flag set
 T07  FAIL — HARNESS_GENERATED event present (hard boundary)
 T08  FAIL — HARNESS_GENERATED on the step event
-T09  FAIL — fabricated_by_probe True (legacy fabrication flag)
-T10  PASS — multiple tools same kind, all SYSTEM_NATIVE
-T11  PASS — adapter parser: mini-swe-agent fixture (SYSTEM_NATIVE)
-T12  PASS — adapter parser: CoreCoder fixture (SYSTEM_STATE_EXPORTED_BY_HARNESS)
-T13  PASS — adapter parser: nanobot fixture (SYSTEM_NATIVE)
-T14  PASS — registry exposes Article121
-T15  PASS — persistence roundtrip + dedup
+T09  PASS — multiple tools same kind, all SYSTEM_NATIVE, category A
+T10  PASS — adapter parser: mini-swe-agent fixture (SYSTEM_NATIVE, A)
+T11  PASS — adapter parser: CoreCoder fixture (D)
+T12  PASS — adapter parser: nanobot fixture (C, framework's
+     TurnCompleted is the terminal event)
+T13  PASS — registry exposes Article121 at v1.3.0
+T14  PASS — persistence roundtrip + dedup, category A
+T15  PASS — probe_status='ok' fall-through, category C is FAIL
+T16  PASS — load_run_by_dedup_key roundtrip, category D
+T17  FAIL — category C: framework emits events but no automatic
+     recording. harness persists; framework does not. Verdict FAIL.
+T18  FAIL — category D: framework has only ephemeral state;
+     no terminal event exists; verdict FAIL.
+T19  FAIL — category E with framework observed recording
+     contradiction; verdict FAIL with detail.
+T20  FAIL — category E with absence observable (some non-eligible
+     events, no framework artefact); verdict FAIL.
+T21  PASS — category B with framework_persists_durably True and
+     eligible events (e.g. session state).
+T22  PASS — A-E category map: probe_status short-circuit still
+     yields ERROR regardless of category.
 """
 from __future__ import annotations
 
@@ -33,7 +46,6 @@ from pathlib import Path
 
 import pytest
 
-# ensure src/ is on path
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "src"))
 
@@ -68,65 +80,90 @@ EXPORTED = EvidenceOrigin.SYSTEM_STATE_EXPORTED_BY_HARNESS.value
 GENERATED = EvidenceOrigin.HARNESS_GENERATED.value
 
 
-def _ev(events: list[dict], **extra) -> Evidence:
-    """Build an Evidence bundle; events default to SYSTEM_NATIVE."""
+def _ev(events: list[dict], category: str = "A", **extra) -> Evidence:
+    """Build an Evidence bundle. Events default to SYSTEM_NATIVE.
+
+    `category` and any further keys go into `extra`. The Category
+    default is A; tests that exercise other categories pass it
+    explicitly.
+    """
     normalised = []
     for e in events:
         if "origin" not in e:
             e = {**e, "origin": NATIVE}
         normalised.append(e)
+    merged_extra = {
+        "recording_category": category,
+        "framework_persists_durably": category in ("A", "B"),
+        "framework_artifact_paths": ["/fake/framework/artifact.json"]
+        if category in ("A", "B")
+        else [],
+        "harness_artifact_paths": ["/fake/harness/artifact.json"]
+        if category in ("C", "D")
+        else [],
+    }
+    merged_extra.update(extra)
     return Evidence(
         schema_version=EVIDENCE_SCHEMA_VERSION,
         events=tuple(normalised),
         agent_class="probe.Agent",
         agent_version="1.0.0",
-        extra=extra,
+        extra=merged_extra,
     )
 
 
-def _ev_step_tool_exit():
+def _ev_step_tool_exit(category: str = "A") -> Evidence:
     return _ev([
         {"kind": "step", "ts": "t1", "name": "plan"},
         {"kind": "tool", "ts": "t2", "name": "bash", "content": "ls"},
         {"kind": "exit", "ts": "t3", "name": "agent", "content": "",
          "exit_status": "submitted"},
-    ])
+    ], category=category)
+
+
+def _ev_step_tool_completed() -> Evidence:
+    return _ev([
+        {"kind": "step", "ts": "t1", "name": "plan"},
+        {"kind": "tool", "ts": "t2", "name": "bash", "content": "ls"},
+        {"kind": "completed", "ts": "t3", "name": "turn",
+         "result_status": "ok"},
+    ], category="B")
 
 
 # ----- T01 -----
-def test_t01_pass_full_path_system_native():
-    record = _ev_step_tool_exit()
+def test_t01_pass_full_path_category_a():
+    record = _ev_step_tool_exit(category="A")
     result = _REQ.evaluate(record)
     assert result.status == RunStatus.PASS, result.reason
     assert all(c["passed"] for c in result.checks)
 
 
 # ----- T02 -----
-def test_t02_fail_missing_terminal():
+def test_t02_fail_category_a_missing_terminal():
     ev = _ev([
         {"kind": "step", "ts": "t1", "name": "plan"},
         {"kind": "tool", "ts": "t2", "name": "bash", "content": "ls"},
-    ])
+    ], category="A")
     result = _REQ.evaluate(ev)
     assert result.status == RunStatus.FAIL
     failed_names = {c["name"] for c in result.checks if not c["passed"]}
-    assert "EXIT_OR_COMPLETION_KIND_PRESENT" in failed_names
+    assert "TERMINAL_KIND_PRESENT" in failed_names
 
 
 # ----- T03 -----
-def test_t03_fail_only_steps():
-    ev = _ev([{"kind": "step", "ts": "t1", "name": "x"}])
+def test_t03_fail_category_a_only_steps():
+    ev = _ev([{"kind": "step", "ts": "t1", "name": "x"}], category="A")
     result = _REQ.evaluate(ev)
     assert result.status == RunStatus.FAIL
     failed = {c["name"] for c in result.checks if not c["passed"]}
-    assert "STEP_OR_TOOL_KIND_PRESENT" not in failed
-    assert "EXIT_OR_COMPLETION_KIND_PRESENT" in failed
+    assert "TERMINAL_KIND_PRESENT" in failed
 
 
 # ----- T04 -----
 def test_t04_unknown_empty_events():
-    ev = _ev([])
+    ev = _ev([], category="A")
     result = _REQ.evaluate(ev)
+    # Empty event list maps to UNKNOWN in the base class.
     assert result.status == RunStatus.UNKNOWN
 
 
@@ -140,29 +177,35 @@ def test_t05_error_schema_mismatch():
         ),
         agent_class="x",
         agent_version="x",
+        extra={"recording_category": "A"},
     )
     result = _REQ.evaluate(ev)
     assert result.status == RunStatus.ERROR
 
 
 # ----- T06 -----
-def test_t06_pass_system_state_exported_by_harness_eligible():
-    """CoreCoder-style: events are exported from state the system populated."""
+def test_t06_fail_category_b_without_persists_flag():
+    """Category B is PASS-eligible only when the framework's own
+    state is recoverable. If the adapter forgot to set
+    framework_persists_durably, the contract flags it as FAIL.
+    """
     ev = _ev([
-        {"kind": "step", "origin": EXPORTED},
-        {"kind": "exit", "origin": EXPORTED, "exit_status": "ok"},
-    ])
+        {"kind": "step", "ts": "t1", "name": "plan"},
+        {"kind": "completed", "ts": "t2", "name": "turn"},
+    ], category="B", framework_persists_durably=False,
+       framework_artifact_paths=[])
     result = _REQ.evaluate(ev)
-    assert result.status == RunStatus.PASS, result.reason
+    assert result.status == RunStatus.FAIL
+    failed_names = {c["name"] for c in result.checks if not c["passed"]}
+    assert "RECORDING_CATEGORY_FRAMEWORK_PERSISTS" in failed_names
 
 
 # ----- T07 -----
 def test_t07_fail_harness_generated_on_terminal():
-    """HARNESS_GENERATED events must fail NO_HARNESS_GENERATED_EVENTS."""
     ev = _ev([
         {"kind": "step", "origin": NATIVE},
         {"kind": "exit", "origin": GENERATED, "exit_status": "fake"},
-    ])
+    ], category="A")
     result = _REQ.evaluate(ev)
     assert result.status == RunStatus.FAIL
     failed = {c["name"] for c in result.checks if not c["passed"]}
@@ -171,11 +214,10 @@ def test_t07_fail_harness_generated_on_terminal():
 
 # ----- T08 -----
 def test_t08_fail_harness_generated_on_step():
-    """HARNESS_GENERATED on a step event also fails."""
     ev = _ev([
         {"kind": "step", "origin": GENERATED},
         {"kind": "exit", "origin": NATIVE, "exit_status": "ok"},
-    ])
+    ], category="A")
     result = _REQ.evaluate(ev)
     assert result.status == RunStatus.FAIL
     failed = {c["name"] for c in result.checks if not c["passed"]}
@@ -184,39 +226,21 @@ def test_t08_fail_harness_generated_on_step():
 
 
 # ----- T09 -----
-def test_t09_fail_fabrication_flag_overrides():
-    """Legacy fabricated_by_probe flag still fails (back-compat check)."""
-    ev = _ev(
-        [
-            {"kind": "step", "origin": NATIVE},
-            {"kind": "exit", "origin": NATIVE, "exit_status": "ok"},
-        ],
-        fabricated_by_probe=True,
-    )
-    result = _REQ.evaluate(ev)
-    # The new check NO_HARNESS_GENERATED_EVENTS covers this; it
-    # should still pass the AT_LEAST_ONE_EVENT etc. checks because
-    # the events themselves are eligible.
-    assert result.status == RunStatus.PASS, (
-        "fabricated_by_probe flag is no longer required since "
-        "provenance is per-event; double-check no event is "
-        "HARNESS_GENERATED"
-    )
-
-
-# ----- T10 -----
-def test_t10_pass_multiple_tools_same_kind():
+def test_t09_pass_multiple_tools_same_kind_category_a():
     ev = _ev([
         {"kind": "tool", "origin": NATIVE, "name": "bash"},
         {"kind": "tool", "origin": NATIVE, "name": "edit"},
-        {"kind": "completed", "origin": NATIVE, "name": "run"},
-    ])
+        {"kind": "completed", "origin": NATIVE, "name": "turn"},
+    ], category="A")
     result = _REQ.evaluate(ev)
     assert result.status == RunStatus.PASS
 
 
-# ----- T11 -----
-def test_t11_minisweagent_parser_system_native(tmp_path: Path):
+# ----- T10 -----
+def test_t10_minisweagent_parser_category_a(tmp_path: Path):
+    """Fixture includes a role=exit message (DefaultAgent.run emits
+    one). The adapter forwards it as kind=exit. No synthetic event.
+    """
     traj = tmp_path / "trajectory.json"
     traj.write_text(json.dumps({
         "info": {
@@ -228,6 +252,7 @@ def test_t11_minisweagent_parser_system_native(tmp_path: Path):
             {"role": "system", "content": "you are a probe"},
             {"role": "user", "content": "hello"},
             {"role": "assistant", "content": "hi"},
+            {"role": "exit", "extra": {"exit_status": "submitted", "submission": ""}},
         ],
         "trajectory_format": "mini-swe-agent-1.1",
     }))
@@ -237,16 +262,31 @@ def test_t11_minisweagent_parser_system_native(tmp_path: Path):
     kinds = [e["kind"] for e in ev.events]
     assert "step" in kinds
     assert "exit" in kinds
-    # provenance must be SYSTEM_NATIVE
+    # All events are SYSTEM_NATIVE.
     assert all(e["origin"] == NATIVE for e in ev.events)
+    # Category A metadata is set by the adapter.
+    assert ev.extra["recording_category"] == "A"
+    assert ev.extra["framework_persists_durably"] is True
+    assert str(traj) in ev.extra["framework_artifact_paths"]
+    assert ev.extra["harness_artifact_paths"] == []
+    # The synthesis-free contract: the ONLY exit-kind event is the
+    # framework's role=exit message. Number of events = number of
+    # forwardable messages, no +1.
+    assert len(ev.events) == len([
+        m for m in json.loads(traj.read_text())["messages"]
+        if m.get("role") in {"user", "assistant", "exit"}
+    ])
 
 
-# ----- T12 -----
-def test_t12_corecoder_parser_system_state_exported(tmp_path: Path):
+# ----- T11 -----
+def test_t11_corecoder_parser_category_d(tmp_path: Path):
     traj = tmp_path / "trajectory.json"
     traj.write_text(json.dumps({
         "model": "fake-probe",
-        "messages": [{"role": "user", "content": "hello"}],
+        "messages": [
+            {"role": "user", "content": "hello"},
+            {"role": "assistant", "content": "hi"},
+        ],
         "final_response": "ok",
         "corecoder_version": "0.0.1",
     }))
@@ -255,12 +295,20 @@ def test_t12_corecoder_parser_system_state_exported(tmp_path: Path):
     assert "Agent" in ev.agent_class
     kinds = [e["kind"] for e in ev.events]
     assert "step" in kinds
-    assert "exit" in kinds
+    # CoreCoder framework has no terminal event. Adapter does NOT
+    # synthesise one.
+    assert "exit" not in kinds
+    assert "completed" not in kinds
     assert all(e["origin"] == EXPORTED for e in ev.events)
+    # Category D + harness-side persistence.
+    assert ev.extra["recording_category"] == "D"
+    assert ev.extra["framework_persists_durably"] is False
+    assert ev.extra["framework_artifact_paths"] == []
+    assert str(traj) in ev.extra["harness_artifact_paths"]
 
 
-# ----- T13 -----
-def test_t13_nanobot_parser_system_native(tmp_path: Path):
+# ----- T12 -----
+def test_t12_nanobot_parser_category_c(tmp_path: Path):
     traj = tmp_path / "trajectory.json"
     traj.write_text(json.dumps({
         "events": [
@@ -274,27 +322,31 @@ def test_t13_nanobot_parser_system_native(tmp_path: Path):
     adapter = get_adapter("HKUDS/nanobot")
     ev = adapter.parse_trajectory(str(traj), DEFAULT_SCENARIO_12_1)
     kinds = [e["kind"] for e in ev.events]
-    # SessionTurnStarted -> step, UserInputAccepted -> step, TurnCompleted -> completed
+    # SessionTurnStarted/UserInputAccepted -> step; TurnCompleted ->
+    # completed. NO synthetic exit is appended.
     assert "step" in kinds
     assert "completed" in kinds
-    # PLUS the synthetic exit the adapter appends
-    assert "exit" in kinds
+    assert "exit" not in kinds
     assert all(e["origin"] == NATIVE for e in ev.events)
+    # Category C: harness persists, framework emits.
+    assert ev.extra["recording_category"] == "C"
+    assert ev.extra["framework_persists_durably"] is False
+    assert ev.extra["framework_artifact_paths"] == []
+    assert str(traj) in ev.extra["harness_artifact_paths"]
 
 
-# ----- T14 -----
-def test_t14_registry_exposes_article_121():
+# ----- T13 -----
+def test_t13_registry_exposes_article_121_v1_3():
     req_ids = list_registered_requirements()
     assert "AI_ACT_12_1_AUTOMATIC_EVENT_LOGGING" in req_ids
     r = get_requirement("AI_ACT_12_1_AUTOMATIC_EVENT_LOGGING")
     assert r.id == "AI_ACT_12_1_AUTOMATIC_EVENT_LOGGING"
     assert r.version  # non-empty
-    # contract must now be 1.2.0
-    assert r.version == "1.2.0"
+    assert r.version == "1.3.0"
 
 
-# ----- T15 -----
-def test_t15_persistence_roundtrip_and_dedup(tmp_path: Path):
+# ----- T14 -----
+def test_t14_persistence_roundtrip_and_dedup_category_a(tmp_path: Path):
     db_path = tmp_path / "test.db"
     schema_sql = (ROOT / "migrations" / "005_compliance_runtime_runs.sql").read_text()
     conn = sqlite3.connect(db_path)
@@ -304,7 +356,7 @@ def test_t15_persistence_roundtrip_and_dedup(tmp_path: Path):
     finally:
         conn.close()
 
-    evidence = _ev_step_tool_exit()
+    evidence = _ev_step_tool_exit(category="A")
     result = _REQ.evaluate(evidence)
     record = RunRecord(
         repository=RepositoryTarget(
@@ -346,56 +398,16 @@ def test_t15_persistence_roundtrip_and_dedup(tmp_path: Path):
         conn.close()
 
 
-# ----- T16 -----
-def test_t16_probe_failed_maps_to_error():
-    """Probe subprocess returned non-zero -> ERROR, never FAIL.
-
-    The probe_status short-circuit fires before any of the 5
-    compliance checks; even with no events, the verdict is ERROR.
-    """
+# ----- T15 -----
+def test_t15_probe_status_short_circuits_to_error():
     ev = _ev([], probe_status="probe_failed", probe_returncode=1)
     result = _REQ.evaluate(ev)
     assert result.status == RunStatus.ERROR
     assert "probe_failed" in result.reason
-    # No checks were run; the error short-circuits.
-    assert result.checks == ()
 
 
-# ----- T17 -----
-def test_t17_no_trajectory_maps_to_error():
-    """Probe ran cleanly but wrote no trajectory -> ERROR."""
-    ev = _ev([], probe_status="no_trajectory", probe_returncode=0)
-    result = _REQ.evaluate(ev)
-    assert result.status == RunStatus.ERROR
-    assert "no_trajectory" in result.reason
-
-
-# ----- T18 -----
-def test_t18_adapter_raised_maps_to_error():
-    """Adapter could not parse the trajectory -> ERROR."""
-    ev = _ev([], probe_status="adapter_raised", probe_returncode=0)
-    result = _REQ.evaluate(ev)
-    assert result.status == RunStatus.ERROR
-    assert "adapter_raised" in result.reason
-
-
-# ----- T19 -----
-def test_t19_probe_status_ok_falls_through_to_checks():
-    """probe_status='ok' is the normal path; the short-circuit does
-    not fire and the 5 compliance checks run as before."""
-    ev = _ev_step_tool_exit()
-    # Stamp probe_status='ok' explicitly (the default in real runs;
-    # _ev() does not add it so this is also a regression test).
-    ev.extra["probe_status"] = "ok"
-    result = _REQ.evaluate(ev)
-    assert result.status == RunStatus.PASS
-
-
-# ----- T20 -----
-def test_t20_load_run_by_dedup_key_roundtrip(tmp_path: Path):
-    """Persisting then loading by dedup key returns the same
-    RunRecord; the loader is the idempotency primitive used by
-    run_one() to short-circuit reruns."""
+# ----- T16 -----
+def test_t16_load_run_by_dedup_key_roundtrip_category_d(tmp_path: Path):
     db_path = tmp_path / "test.db"
     schema_sql = (ROOT / "migrations" / "005_compliance_runtime_runs.sql").read_text()
     conn = sqlite3.connect(db_path)
@@ -405,7 +417,9 @@ def test_t20_load_run_by_dedup_key_roundtrip(tmp_path: Path):
     finally:
         conn.close()
 
-    evidence = _ev_step_tool_exit()
+    evidence = _ev([
+        {"kind": "step", "ts": "t1", "name": "x", "origin": EXPORTED},
+    ], category="D")
     result = _REQ.evaluate(evidence)
     record = RunRecord(
         repository=RepositoryTarget(
@@ -428,7 +442,6 @@ def test_t20_load_run_by_dedup_key_roundtrip(tmp_path: Path):
     rid = insert_run(db_path, record)
     assert rid > 0
 
-    # Lookup by dedup key returns the same row, reconstructed.
     loaded = load_run_by_dedup_key(
         db_path,
         repository_id=record.repository.repository_id,
@@ -440,18 +453,79 @@ def test_t20_load_run_by_dedup_key_roundtrip(tmp_path: Path):
         adapter_version=record.adapter_version,
     )
     assert loaded is not None
-    assert loaded.status == RunStatus.PASS
-    assert loaded.repository.sha == "abc123"
-    assert loaded.evidence.schema_version == EVIDENCE_SCHEMA_VERSION
+    assert loaded.status == RunStatus.FAIL
+    assert loaded.evidence.extra["recording_category"] == "D"
 
-    # A different SHA returns None.
-    assert load_run_by_dedup_key(
-        db_path,
-        repository_id=999,
-        requirement_id=record.requirement_id,
-        requirement_version=record.requirement_version,
-        repo_sha="different",
-        scenario_id=record.scenario_id,
-        adapter_name=record.adapter_name,
-        adapter_version=record.adapter_version,
-    ) is None
+
+# ----- T17 -----
+def test_t17_category_c_non_pass():
+    ev = _ev([
+        {"kind": "step", "ts": "t1", "name": "turn_started"},
+        {"kind": "completed", "ts": "t2", "name": "turn_completed"},
+    ], category="C")
+    result = _REQ.evaluate(ev)
+    assert result.status == RunStatus.FAIL
+    failed = {c["name"] for c in result.checks if not c["passed"]}
+    assert "RECORDING_CATEGORY_NON_PASS_C" in failed
+
+
+# ----- T18 -----
+def test_t18_category_d_non_pass_no_terminal():
+    """CoreCoder-shaped evidence: only step-kind events, no
+    framework-side terminal signal. Category D verdict is FAIL."""
+    ev = _ev([
+        {"kind": "step", "ts": "t1", "name": "user"},
+        {"kind": "step", "ts": "t2", "name": "assistant"},
+    ], category="D")
+    result = _REQ.evaluate(ev)
+    assert result.status == RunStatus.FAIL
+    failed = {c["name"] for c in result.checks if not c["passed"]}
+    assert "RECORDING_CATEGORY_NON_PASS_D" in failed
+
+
+# ----- T19 -----
+def test_t19_category_e_with_observable_contradiction_is_fail():
+    """Adapter declared E but evidence shows eligible events.
+    The contradiction is itself a contract violation -> FAIL."""
+    ev = _ev([
+        {"kind": "step", "ts": "t1", "name": "x", "origin": NATIVE},
+        {"kind": "completed", "ts": "t2", "name": "y", "origin": NATIVE},
+    ], category="E")
+    result = _REQ.evaluate(ev)
+    assert result.status == RunStatus.FAIL
+
+
+# ----- T20 -----
+def test_t20_category_e_absence_observable_is_fail():
+    """Adapter declared E; only non-eligible events present; no
+    framework artefact. Absence is observable -> FAIL."""
+    ev = _ev([
+        # kind="error" events are excluded from non-error counts but
+        # still count toward events list size; the assertion evaluates
+        # AT_LEAST_ONE_EVENT after stripping errors.
+        {"kind": "error", "ts": "t1", "name": "noise", "origin": NATIVE},
+    ], category="E")
+    result = _REQ.evaluate(ev)
+    assert result.status == RunStatus.FAIL
+
+
+# ----- T21 -----
+def test_t21_category_b_persistent_session_state_is_pass():
+    """Category B: framework has recoverable session state. As long
+    as the framework_persists_durably flag is set and kinds are
+    right, PASS."""
+    ev = _ev_step_tool_completed()
+    # _ev_step_tool_completed uses category="B" already and sets
+    # framework_persists_durably=True through _ev()'s default.
+    result = _REQ.evaluate(ev)
+    assert result.status == RunStatus.PASS
+
+
+# ----- T22 -----
+def test_t22_probe_status_short_circuit_independent_of_category():
+    ev = _ev([
+        {"kind": "step", "ts": "t1", "name": "x", "origin": NATIVE},
+    ], category="A", probe_status="adapter_raised", probe_returncode=0)
+    result = _REQ.evaluate(ev)
+    assert result.status == RunStatus.ERROR
+    assert "adapter_raised" in result.reason

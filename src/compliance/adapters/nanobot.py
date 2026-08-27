@@ -1,18 +1,29 @@
 """Adapter for HKUDS/nanobot.
 
+Recording category: C (framework emits events but requires an external
+recorder to persist them).
+
 Reconnaissance notes
 --------------------
-  - nanobot exposes `nanobot.bus.runtime_events` containing a real
-    `RuntimeEventBus` and `RuntimeEventPublisher`.
-  - The Publisher has its OWN emit methods
-    (session_turn_started, turn_runtime_admitted, turn_completed,
-    session_turn_persisted, ...) that call `await self.bus.publish(...)`.
-  - Subscribers register via `RuntimeEventBus.subscribe(...)`.
+nanobot exposes `nanobot.bus.runtime_events` containing a real
+`RuntimeEventBus` and `RuntimeEventPublisher`. The Publisher has its
+OWN emit methods (`session_turn_started`, `turn_runtime_admitted`,
+`turn_completed`, `session_turn_persisted`, ...) that call
+`await self.bus.publish(...)`. Subscribers register via
+`RuntimeEventBus.subscribe(...)`.
+
+The framework emits lifecycle events to the bus during a normal
+turn but does not, by itself, persist them. Persistence is the
+responsibility of whatever subscribers are registered. Reguard is
+one such subscriber.
+
+Under v1.3 we do NOT synthesise a terminal event. The framework's
+own `TurnCompleted` event (kind="completed") satisfies the terminal
+check on its own.
 
 Provenance boundary
 -------------------
 The probe MUST NOT inject or fabricate events. It:
-
   1. constructs a real RuntimeEventPublisher,
   2. subscribes a collector that records every event the publisher
      emits,
@@ -22,15 +33,20 @@ The probe MUST NOT inject or fabricate events. It:
   4. writes the SUBSCRIBER's record of what was emitted.
 
 Every event in the resulting bundle therefore has origin =
-SYSTEM_NATIVE (the bus emitted it; we only listened).
+SYSTEM_NATIVE (the bus emitted it; we only listened). The harness
+subscribes but does not persist; there is no framework-side
+artifact written by nanobot itself.
 
-What this proves
-----------------
-The probe demonstrates that nanobot's runtime bus really does emit
-events during a turn. It does NOT demonstrate that the high-level
-Nanobot gateway runs end-to-end (that requires real LLM creds and
-is out of scope for the v1 engine). For Article 12(1), "automatic
-event recording" is satisfied by the bus, not by the gateway.
+Provenance metadata (v1.3 contract):
+
+    recording_category         = "C"
+    framework_persists_durably  = False
+    framework_artifact_paths   = ()
+    harness_artifact_paths     = (collector_record_path,)
+
+The framework's automatic recording capability depends on an
+external recorder (Reguard's subscriber). Reguard's stored
+collector record is in `harness_artifact_paths`, not framework.
 """
 from __future__ import annotations
 
@@ -50,14 +66,14 @@ _COLLECTOR = "nanobot_adapter_v1"
 _PRODUCER = "nanobot.bus.runtime_events.RuntimeEventPublisher"
 
 
-# nanobot stream-event type -> our normalised Evidence.kind
+# nanobot stream-event type -> our normalised Evidence.kind.
+# TurnCompleted -> "completed" satisfies TERMINAL_KIND_PRESENT.
 _NANOBOT_KIND_MAP: dict[str, str] = {
     "SessionTurnStarted": "step",
     "UserInputAccepted": "step",
     "TurnRuntimeAdmitted": "model",
     "TurnRunStatusChanged": "step",
     "TurnCompleted": "completed",
-    "SessionTurnPersisted": "exit",
 }
 
 
@@ -91,6 +107,10 @@ class NanobotAdapter(RepoAdapter):
                 agent_version="unknown",
                 extra={
                     "reason": f"trajectory file missing: {trajectory_path}",
+                    "recording_category": "C",
+                    "framework_persists_durably": False,
+                    "framework_artifact_paths": [],
+                    "harness_artifact_paths": [],
                     "origin": EvidenceOrigin.SYSTEM_NATIVE.value,
                     "producer": _PRODUCER,
                     "collector": _COLLECTOR,
@@ -107,6 +127,10 @@ class NanobotAdapter(RepoAdapter):
                 agent_version="unknown",
                 extra={
                     "reason": f"trajectory parse error: {exc}",
+                    "recording_category": "C",
+                    "framework_persists_durably": False,
+                    "framework_artifact_paths": [],
+                    "harness_artifact_paths": [],
                     "origin": EvidenceOrigin.SYSTEM_NATIVE.value,
                     "producer": _PRODUCER,
                     "collector": _COLLECTOR,
@@ -117,7 +141,13 @@ class NanobotAdapter(RepoAdapter):
         raw_events = data.get("events") or []
         for idx, ev in enumerate(raw_events):
             ev_type = ev.get("type") or ev.get("kind") or "step"
-            kind = _NANOBOT_KIND_MAP.get(ev_type, "step")
+            if ev_type not in _NANOBOT_KIND_MAP:
+                # Skip event types the article contract is silent on.
+                # The article contract does not define what counts as
+                # a step/tool/model event beyond the kind set in the
+                # RequirementTest.
+                continue
+            kind = _NANOBOT_KIND_MAP[ev_type]
             events.append({
                 "kind": kind,
                 "ts": ev.get("ts", ""),
@@ -129,24 +159,18 @@ class NanobotAdapter(RepoAdapter):
                 "type": f"nanobot_{ev_type.lower()}",
             })
 
-        events.append({
-            "kind": "exit",
-            "ts": "",
-            "name": "nanobot_run",
-            "content": "",
-            "result_status": data.get("result_status", ""),
-            "origin": EvidenceOrigin.SYSTEM_NATIVE.value,
-            "producer": _PRODUCER,
-            "collector": _COLLECTOR,
-            "type": "probe_exit",
-        })
-
+        # No framework-side artefact. The collector's record was
+        # written by Reguard, not nanobot.
         return Evidence(
             schema_version=EVIDENCE_SCHEMA_VERSION,
             events=tuple(events),
             agent_class=_PRODUCER,
             agent_version=str(data.get("nanobot_version", "")),
             extra={
+                "recording_category": "C",
+                "framework_persists_durably": False,
+                "framework_artifact_paths": [],
+                "harness_artifact_paths": [str(path)] if path.exists() else [],
                 "scenario_id": scenario.scenario_id,
                 "result_status": data.get("result_status", ""),
                 "origin": EvidenceOrigin.SYSTEM_NATIVE.value,

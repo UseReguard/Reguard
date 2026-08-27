@@ -1,15 +1,19 @@
 """Adapter for SWE-agent/mini-swe-agent.
 
+Recording category: A (framework creates + persists its own log).
+
 Reconnaissance notes
 --------------------
-  - `DefaultAgent.run(task)` accumulates messages on self.messages
-    and auto-saves a trajectory JSON to `self.config.output_path`
-    after every step (DefaultAgent.run calls self.save() in its
-    `finally` clause, line 121 of agents/default.py).
-  - The trajectory file is therefore written by the agent system
-    itself, not by the probe. Origin is SYSTEM_NATIVE.
-  - We use `DeterministicModel` (test_models.py) so no API key is
-    needed.
+`DefaultAgent.run(task)` accumulates messages on `self.messages` and
+auto-saves a trajectory JSON to `self.config.output_path` after every
+loop iteration (the trajectory is written by `DefaultAgent.save`,
+which runs inside `DefaultAgent.run`'s `finally` branch). The
+framework therefore records durably during a normal agent invocation.
+
+The trajectory already contains a `{"role": "exit", "extra": {...}}`
+message appended by `DefaultAgent.run` when the loop terminates. The
+adapter forwards that exit message into `Evidence.events` as
+`kind="exit"`. The adapter does NOT synthesise an extra exit event.
 
 Provenance
 ----------
@@ -19,7 +23,12 @@ Every event stamped on the Evidence bundle carries:
     producer   = "minisweagent.agents.default.DefaultAgent"
     collector  = "minisweagent_adapter_v1"
 
-The harness only reads the file; the agent wrote it.
+Extra metadata (v1.3 contract):
+
+    recording_category        = "A"
+    framework_persists_durably = True
+    framework_artifact_paths  = (trajectory_path,)
+    harness_artifact_paths    = ()
 """
 from __future__ import annotations
 
@@ -37,6 +46,15 @@ from .base import AdapterCapabilities, RepoAdapter
 
 _COLLECTOR = "minisweagent_adapter_v1"
 _PRODUCER = "minisweagent.agents.default.DefaultAgent"
+
+
+# Trajectory message role -> normalised Evidence.kind.
+_ROLE_KIND_MAP: dict[str, str] = {
+    "user": "step",
+    "assistant": "step",
+    "tool": "tool",
+    "exit": "exit",
+}
 
 
 class MiniSweAgentAdapter(RepoAdapter):
@@ -57,9 +75,6 @@ class MiniSweAgentAdapter(RepoAdapter):
         return _PRODUCER
 
     def render_synthetic_task(self, scenario: Scenario) -> str:
-        # The task itself is small and deterministic. mini-swe-agent
-        # has its own system_template but for this probe we just feed
-        # a literal task.
         return scenario.user_prompt
 
     def parse_trajectory(self, trajectory_path: str, scenario: Scenario) -> Evidence:
@@ -72,6 +87,10 @@ class MiniSweAgentAdapter(RepoAdapter):
                 agent_version="unknown",
                 extra={
                     "reason": f"trajectory file missing: {trajectory_path}",
+                    "recording_category": "A",
+                    "framework_persists_durably": False,
+                    "framework_artifact_paths": (),
+                    "harness_artifact_paths": (),
                     "origin": EvidenceOrigin.SYSTEM_NATIVE.value,
                     "producer": _PRODUCER,
                     "collector": _COLLECTOR,
@@ -88,6 +107,10 @@ class MiniSweAgentAdapter(RepoAdapter):
                 agent_version="unknown",
                 extra={
                     "reason": f"trajectory parse error: {exc}",
+                    "recording_category": "A",
+                    "framework_persists_durably": False,
+                    "framework_artifact_paths": (),
+                    "harness_artifact_paths": (),
                     "origin": EvidenceOrigin.SYSTEM_NATIVE.value,
                     "producer": _PRODUCER,
                     "collector": _COLLECTOR,
@@ -98,39 +121,48 @@ class MiniSweAgentAdapter(RepoAdapter):
         messages = data.get("messages") or []
         for idx, msg in enumerate(messages):
             role = msg.get("role", "?")
-            events.append({
-                "kind": "step",
+            if role not in _ROLE_KIND_MAP:
+                # System / unknown roles are not part of the article's
+                # recorded-events assertion; skip them. The framework's
+                # own loop emits only roles it knows about.
+                continue
+            kind = _ROLE_KIND_MAP[role]
+            event: dict = {
+                "kind": kind,
                 "ts": "",
-                "name": f"message[{idx}]",
+                "name": (
+                    f"agent_exit:{msg.get('extra', {}).get('exit_status', '')}"
+                    if role == "exit"
+                    else f"message[{idx}]:{role}"
+                ),
                 "content": json.dumps(msg, sort_keys=True),
                 "role": role,
                 "origin": EvidenceOrigin.SYSTEM_NATIVE.value,
                 "producer": _PRODUCER,
                 "collector": _COLLECTOR,
-                "type": "agent_step",
-            })
+                "type": "agent_message",
+            }
+            if role == "exit":
+                extra = msg.get("extra") or {}
+                event["exit_status"] = extra.get("exit_status", "")
+                event["submission"] = extra.get("submission", "")
+            events.append(event)
 
-        exit_status = (data.get("info") or {}).get("exit_status", "")
-        events.append({
-            "kind": "exit",
-            "ts": "",
-            "name": "agent_run",
-            "content": "",
-            "exit_status": exit_status,
-            "origin": EvidenceOrigin.SYSTEM_NATIVE.value,
-            "producer": _PRODUCER,
-            "collector": _COLLECTOR,
-            "type": "agent_exit",
-        })
-
+        info = data.get("info") or {}
+        framework_persists = path.exists() and bool(messages)
         return Evidence(
             schema_version=EVIDENCE_SCHEMA_VERSION,
             events=tuple(events),
             agent_class=_PRODUCER,
-            agent_version=str(data.get("info", {}).get("mini_version", "")),
+            agent_version=str(info.get("mini_version", "")),
             extra={
+                "recording_category": "A",
+                "framework_persists_durably": framework_persists,
+                "framework_artifact_paths": [str(path)] if framework_persists else [],
+                "harness_artifact_paths": [],
                 "trajectory_format": data.get("trajectory_format", ""),
-                "model_stats": data.get("info", {}).get("model_stats", {}),
+                "model_stats": info.get("model_stats", {}),
+                "exit_status": info.get("exit_status", ""),
                 "scenario_id": scenario.scenario_id,
                 "origin": EvidenceOrigin.SYSTEM_NATIVE.value,
                 "producer": _PRODUCER,
