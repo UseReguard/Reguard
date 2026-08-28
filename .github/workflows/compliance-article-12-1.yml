@@ -17,9 +17,19 @@ on:
         required: true
         default: "25941c89cfbc91eb40b3f8756348c91d9977d57e"
         type: string
+      executor:
+        description: "execution backend; must be 'subprocess' or 'container'"
+        required: false
+        default: "container"
+        type: choice
+        options:
+          - subprocess
+          - container
 
 # Strictly read-only. The probe must never be granted write
-# permissions against the host repo.
+# permissions against the host repo. The container step additionally
+# needs no OCI-runtime privileges beyond what `docker run` already
+# needs (the runner provides Docker by default).
 permissions:
   contents: read
 
@@ -43,6 +53,21 @@ jobs:
           path: target
           fetch-depth: 0
 
+      - name: Build runtime container image
+        if: ${{ inputs.executor == 'container' }}
+        working-directory: Reguard
+        # GitHub Actions runners ship Docker, not podman. The runner
+        # already has Docker installed and running on a daemon
+        # socket the job can reach. Building on the runner keeps
+        # the image identical to what the tool would build locally.
+        run: |
+          docker build \
+            --tag python-agent-runtime:dev \
+            --label "reguard.runtime.image=python-agent-runtime:dev" \
+            --label "reguard.runtime.executor=container" \
+            -f runtime/Dockerfile \
+            .
+
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
@@ -61,6 +86,7 @@ jobs:
         env:
           PYTHONUNBUFFERED: "1"
           # no LLM creds; the adapters use deterministic stubs
+          REGUARD_RUNTIME_IMAGE: python-agent-runtime:dev
         run: |
           set -uo pipefail
           set +e
@@ -69,6 +95,7 @@ jobs:
             --sha "${{ inputs.sha }}" \
             --repo-path "$GITHUB_WORKSPACE/target" \
             --requirement AI_ACT_12_1_AUTOMATIC_EVENT_LOGGING \
+            --executor "${{ inputs.executor }}" \
             --output compliance-result.json
           EXIT_CODE=$?
           echo "exit_code=$EXIT_CODE" >> $GITHUB_OUTPUT
@@ -109,6 +136,7 @@ jobs:
               echo "| Event count | $EVT |"
               echo "| Evidence origins | $ORIGINS |"
               echo "| Duration (s) | $DUR |"
+              echo "| Executor | ${{ inputs.executor }} |"
             else
               echo "| Repository | $INPUT_REPOSITORY |"
               echo "| SHA | $INPUT_SHA |"
