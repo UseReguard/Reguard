@@ -403,7 +403,16 @@ def _run_probe_container(
             "PYTHONDONTWRITEBYTECODE": "1",
             "PYTHONUNBUFFERED": "1",
         },
-        timeout_seconds=adapter.capabilities.run_timeout_seconds,
+        # The runtime treats --timeout-seconds as a total budget for
+        # the whole exec mode (setup + install + exec). The host
+        # subprocess path uses both install_timeout_seconds and
+        # run_timeout_seconds; mirror that here so a heavy install
+        # isn't capped by the run budget.
+        timeout_seconds=max(
+            300,
+            adapter.capabilities.install_timeout_seconds
+            + adapter.capabilities.run_timeout_seconds,
+        ),
     )
 
     # If the container wrote a trajectory, copy it to the work_root
