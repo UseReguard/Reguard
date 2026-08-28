@@ -415,11 +415,35 @@ def _run_probe_container(
         except OSError:
             pass
 
+    # The runtime entrypoint logs only INFO/WARNING to stderr; the
+    # per-step stdout / stderr land in artifacts_dir/<label>.{stdout,
+    # stderr}.log. When the container's structured result is
+    # available we pull those per-step logs into the surfaced
+    # stdout/stderr so downstream error reporting can see why a step
+    # failed (install vs. exec vs. probe) without an extra round
+    # trip. Trajectory content is NOT included — that goes to the
+    # adapter's parser, not into the stderr surface.
+    surface_stdout = cr.runtime_stdout
+    surface_stderr = cr.runtime_stderr
+    if cr.artifacts_dir is not None and cr.artifacts_dir.exists():
+        per_step: list[str] = []
+        for label in ("00_setup", "01_install", "02_exec"):
+            for kind in ("stdout", "stderr"):
+                p = cr.artifacts_dir / f"{label}.{kind}.log"
+                if p.exists() and p.stat().st_size > 0:
+                    txt = p.read_text(encoding="utf-8", errors="replace")
+                    per_step.append(f"--- {label} {kind} ---\n{txt}")
+        if per_step:
+            surface_stderr = (
+                surface_stderr + ("\n" if surface_stderr else "")
+                + "\n".join(per_step)
+            )
+
     return ProbeOutputs(
         work_dir=work_root,
         trajectory_path=trajectory_path,
-        stdout_log=cr.runtime_stdout,
-        stderr_log=cr.runtime_stderr,
+        stdout_log=surface_stdout,
+        stderr_log=surface_stderr,
         returncode=cr.exit_code,
     )
 
