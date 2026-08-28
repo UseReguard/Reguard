@@ -188,6 +188,12 @@ def run_in_container(
 
     runtime, _ = _discover_runtime()
 
+    # The podman rootless backend uses `:U=true` as a chown helper
+    # because the bind-mounted directory's owner UID gets remapped
+    # across the kernel boundary. docker (rootful or rootless) does
+    # not understand that suffix and rejects the flag.
+    needs_uid_remap_suffix = (runtime == "podman")
+
     artifacts_dir = Path(tempfile.mkdtemp(prefix="reguard_container_"))
     # Pre-chown to a broad-readable mode so the host user can read the
     # artifacts dir after the container (whose bind mount gets remapped
@@ -254,8 +260,12 @@ def run_in_container(
         "--tmpfs", f"/tmp:rw,nosuid,size={tmp_size}",
         "--user", "10001:10001",
         "--mount", f"type=bind,src={target_repo_path},dst=/input,readonly",
-        "--mount", f"type=bind,src={artifacts_dir},dst=/artifacts,U=true",
-        "--mount", f"type=bind,src={probe_exec_copy},dst={PROBE_SCRIPT_CONTAINER_PATH},readonly,U=true",
+        "--mount",
+        f"type=bind,src={artifacts_dir},dst=/artifacts"
+        f"{',U=true' if needs_uid_remap_suffix else ''}",
+        "--mount",
+        f"type=bind,src={probe_exec_copy},dst={PROBE_SCRIPT_CONTAINER_PATH},readonly"
+        f"{',U=true' if needs_uid_remap_suffix else ''}",
         *env_args,
         image,
         "exec",
