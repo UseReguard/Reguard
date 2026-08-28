@@ -1,0 +1,37 @@
+{
+  "adapter_name": "nanobot",
+  "adapter_version": "1.1.0",
+  "checks": [
+    {
+      "detail": "no HARNESS_GENERATED events present",
+      "name": "NO_HARNESS_GENERATED_EVENTS",
+      "passed": true
+    },
+    {
+      "detail": "observed 3 non-error event(s) out of 3 total",
+      "name": "AT_LEAST_ONE_EVENT",
+      "passed": true
+    },
+    {
+      "detail": "category=C; framework emits events but its automatic recording capability depends on an external recorder not in the framework. harness_artifacts=['/tmp/cp_work_tbm0tqua/probe/trajectory.json']",
+      "name": "RECORDING_CATEGORY_NON_PASS_C",
+      "passed": false
+    }
+  ],
+  "completed_at": "2026-08-28T11:35:29Z",
+  "duration_seconds": 18.473,
+  "event_count": 3,
+  "evidence_origins": [
+    "SYSTEM_NATIVE"
+  ],
+  "reason": "1 check(s) failed: RECORDING_CATEGORY_NON_PASS_C",
+  "repository": "HKUDS/nanobot",
+  "requirement_id": "AI_ACT_12_1_AUTOMATIC_EVENT_LOGGING",
+  "requirement_version": "1.3.0",
+  "runtime_version": "1.0.0",
+  "scenario_id": "compliance.synthetic.hello",
+  "schema_version": "1",
+  "sha": "4d204ba077a86dc42225c16f8f90032013ea1969",
+  "started_at": "2026-08-28T11:35:10Z",
+  "status": "FAIL"
+}
