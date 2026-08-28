@@ -87,6 +87,13 @@ jobs:
           PYTHONUNBUFFERED: "1"
           # no LLM creds; the adapters use deterministic stubs
           REGUARD_RUNTIME_IMAGE: python-agent-runtime:dev
+          # GitHub Actions runner image store: docker. The runner
+          # builds the image with `docker build` and the runner's
+          # rootless podman has a separate store that would attempt
+          # to pull from registries instead of seeing the local
+          # build. Pinning docker keeps local + GHA on the same
+          # store when locally that store happens to be podman.
+          REGUARD_RUNTIME_BINARY: docker
         run: |
           set -uo pipefail
           set +e

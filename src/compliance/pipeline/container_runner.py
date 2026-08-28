@@ -94,14 +94,36 @@ class ContainerRunnerError(RuntimeError):
 def _discover_runtime() -> tuple[str, list[str]]:
     """Return (runtime_binary, extra_flags_for_no_socket).
 
-    Prefers podman. Falls back to docker. Raises if neither is on PATH.
+    Selection order:
+
+      1. ``REGUARD_RUNTIME_BINARY`` env var, if set and on PATH. This
+         lets CI / local scripts pin a specific backend without
+         touching the discovery heuristics.
+      2. ``docker`` first, then ``podman``. docker is preferred
+         because GitHub Actions runners ship a working docker
+         daemon whose image store also holds images built earlier in
+         the same job. Rootless podman on ephemeral runners can run,
+         but its separate image store does not see images built with
+         ``docker build`` and falls back to registry pulls.
+
+    Locally, both work; an explicit ``REGUARD_RUNTIME_BINARY=podman``
+    pin avoids the docker-vs-podman preference difference and lets
+    one host keep using whichever store already holds the image.
     """
-    for binary in ("podman", "docker"):
+    forced = os.environ.get("REGUARD_RUNTIME_BINARY", "").strip()
+    if forced:
+        path = shutil.which(forced)
+        if path:
+            return forced, []
+        raise ContainerRunnerError(
+            f"REGUARD_RUNTIME_BINARY={forced!r} but binary not on PATH"
+        )
+    for binary in ("docker", "podman"):
         path = shutil.which(binary)
         if path:
             return binary, []
     raise ContainerRunnerError(
-        "no OCI runtime found on PATH; install podman or docker"
+        "no OCI runtime found on PATH; install docker or podman"
     )
 
 
