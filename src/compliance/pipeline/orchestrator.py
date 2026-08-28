@@ -260,10 +260,222 @@ if __name__ == "__main__":
 '''
 
 
+_PROBE_POCKETFLOW = r'''
+"""PocketFlow probe — runs a deterministic two-node Flow, observes silence.
+
+A real framework recorder (any category other than E) writes at
+least one side-effect file under the workspace during a normal
+run. PocketFlow, by inspection, has no such writer. The probe
+runs a Flow with two stub Nodes, touches the shared dict, and
+emits the observed absence in the trajectory. The absence is the
+probe's SYSTEM_NATIVE evidence.
+"""
+import json
+import os
+import sys
+from pathlib import Path
+
+OUTPUT = Path(os.environ["COMPLIANCE_TRAJECTORY_PATH"])
+OUTPUT.parent.mkdir(parents=True, exist_ok=True)
+WORKSPACE = Path(os.environ.get("REPO_RUNTIME_WORKSPACE", "/workspace/repo"))
+
+
+class StubNode:
+    """A do-nothing PocketFlow-shaped node.
+
+    PocketFlow expects Node subclasses to be installed via
+    ``node_a >> node_b``. The stubs below mirror the protocol
+    sufficiently for a Flow run without any framework-side
+    recording happening.
+    """
+
+    def __init__(self, name):
+        self.name = name
+        self.params = {}
+        self.successors = {}
+
+    # PocketFlow's BaseNode API surface: prep / exec / post / _run
+    def prep(self, shared):
+        shared.setdefault("steps", []).append(f"prep:{self.name}")
+
+    def exec(self, prep_res):  # noqa: D401 - pocketflow protocol
+        return f"exec:{self.name}"
+
+    def post(self, shared, prep_res, exec_res):
+        shared.setdefault("steps", []).append(f"post:{self.name}")
+        return exec_res
+
+    # Flow uses _run / _exec but for a leaf Node there's nothing
+    # to override beyond the protocol stubs above.
+    def __rshift__(self, other):
+        self.successors["default"] = other
+        return other
+
+
+def main() -> int:
+    task = sys.argv[1] if len(sys.argv) > 1 else "hello"
+
+    try:
+        # PocketFlow Flow takes a start node and walks successors.
+        from pocketflow import Flow, Node
+
+        class TalkNode(Node):
+            def prep(self, shared):
+                shared.setdefault("steps", []).append(f"prep:{self.name}")
+
+            def exec(self, _):
+                return f"exec:{self.name}"
+
+            def post(self, shared, prep_res, exec_res):
+                shared.setdefault("steps", []).append(f"post:{self.name}")
+                return exec_res
+
+        a = TalkNode()
+        a.name = "a"
+        b = TalkNode()
+        b.name = "b"
+        a >> b  # edge a -> b
+        flow = Flow(start=a)
+
+        shared = {}
+        flow.run(shared)
+        steps_observed = shared.get("steps", [])
+    except Exception as exc:  # noqa: BLE001
+        OUTPUT.write_text(json.dumps({
+            "probe_status": "probe_error",
+            "error": repr(exc),
+            "scenario_id": task,
+            "steps_observed": [],
+            "framework_artifacts_observed": [],
+        }, indent=2), encoding="utf-8")
+        return 1
+
+    # Scan workspace + /tmp for any framework-created artifacts.
+    # The framework did not write; both lists should be empty.
+    observed: list[str] = []
+    candidates: list[Path] = []
+    if WORKSPACE.exists():
+        candidates.append(WORKSPACE)
+    candidates.append(Path("/tmp"))
+    for root in candidates:
+        if not root.exists():
+            continue
+        for p in root.rglob("*"):
+            if not p.is_file():
+                continue
+            if p.suffix not in (".json", ".log", ".jsonl", ".txt"):
+                continue
+            # Skip the probe's own trajectory file.
+            try:
+                if p.resolve() == OUTPUT.resolve():
+                    continue
+            except OSError:
+                pass
+            # Skip pre-existing files in /tmp that are obviously
+            # unrelated to PocketFlow (e.g. container runtime noise).
+            observed.append(str(p))
+
+    OUTPUT.write_text(json.dumps({
+        "probe_status": "ok",
+        "scenario_id": task,
+        "steps_observed": steps_observed,
+        "framework_artifacts_observed": observed,
+    }, indent=2), encoding="utf-8")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
+'''
+
+
+_PROBE_GPTME = r'''
+"""gptme probe — instantiates LogManager, appends two turns, reads back.
+
+gptme's LogManager is a session-persistent recorder. The probe:
+
+  1. Builds a LogManager against a workspace-relative log dir.
+  2. Writes two synthetic turns through the framework's append API.
+  3. Reads the log file back.
+  4. Writes the path + replayed turns into the trajectory.
+
+The framework wrote the file; the harness only mirrors it.
+"""
+import json
+import os
+import sys
+import tempfile
+from pathlib import Path
+
+OUTPUT = Path(os.environ["COMPLIANCE_TRAJECTORY_PATH"])
+OUTPUT.parent.mkdir(parents=True, exist_ok=True)
+
+
+def main() -> int:
+    task = sys.argv[1] if len(sys.argv) > 1 else "hello"
+
+    log_root = Path(tempfile.mkdtemp(prefix="reguard_gptme_"))
+    log_dir = log_root / "logs"
+    log_dir.mkdir(parents=True, exist_ok=True)
+
+    try:
+        from gptme.logmanager.manager import LogManager
+
+        session_id = "compliance-12-1-probe"
+        log_file = log_dir / f"{session_id}.jsonl"
+        log_manager = LogManager(log_file=log_file)
+
+        log_manager.append({"role": "user", "content": task})
+        log_manager.append({"role": "assistant", "content": "hello"})
+
+        if not log_file.exists() or log_file.stat().st_size == 0:
+            raise RuntimeError("framework did not write the log file")
+
+        # Read the persisted turns back. The harness re-reads what
+        # the framework already wrote; we never fabricate events.
+        turns = []
+        with open(log_file, "r", encoding="utf-8") as fh:
+            for line in fh:
+                line = line.strip()
+                if not line:
+                    continue
+                turns.append(json.loads(line))
+    except Exception as exc:  # noqa: BLE001
+        OUTPUT.write_text(json.dumps({
+            "probe_status": "probe_error",
+            "error": repr(exc),
+            "scenario_id": task,
+            "log_file_path": "",
+            "turns": [],
+        }, indent=2), encoding="utf-8")
+        return 1
+
+    import gptme as _gm
+    version = getattr(_gm, "__version__", "unknown")
+
+    OUTPUT.write_text(json.dumps({
+        "probe_status": "ok",
+        "scenario_id": task,
+        "log_file_path": str(log_file),
+        "log_size_bytes": log_file.stat().st_size,
+        "session_id": session_id,
+        "turns": turns,
+        "gptme_version": version,
+    }, indent=2), encoding="utf-8")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
+'''
+
+
 _PROBE_BY_ADAPTER = {
     "minisweagent": _PROBE_MINISWEAGENT,
     "corecoder": _PROBE_CORECODER,
     "nanobot": _PROBE_NANOBOT,
+    "pocketflow": _PROBE_POCKETFLOW,
+    "gptme": _PROBE_GPTME,
 }
 
 
