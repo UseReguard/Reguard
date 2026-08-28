@@ -488,6 +488,11 @@ def collect_evidence(
     made when the probe actually executed.
     """
     if outputs.returncode != 0:
+        # Keep enough of stderr to localise which step failed (install
+        # vs. exec) for typical single-step failures. The full stderr
+        # is also captured in evidence_path when the pipeline has an
+        # evidence_output_dir, so nothing is lost.
+        truncated = outputs.stderr_log[:800] if outputs.stderr_log else ""
         return Evidence(
             schema_version=EVIDENCE_SCHEMA_VERSION,
             events=(),
@@ -498,7 +503,7 @@ def collect_evidence(
                 "probe_returncode": outputs.returncode,
                 "reason": (
                     f"probe returned {outputs.returncode}; "
-                    f"stderr={outputs.stderr_log[:400]!r}"
+                    f"stderr={truncated!r}"
                 ),
             },
         )
