@@ -427,11 +427,11 @@ def _run_probe_container(
     # The runtime entrypoint logs only INFO/WARNING to stderr; the
     # per-step stdout / stderr land in artifacts_dir/<label>.{stdout,
     # stderr}.log. When the container's structured result is
-    # available we pull those per-step logs into the surfaced
-    # stdout/stderr so downstream error reporting can see why a step
-    # failed (install vs. exec vs. probe) without an extra round
-    # trip. Trajectory content is NOT included — that goes to the
-    # adapter's parser, not into the stderr surface.
+    # available we pull the *tail* of each per-step log so downstream
+    # error reporting can see why a step failed (install vs. exec vs.
+    # probe) without an extra round trip. The tail is small enough
+    # to fit in the surfaced stderr without truncation; the FULL logs
+    # remain in cr.artifacts_dir for callers that want them.
     surface_stdout = cr.runtime_stdout
     surface_stderr = cr.runtime_stderr
     if cr.artifacts_dir is not None and cr.artifacts_dir.exists():
@@ -439,9 +439,21 @@ def _run_probe_container(
         for label in ("00_setup", "01_install", "02_exec"):
             for kind in ("stdout", "stderr"):
                 p = cr.artifacts_dir / f"{label}.{kind}.log"
-                if p.exists() and p.stat().st_size > 0:
-                    txt = p.read_text(encoding="utf-8", errors="replace")
-                    per_step.append(f"--- {label} {kind} ---\n{txt}")
+                if not p.exists() or p.stat().st_size == 0:
+                    continue
+                # Tail the file — the start of an install log is
+                # always "Obtaining file://..." noise; the actual
+                # failure is in the last KB.
+                tail_bytes = 8_192
+                size = p.stat().st_size
+                with p.open("rb") as fh:
+                    if size > tail_bytes:
+                        fh.seek(size - tail_bytes)
+                        fh.readline()  # drop the partial first line
+                        text = fh.read().decode("utf-8", errors="replace")
+                    else:
+                        text = p.read_text(encoding="utf-8", errors="replace")
+                per_step.append(f"--- {label} {kind} (tail) ---\n{text}")
         if per_step:
             surface_stderr = (
                 surface_stderr + ("\n" if surface_stderr else "")
@@ -498,10 +510,12 @@ def collect_evidence(
     """
     if outputs.returncode != 0:
         # Keep enough of stderr to localise which step failed (install
-        # vs. exec) for typical single-step failures. The full stderr
-        # is also captured in evidence_path when the pipeline has an
+        # vs. exec) for typical single-step failures. Container mode
+        # already tails the per-step logs; 16 KB is enough to read the
+        # whole tail through any pip / uv error. The full stderr is
+        # also captured in evidence_path when the pipeline has an
         # evidence_output_dir, so nothing is lost.
-        truncated = outputs.stderr_log[:800] if outputs.stderr_log else ""
+        truncated = outputs.stderr_log[:16_384] if outputs.stderr_log else ""
         return Evidence(
             schema_version=EVIDENCE_SCHEMA_VERSION,
             events=(),
