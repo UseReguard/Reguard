@@ -166,10 +166,10 @@ def run_in_container(
     image: str = DEFAULT_IMAGE,
     timeout_seconds: int = 600,
     pids_limit: int = 256,
-    memory_limit: str = "4g",
+    memory_limit: str = "8g",
     cpus_limit: str = "2",
-    tmp_size: str = "2g",
-    workspace_size: str = "4g",
+    tmp_size: str = "6g",
+    workspace_size: str = "8g",
     result_json_filename: str = "container_result.json",
 ) -> ContainerRunResult:
     """Execute a Reguard probe inside the frozen runtime container.
@@ -241,23 +241,22 @@ def run_in_container(
     for k, v in (probe_extra_env or {}).items():
         exec_env_args += ["--env", f"{k}={v}"]
 
-    # We rely on the runtime's default bridge network. Install needs
-    # PyPI access; the probe step is host-supplied deterministic
-    # orchestration code and is not expected to make outbound calls.
-    # Strict per-step network isolation (install=enabled, probe=disabled)
-    # requires a two-container invocation with a shared /workspace
-    # bind-mount and is tracked as a follow-up TODO.
-    network_args: list[str] = []
-
     invocation = [
         runtime, "run", "--rm",
-        *network_args,
         "--cap-drop", "ALL",
         "--security-opt", "no-new-privileges",
         "--pids-limit", str(pids_limit),
         "--memory", memory_limit,
         "--cpus", cpus_limit,
-        "--tmpfs", f"/tmp:rw,nosuid,size={tmp_size}",
+        # /tmp is left on the container's writable overlay (not a
+        # tmpfs). On the GitHub Actions runners the tmpfs that
+        # podman / docker build by default refuses mmap of shared
+        # objects written there, so pip --user-installed .so files
+        # in /tmp/.local fail with "failed to map segment from
+        # shared object". The overlay path is fine.
+        # /workspace is the runtime's writable working directory,
+        # created inside the image as runtime-owned; it lives on
+        # the container's writable overlay here too.
         "--user", "10001:10001",
         "--mount", f"type=bind,src={target_repo_path},dst=/input,readonly",
         "--mount",

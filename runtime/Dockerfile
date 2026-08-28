@@ -70,6 +70,14 @@ RUN python3 -m pip install --no-cache-dir --upgrade \
 # ---------------------------------------------------------------------------
 # The runtime never needs root. Running as a fixed UID makes the audit
 # trail predictable across local + CI runs.
+#
+# /usr/local is chowned to the runtime user so `pip install` inside
+# the container can write to /usr/local/lib/python3.12/site-packages.
+# Without this, a non-root pip install falls back to /tmp/.local,
+# which on some kernel / OCI-runtime combinations refuses
+# mmap of shared objects (raising 'failed to map segment from shared
+# object'). Writing packages to /usr/local keeps them on the
+# container's writable overlay, where mmap behaves normally.
 # ---------------------------------------------------------------------------
 ARG RUNTIME_UID=10001
 ARG RUNTIME_GID=10001
@@ -77,7 +85,8 @@ RUN groupadd --system --gid "${RUNTIME_GID}" runtime \
  && useradd  --system --uid "${RUNTIME_UID}" --gid runtime \
               --home-dir /home/runtime --shell /usr/sbin/nologin \
               --no-create-home runtime \
- && install -d -o runtime -g runtime -m 0755 /home/runtime /workspace /artifacts
+ && install -d -o runtime -g runtime -m 0755 /home/runtime /workspace /artifacts \
+ && chown -R runtime:runtime /usr/local
 
 # ---------------------------------------------------------------------------
 # Runtime source

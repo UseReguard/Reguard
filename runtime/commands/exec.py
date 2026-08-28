@@ -62,6 +62,13 @@ def run(
     `network_policy` applies to the exec step (step 4 above). The
     install step (step 3) always runs with ENABLED, regardless of the
     host's request, because pip dependency resolution needs network.
+
+    `extra_env` is forwarded to the host-supplied command (step 4).
+    If the host needs its env vars to influence the *install* step
+    as well (typical when PYTHONUSERBASE etc. have to survive the
+    install subprocess), it can additionally be passed to the
+    container's outer env so it propagates into the runtime's
+    env vars — those override the install subprocess allow-list.
     """
     started = time.monotonic()
     detection, strategy = detect(repo_path)
