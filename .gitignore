@@ -31,3 +31,5 @@ Thumbs.db
 # (kept outside the repo, but listed here for safety if a copy lands in-tree)
 data/*.db.backup-*
 data/*.sqlite-journal
+# Local run outputs (mirrored into audit/ on success)
+out/

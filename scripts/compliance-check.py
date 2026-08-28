@@ -178,6 +178,15 @@ def _build_parser() -> argparse.ArgumentParser:
         help="also insert a row into compliance_runtime_runs "
              "(default in clone mode; off in path mode unless requested)",
     )
+    p.add_argument(
+        "--executor",
+        choices=("subprocess", "container"),
+        default="subprocess",
+        help="execution backend for the probe. "
+             "'subprocess' (default) uses a fresh per-run virtualenv on "
+             "the host; 'container' invokes the frozen repo-runtime "
+             "container via the available OCI runtime (podman / docker).",
+    )
     return p
 
 
@@ -198,6 +207,7 @@ def main(argv: list[str] | None = None) -> int:
                 requirement_id=args.requirement,
                 evidence_output_dir=evidence_dir,
                 persist=args.persist,
+                executor=args.executor,
             )
         except KeyError as exc:
             # No adapter registered -> UNSUPPORTED, exit 3.

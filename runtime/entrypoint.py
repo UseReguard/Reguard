@@ -35,6 +35,7 @@ if str(_THIS_DIR.parent) not in sys.path:
     sys.path.insert(0, str(_THIS_DIR.parent))
 
 from runtime.commands import build as build_cmd
+from runtime.commands import exec as exec_cmd
 from runtime.commands import inspect as inspect_cmd
 from runtime.commands import test as test_cmd
 from runtime.models import NetworkPolicy, Status   # noqa: E402
@@ -97,6 +98,20 @@ def _build_parser() -> argparse.ArgumentParser:
                              "(detect+install) before the test command. "
                              "Default: enabled. Disable with --no-auto-setup "
                              "if the host already prepared the environment.")
+
+    exec_p = sub.add_parser("exec", parents=[common],
+                            help="Run a host-supplied command with the repo "
+                                 "installed. Generic exec primitive; the "
+                                 "runtime does not interpret the command.")
+    exec_p.add_argument("--command", dest="exec_command", default=None,
+                        help="Whitespace-split command to execute after "
+                             "install. Treated as trusted orchestration "
+                             "configuration.")
+    exec_p.add_argument("--env", dest="exec_env", action="append",
+                        default=[],
+                        help="KEY=VALUE extra env passed to the exec step. "
+                             "Repeatable. Applied on top of the default "
+                             "allow-listed env.")
 
     return parser
 
@@ -180,6 +195,22 @@ def main(argv: Optional[list[str]] = None) -> int:
                 network_policy=net,
                 command=_split_command(getattr(args, "command", None)),
                 auto_setup=getattr(args, "auto_setup", True),
+            )
+        elif args.mode == "exec":
+            env: dict[str, str] = {}
+            for kv in getattr(args, "exec_env", []) or []:
+                if "=" in kv:
+                    k, v = kv.split("=", 1)
+                    env[k] = v
+            result = exec_cmd.run(
+                repo_path=repo_path,
+                artifacts_dir=artifacts_dir,
+                timeout_seconds=args.timeout_seconds,
+                repo_sha=args.repo_sha,
+                output_path=output_path,
+                network_policy=net,
+                command=_split_command(getattr(args, "exec_command", None)),
+                extra_env=env or None,
             )
         else:  # pragma: no cover — argparse `required=True` prevents this
             raise SystemExit(f"unknown mode: {args.mode}")

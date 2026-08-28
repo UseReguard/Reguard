@@ -166,6 +166,7 @@ def _run_pipeline(
     evidence_output_dir: Path | None,
     work_root_parent: Path | None,
     persist: bool,
+    executor: str = "subprocess",
 ) -> tuple[RunRecord, Path | None]:
     """Core execution: probe + assert + (optional) persist.
 
@@ -199,6 +200,7 @@ def _run_pipeline(
                 scenario=DEFAULT_SCENARIO_12_1,
                 repo_checkout=Path(repo_checkout),
                 work_root=work_root,
+                executor=executor,
             )
         except Exception as exc:  # noqa: BLE001
             evidence = collect_evidence(
@@ -338,6 +340,7 @@ def run_path_mode(
     requirement_id: str = "AI_ACT_12_1_AUTOMATIC_EVENT_LOGGING",
     evidence_output_dir: Path | None = None,
     persist: bool = False,
+    executor: str = "subprocess",
 ) -> tuple[RunRecord, Path | None]:
     """Path-mode run.
 
@@ -385,6 +388,7 @@ def run_path_mode(
         evidence_output_dir=evidence_output_dir,
         work_root_parent=None,
         persist=persist,
+        executor=executor,
     )
 
 

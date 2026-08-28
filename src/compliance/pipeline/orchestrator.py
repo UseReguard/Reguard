@@ -279,6 +279,7 @@ def run_probe(
     scenario: Scenario,
     repo_checkout: Path,
     work_root: Path,
+    executor: str = "subprocess",
 ) -> ProbeOutputs:
     """Run the probe for the given adapter against a fresh venv.
 
@@ -286,7 +287,27 @@ def run_probe(
     venv lives at `work_root/venv`, the repo install is at
     `work_root/repo`, the probe script is at `work_root/probe.py`,
     and the trajectory is at `work_root/trajectory.json`.
+
+    `executor` selects the execution backend:
+      - "subprocess": fresh per-run virtualenv + host subprocess (default)
+      - "container": frozen runtime container, OCI-runtime-agnostic
+
+    Both paths produce a `ProbeOutputs` with the trajectory path,
+    stdout/stderr logs, and exit code. The container path additionally
+    writes the runtime's structured result to the artifacts directory
+    but does not surface it through this function (the caller already
+    persists the JSON).
     """
+    if executor == "container":
+        return _run_probe_container(
+            adapter=adapter,
+            scenario=scenario,
+            repo_checkout=repo_checkout,
+            work_root=work_root,
+        )
+    if executor != "subprocess":
+        raise ValueError(f"unknown executor: {executor!r}; expected 'subprocess' or 'container'")
+
     work_root = Path(work_root)
     work_root.mkdir(parents=True, exist_ok=True)
 
@@ -339,6 +360,67 @@ def run_probe(
         stdout_log=run.stdout,
         stderr_log=run.stderr,
         returncode=run.returncode,
+    )
+
+
+def _run_probe_container(
+    *,
+    adapter: RepoAdapter,
+    scenario: Scenario,
+    repo_checkout: Path,
+    work_root: Path,
+) -> ProbeOutputs:
+    """Container-backed probe execution. Delegates to `container_runner`.
+
+    The compliance layer is responsible for keeping adapter parsing,
+    Evidence construction, A-E classification, and PASS/FAIL logic
+    outside the container. The container only runs the probe and
+    returns raw artifacts; this wrapper re-emits them in the
+    `ProbeOutputs` shape the rest of the pipeline already understands.
+    """
+    # Import here to keep the subprocess path free of the container
+    # dependency (podman / docker) when not requested.
+    from .container_runner import run_in_container
+
+    work_root = Path(work_root)
+    work_root.mkdir(parents=True, exist_ok=True)
+
+    probe_src = _PROBE_BY_ADAPTER.get(adapter.name)
+    if probe_src is None:
+        raise ProbeError(f"no probe registered for adapter {adapter.name!r}")
+
+    probe_path = work_root / "probe.py"
+    probe_path.write_text(probe_src, encoding="utf-8")
+
+    task = adapter.render_synthetic_task(scenario)
+    trajectory_path = work_root / "trajectory.json"
+
+    cr = run_in_container(
+        target_repo_path=Path(repo_checkout),
+        probe_script_path=probe_path,
+        probe_task=task,
+        probe_extra_env={
+            "PYTHONDONTWRITEBYTECODE": "1",
+            "PYTHONUNBUFFERED": "1",
+        },
+        timeout_seconds=adapter.capabilities.run_timeout_seconds,
+    )
+
+    # If the container wrote a trajectory, copy it to the work_root
+    # path so the rest of the pipeline (collect_evidence, adapter
+    # parsers, DB persistence) keeps working unchanged.
+    if cr.trajectory_path is not None and cr.trajectory_path.exists():
+        try:
+            trajectory_path.write_bytes(cr.trajectory_path.read_bytes())
+        except OSError:
+            pass
+
+    return ProbeOutputs(
+        work_dir=work_root,
+        trajectory_path=trajectory_path,
+        stdout_log=cr.runtime_stdout,
+        stderr_log=cr.runtime_stderr,
+        returncode=cr.exit_code,
     )
 
 
