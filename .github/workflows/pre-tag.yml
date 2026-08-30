@@ -1,0 +1,207 @@
+# Reguard Core pre-tag validation
+#
+# Runs the EXACT validation + build sequence of release.yml (validate
+# + build jobs) on Python 3.12 against a clean checkout, WITHOUT the
+# publication jobs (publish-pypi, publish-runtime, release).
+#
+# Triggers:
+#   * workflow_dispatch (manual; the operator can run this gate
+#     before tagging RC2);
+#   * push to main (so every green push to main proves the gate
+#     still passes).
+#
+# This is the authoritative Python 3.12 pre-tag gate for the RC2
+# phase. RC2 MUST NOT be tagged until this workflow has run against
+# the exact RC2 source SHA and reported success.
+#
+# The release.yml workflow (tag-triggered, with the same validate +
+# build body) remains the publication path. Any divergence between
+# this pre-tag gate and release.yml's validate + build is a defect
+# that must be reported.
+
+name: pre-tag
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+permissions: {}
+
+env:
+  PYTHON_VERSION: "3.12"
+
+jobs:
+
+  validate:
+    name: Validate tag shape and package-version match
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      git_tag: ${{ steps.parse.outputs.git_tag }}
+      package_version: ${{ steps.parse.outputs.package_version }}
+      source_sha: ${{ steps.parse.outputs.source_sha }}
+      is_prerelease: ${{ steps.parse.outputs.is_prerelease }}
+    steps:
+      - name: Checkout source at HEAD
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Strict tag parsing and version comparison
+        id: parse
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          # Read the package version directly from pyproject.toml —
+          # we are at HEAD on main, so we know what the next tag
+          # would be. The synthetic tag is the canonical form
+          # ``vX.Y.Z`` or ``vX.Y.Z-rc.N`` derived from
+          # ``pyproject.toml [project].version``.
+          PKG_VERSION="$(python -c "import tomllib, pathlib; \
+            print(tomllib.loads(pathlib.Path('pyproject.toml').read_text())['project']['version'])")"
+
+          SYNTH_TAG="v${PKG_VERSION}"
+
+          SOURCE_SHA="$(git rev-parse HEAD)"
+
+          # Strict shape validation (mirrors release.yml).
+          if [[ "${SYNTH_TAG}" =~ ^v([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
+            IS_PRERELEASE="false"
+            EXPECTED_PKG_VERSION="${BASH_REMATCH[1]}.${BASH_REMATCH[2]}.${BASH_REMATCH[3]}"
+          elif [[ "${SYNTH_TAG}" =~ ^v([0-9]+)\.([0-9]+)\.([0-9]+)-rc\.([0-9]+)$ ]]; then
+            IS_PRERELEASE="true"
+            EXPECTED_PKG_VERSION="${BASH_REMATCH[1]}.${BASH_REMATCH[2]}.${BASH_REMATCH[3]}rc${BASH_REMATCH[4]}"
+          else
+            echo "::error::Synthetic tag '${SYNTH_TAG}' is not a recognized release tag shape."
+            exit 1
+          fi
+
+          if [ "${EXPECTED_PKG_VERSION}" != "${PKG_VERSION}" ]; then
+            echo "::error::Synthetic tag '${SYNTH_TAG}' implies package version '${EXPECTED_PKG_VERSION}' but pyproject.toml declares '${PKG_VERSION}'."
+            exit 1
+          fi
+
+          echo "git_tag=${SYNTH_TAG}"            >> "$GITHUB_OUTPUT"
+          echo "package_version=${PKG_VERSION}" >> "$GITHUB_OUTPUT"
+          echo "source_sha=${SOURCE_SHA}"       >> "$GITHUB_OUTPUT"
+          echo "is_prerelease=${IS_PRERELEASE}" >> "$GITHUB_OUTPUT"
+
+          {
+            echo "## Pre-tag validation"
+            echo
+            echo "- Synthetic tag:\`${SYNTH_TAG}\`"
+            echo "- Package version:\`${PKG_VERSION}\`"
+            echo "- Source SHA:     \`${SOURCE_SHA}\`"
+            echo "- Pre-release:    ${IS_PRERELEASE}"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  build:
+    name: Test and build exact artifacts (pre-tag gate)
+    needs: validate
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout source at HEAD
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install project and dev dependencies (clean runner)
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade "pip>=23" "build>=1.0" "twine>=5" "pytest>=8"
+          python -m pip install -e ".[dev]"
+
+      # Build the local runtime image up-front so the container
+      # integration tests find it without depending on a public
+      # registry pull.
+      - name: Build local runtime image for container tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          OCI_BIN="${REGUARD_RUNTIME_BINARY:-}"
+          if [ -z "${OCI_BIN}" ]; then
+            if command -v podman >/dev/null 2>&1; then
+              OCI_BIN="podman"
+            elif command -v docker >/dev/null 2>&1; then
+              OCI_BIN="docker"
+            fi
+          fi
+          if [ -z "${OCI_BIN}" ]; then
+            echo "::warning::no podman or docker on PATH; container integration tests will be skipped."
+          else
+            echo "Building local runtime image with ${OCI_BIN}..."
+            "${OCI_BIN}" build \
+              -f runtime/Dockerfile \
+              -t reguard-runtime:ci-test \
+              .
+          fi
+
+      - name: Run full test suite
+        shell: bash
+        run: |
+          set -euo pipefail
+          pytest tests/ -q
+
+      - name: Build wheel and sdist
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf build dist src/*.egg-info src/compliance.egg-info
+          python -m build --sdist --wheel
+
+      - name: twine check
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m twine check dist/*
+
+      # Packaging tests are deliberately run AFTER the wheel is
+      # built so they exercise the exact artifact a consumer would
+      # receive. They MUST NOT be skipped because dist/ was missing
+      # at the earlier source-test phase.
+      - name: Packaging tests against built wheel
+        shell: bash
+        run: |
+          set -euo pipefail
+          pytest tests/packaging/ -v
+
+      # Clean wheel smoke: install the freshly built wheel into a
+      # fresh virtualenv and run the public CLI.
+      - name: Clean wheel smoke (install + reguard --version)
+        shell: bash
+        run: |
+          set -euo pipefail
+          WHL="$(ls dist/*.whl | head -n1)"
+          python -m venv /tmp/reguard-clean-wheel-smoke
+          # shellcheck disable=SC1091
+          source /tmp/reguard-clean-wheel-smoke/bin/activate
+          pip install --upgrade "pip>=23" >/dev/null
+          pip install "${WHL}"
+          reguard --version
+          reguard doctor
+          reguard list
+          deactivate
+          {
+            echo "## Pre-tag build result"
+            echo
+            echo "- Wheel:   \`$(ls dist/*.whl | head -n1)\`"
+            echo "- Sdist:   \`$(ls dist/*.tar.gz | head -n1)\`"
+            echo "- Clean wheel smoke: PASS"
+          } >> "$GITHUB_STEP_SUMMARY"
+

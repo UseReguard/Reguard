@@ -423,3 +423,106 @@ def test_workflow_triggers_only_on_valid_tag_shapes() -> None:
         "workflow trigger must be exactly ['v*']; tag-shape enforcement "
         "happens in the validate job (see test_strict_tag_parser)"
     )
+
+
+# -- Pre-tag validation gate (RC2) -------------------------------------
+
+PRE_TAG_PATH = Path(__file__).resolve().parents[2] / ".github" / "workflows" / "pre-tag.yml"
+
+
+def _load_pre_tag_workflow() -> dict:
+    return yaml.safe_load(PRE_TAG_PATH.read_text())
+
+
+def test_pre_tag_workflow_exists() -> None:
+    """A non-publication pre-tag gate must exist so Python 3.12 can
+    validate the RC2 source SHA without triggering the tag-only
+    release.yml path."""
+    assert PRE_TAG_PATH.exists(), (
+        f"missing {PRE_TAG_PATH}; the RC2 pre-tag gate is required "
+        "to validate the source SHA on Python 3.12 without publishing"
+    )
+
+
+def test_pre_tag_workflow_triggers_on_push_and_dispatch() -> None:
+    """Pre-tag must run on push-to-main AND manual dispatch so
+    operators can re-run it before tagging."""
+    wf = _load_pre_tag_workflow()
+    on = wf[True]
+    assert "push" in on, "pre-tag must trigger on push (to main)"
+    assert "workflow_dispatch" in on, "pre-tag must be dispatchable"
+    # The push trigger must be restricted to main (not tag-triggered;
+    # publication remains tag-only).
+    push = on["push"]
+    assert push.get("branches") == ["main"], (
+        "pre-tag push trigger must be branches: [main]; tag triggers "
+        "belong exclusively to release.yml"
+    )
+
+
+def test_pre_tag_workflow_has_no_publication_jobs() -> None:
+    """The pre-tag gate must NOT publish anything to PyPI, GHCR, or
+    the GitHub Release API."""
+    wf = _load_pre_tag_workflow()
+    jobs = wf["jobs"]
+    forbidden_jobs = ("publish-pypi", "publish-runtime", "release")
+    for name in forbidden_jobs:
+        assert name not in jobs, (
+            f"pre-tag must not declare a {name!r} job; "
+            "publication is exclusively handled by release.yml"
+        )
+    # Defence-in-depth: no step should reference PyPI publish action
+    # or docker/build-push-action.
+    text = PRE_TAG_PATH.read_text()
+    assert "pypa/gh-action-pypi-publish" not in text
+    assert "docker/build-push-action" not in text
+    assert "softprops/action-gh-release" not in text
+
+
+def test_pre_tag_workflow_uses_python_3_12() -> None:
+    """Pre-tag must declare Python 3.12 — not the developer's local
+    Python (3.14)."""
+    text = PRE_TAG_PATH.read_text()
+    assert 'PYTHON_VERSION: "3.12"' in text, (
+        "pre-tag env.PYTHON_VERSION must be 3.12 (the brief pins 3.12 "
+        "as the authoritative pre-tag gate version)"
+    )
+
+
+def test_pre_tag_workflow_builds_local_runtime_image() -> None:
+    """The OCI contract tests must not pull from a public registry;
+    the pre-tag gate must build the local runtime image."""
+    text = PRE_TAG_PATH.read_text()
+    assert "Build local runtime image" in text
+    assert "reguard-runtime:ci-test" in text
+
+
+def test_pre_tag_workflow_runs_packaging_tests_after_build() -> None:
+    """Packaging tests MUST run AFTER ``python -m build`` so the
+    wheel exists when they execute."""
+    text = PRE_TAG_PATH.read_text()
+    build_pos = text.find("Build wheel and sdist")
+    packaging_pos = text.find("Packaging tests against built wheel")
+    assert build_pos != -1 and packaging_pos != -1, (
+        "pre-tag must contain both 'Build wheel and sdist' and "
+        "'Packaging tests against built wheel' steps"
+    )
+    assert build_pos < packaging_pos, (
+        "Packaging tests must be AFTER Build wheel and sdist; "
+        f"build_pos={build_pos} packaging_pos={packaging_pos}"
+    )
+    # The post-build packaging command must be the dedicated rerun,
+    # not just the in-source 'pytest tests/ -q'.
+    assert "pytest tests/packaging/ -v" in text, (
+        "pre-tag must explicitly run packaging tests against the "
+        "freshly built wheel (pytest tests/packaging/ -v)"
+    )
+
+
+def test_pre_tag_workflow_runs_clean_wheel_smoke() -> None:
+    """Clean wheel smoke must install the freshly built wheel into a
+    fresh venv and exercise the public CLI."""
+    text = PRE_TAG_PATH.read_text()
+    assert "Clean wheel smoke" in text
+    assert "reguard --version" in text
+    assert "reguard doctor" in text
