@@ -62,22 +62,31 @@ jobs:
 
           # Read the package version directly from pyproject.toml —
           # we are at HEAD on main, so we know what the next tag
-          # would be. The synthetic tag is the canonical form
-          # ``vX.Y.Z`` or ``vX.Y.Z-rc.N`` derived from
-          # ``pyproject.toml [project].version``.
+          # would be. Translate the Python ``0.1.0rc2`` form into
+          # the canonical ``v0.1.0-rc.2`` tag form that release.yml
+          # accepts (the same transform a human does at tagging
+          # time).
           PKG_VERSION="$(python -c "import tomllib, pathlib; \
             print(tomllib.loads(pathlib.Path('pyproject.toml').read_text())['project']['version'])")"
 
-          SYNTH_TAG="v${PKG_VERSION}"
+          # Python prerelease: ``0.1.0rc2`` → tag ``v0.1.0-rc.2``.
+          if [[ "${PKG_VERSION}" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)rc([0-9]+)$ ]]; then
+            SYNTH_TAG="v${BASH_REMATCH[1]}.${BASH_REMATCH[2]}.${BASH_REMATCH[3]}-rc.${BASH_REMATCH[4]}"
+            IS_PRERELEASE="true"
+          elif [[ "${PKG_VERSION}" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
+            SYNTH_TAG="v${PKG_VERSION}"
+            IS_PRERELEASE="false"
+          else
+            echo "::error::pyproject.toml [project].version '${PKG_VERSION}' is not PEP 440-conformant to a recognized release tag shape."
+            exit 1
+          fi
 
           SOURCE_SHA="$(git rev-parse HEAD)"
 
           # Strict shape validation (mirrors release.yml).
           if [[ "${SYNTH_TAG}" =~ ^v([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
-            IS_PRERELEASE="false"
             EXPECTED_PKG_VERSION="${BASH_REMATCH[1]}.${BASH_REMATCH[2]}.${BASH_REMATCH[3]}"
           elif [[ "${SYNTH_TAG}" =~ ^v([0-9]+)\.([0-9]+)\.([0-9]+)-rc\.([0-9]+)$ ]]; then
-            IS_PRERELEASE="true"
             EXPECTED_PKG_VERSION="${BASH_REMATCH[1]}.${BASH_REMATCH[2]}.${BASH_REMATCH[3]}rc${BASH_REMATCH[4]}"
           else
             echo "::error::Synthetic tag '${SYNTH_TAG}' is not a recognized release tag shape."

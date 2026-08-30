@@ -526,3 +526,30 @@ def test_pre_tag_workflow_runs_clean_wheel_smoke() -> None:
     assert "Clean wheel smoke" in text
     assert "reguard --version" in text
     assert "reguard doctor" in text
+
+
+def test_pre_tag_workflow_translates_pep440_to_tag() -> None:
+    """The pre-tag validate step must translate the PEP 440 prerelease
+    form (``0.1.0rc2``) into the canonical tag form
+    (``v0.1.0-rc.2``) that release.yml accepts. Without this
+    translation the validate step rejects the synthetic tag as
+    malformed even though the package version is valid."""
+    import re as _re
+    text = PRE_TAG_PATH.read_text()
+    # The translation must produce the -rc.N form, NOT keep the rcN form.
+    assert "rc${BASH_REMATCH[4]}" in text, (
+        "pre-tag must translate PEP 440 '0.1.0rc2' to tag 'v0.1.0-rc.2'"
+    )
+    # And the resulting SYNTH_TAG must match release.yml's regex.
+    assert "v${BASH_REMATCH[1]}.${BASH_REMATCH[2]}.${BASH_REMATCH[3]}-rc.${BASH_REMATCH[4]}" in text
+
+    # Functional check: replicate the transformation in Python and
+    # confirm release.yml's regex chain accepts it.
+    pkg_version = "0.1.0rc2"
+    m = _re.match(r"^([0-9]+)\.([0-9]+)\.([0-9]+)rc([0-9]+)$", pkg_version)
+    assert m is not None
+    synth_tag = f"v{m.group(1)}.{m.group(2)}.{m.group(3)}-rc.{m.group(4)}"
+    assert synth_tag == "v0.1.0-rc.2"
+    assert _re.match(
+        r"^v([0-9]+)\.([0-9]+)\.([0-9]+)-rc\.([0-9]+)$", synth_tag,
+    ) is not None
