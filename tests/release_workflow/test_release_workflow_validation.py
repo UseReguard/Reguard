@@ -632,3 +632,339 @@ def test_pre_tag_workflow_translates_pep440_to_tag() -> None:
     assert _re.match(
         r"^v([0-9]+)\.([0-9]+)\.([0-9]+)-rc\.([0-9]+)$", synth_tag,
     ) is not None
+
+
+# ---------------------------------------------------------------------------
+# Truthful-evidence gate tests (BLOCKER B of the RC2 prompt)
+# ---------------------------------------------------------------------------
+#
+# These tests assert that the GH Actions summary steps never
+# hard-code PASS verdicts for steps that may have been skipped or
+# failed. Each smoke / check step must have an explicit ``id:``,
+# and the always()-summary step must derive its per-step
+# outcomes from ``${{ steps.<id>.outcome }}`` /
+# ``${{ steps.<id>.conclusion }}``. Hard-coding ``echo
+# "- Clean installed-wheel smoke: PASS"`` inside the smoke step's
+# own run block would make the summary report PASS even when the
+# step fails or is skipped, which is the defect BLOCKER B
+# forbids.
+
+
+def _step_ids_in_build(text: str) -> set[str]:
+    """Collect every ``id:`` declared on a step in a build-job
+    workflow (pre-tag or release)."""
+    return set(re.findall(r"^\s+id:\s*([A-Za-z0-9_\-]+)\s*$", text, re.MULTILINE))
+
+
+def _build_step_block(text: str, name: str) -> str:
+    """Return the run block for the named build-job step, or empty
+    string if not found. ``name`` is the raw ``- name: ...``
+    payload.
+
+    The returned text contains ONLY the step itself (not
+    subsequent steps). We detect the next step by a non-blank
+    line whose first non-space character is ``-`` and the second
+    non-space character is ``n`` (i.e. ``- name:``).
+    """
+    lines = text.splitlines()
+    # Top-level "this is a step" lines begin with 6 spaces then ``-``.
+    step_re = re.compile(r"^\s{6}-\s")
+    # Inside a step's run: |-block, every body line begins with at
+    # least 10 spaces (matching ``          ``).
+    for idx, line in enumerate(lines):
+        stripped = line.strip()
+        if not stripped.startswith("- name:"):
+            continue
+        m = re.match(r"- name:\s*(.+?)\s*$", stripped)
+        if not m:
+            continue
+        if m.group(1).strip("'\"") != name:
+            continue
+        # Find the run: line.
+        run_idx = None
+        for j in range(idx + 1, min(idx + 25, len(lines))):
+            if lines[j].lstrip().startswith("run:"):
+                run_idx = j
+                break
+        if run_idx is None:
+            return ""
+        body_lines: list[str] = []
+        for j in range(run_idx + 1, len(lines)):
+            candidate = lines[j]
+            if not candidate.strip():
+                body_lines.append(candidate)
+                continue
+            # Stop when we hit a new top-level step.
+            if step_re.match(candidate):
+                break
+            # Or a line that has dedented past the step's run body
+            # (which would mean we're leaving this job).
+            indent = len(candidate) - len(candidate.lstrip(" "))
+            if indent < 10:
+                break
+            body_lines.append(candidate)
+        return "\n".join(body_lines)
+    return ""
+
+
+def test_pre_tag_summary_does_not_hardcode_pass_for_smoke_or_check() -> None:
+    """The pre-tag summary step must report the smoke and check
+    step outcomes via ``${{ steps.<id>.outcome }}``, not by
+    hard-coding ``PASS`` in the summary's run block. A skipped or
+    failed step that emits ``PASS`` into the step summary would
+    be a false evidence defect."""
+    text = PRE_TAG_PATH.read_text()
+
+    # Both steps must have explicit ids.
+    ids = _step_ids_in_build(text)
+    assert "clean_smoke" in ids, (
+        "pre-tag: 'Clean installed-wheel smoke' step must have "
+        "id: clean_smoke for truthful summary lookups"
+    )
+    assert "clean_check" in ids, (
+        "pre-tag: 'Clean installed-wheel check (reguard check)' step "
+        "must have id: clean_check for truthful summary lookups"
+    )
+
+    # The summary step's run block must NOT hard-code PASS for the
+    # smoke or check rows. It must reference the step outcome.
+    summary_block = _build_step_block(
+        text, "Pre-tag build summary",
+    )
+    assert summary_block, "pre-tag: 'Pre-tag build summary' step not found"
+
+    # The summary must report the per-step status via the outcome
+    # values injected as env from the steps.<id>.outcome lookups.
+    assert "CLEAN_SMOKE_OUTCOME" in summary_block, (
+        "pre-tag summary must reference CLEAN_SMOKE_OUTCOME (sourced "
+        "from steps.clean_smoke.outcome) to truthfully report "
+        "smoke status"
+    )
+    assert "CLEAN_CHECK_OUTCOME" in summary_block, (
+        "pre-tag summary must reference CLEAN_CHECK_OUTCOME (sourced "
+        "from steps.clean_check.outcome) to truthfully report "
+        "check status"
+    )
+    # The summary's run block must NOT contain literal "PASS" lines
+    # for the smoke or check rows. Hard-coded PASS is exactly the
+    # BLOCKER B defect.
+    summary_low = summary_block.lower()
+    assert ": pass" not in summary_low, (
+        "pre-tag summary must NOT hard-code ': PASS' for any step; "
+        "a skipped or failed smoke/check step would otherwise be "
+        "reported as PASS. Found:\n" + summary_block
+    )
+
+
+def test_pre_tag_smoke_step_run_block_contains_no_pass_assertion() -> None:
+    """The 'Clean installed-wheel smoke' step's own run block must
+    NOT write a 'PASS' line into GITHUB_STEP_SUMMARY either; the
+    only place PASS may appear is in the always()-summary step
+    that aggregates outcomes, and only after reading the actual
+    step outcome."""
+    text = PRE_TAG_PATH.read_text()
+    smoke_block = _build_step_block(
+        text, "Clean installed-wheel smoke",
+    )
+    assert smoke_block, "pre-tag: 'Clean installed-wheel smoke' step not found"
+    # The smoke step's run block must not write a "PASS" claim to
+    # the step summary, because its outcome is not yet known.
+    assert "GITHUB_STEP_SUMMARY" not in smoke_block, (
+        "pre-tag: 'Clean installed-wheel smoke' step must not write "
+        "PASS into GITHUB_STEP_SUMMARY itself; verdicts must come "
+        "from the always() summary step that reads "
+        "steps.clean_smoke.outcome / .conclusion"
+    )
+
+
+def test_release_summary_does_not_hardcode_pass_for_smoke_or_check() -> None:
+    """Same truthfulness rule applies to release.yml: the summary
+    step must reference ``steps.clean_smoke.outcome`` /
+    ``steps.clean_check.outcome``, not hard-coded PASS. release.yml
+    does not currently have a single combined summary block, but
+    it MUST at minimum give the smoke and check steps explicit ids
+    and MUST NOT emit a literal 'PASS' line in the smoke or check
+    run blocks."""
+    text = WORKFLOW_PATH.read_text()
+    ids = _step_ids_in_build(text)
+    assert "clean_smoke" in ids, (
+        "release.yml: 'Clean installed-wheel smoke' step must have "
+        "id: clean_smoke for truthful summary lookups"
+    )
+    assert "clean_check" in ids, (
+        "release.yml: 'Clean installed-wheel check (reguard check)' "
+        "step must have id: clean_check for truthful summary lookups"
+    )
+
+    smoke_block = _build_step_block(
+        text, "Clean installed-wheel smoke",
+    )
+    assert smoke_block, "release.yml: smoke step not found"
+    check_block = _build_step_block(
+        text, "Clean installed-wheel check (reguard check)",
+    )
+    assert check_block, "release.yml: check step not found"
+
+    # Neither run block may write a 'PASS' line into the step
+    # summary — that would be the BLOCKER B defect.
+    assert "GITHUB_STEP_SUMMARY" not in smoke_block, (
+        "release.yml: 'Clean installed-wheel smoke' step must not "
+        "write PASS into GITHUB_STEP_SUMMARY; the per-step verdict "
+        "must come from a separate always() summary step that "
+        "reads steps.clean_smoke.outcome / .conclusion"
+    )
+    assert "GITHUB_STEP_SUMMARY" not in check_block, (
+        "release.yml: 'Clean installed-wheel check' step must not "
+        "write PASS into GITHUB_STEP_SUMMARY; the per-step verdict "
+        "must come from a separate always() summary step that "
+        "reads steps.clean_check.outcome / .conclusion"
+    )
+
+    # A truthful release summary step must exist that reads the
+    # clean_smoke and clean_check outcomes.
+    assert "Release build summary (truthful per-step)" in text, (
+        "release.yml must have an always() 'Release build summary' "
+        "step that reads steps.clean_smoke.outcome / "
+        "steps.clean_check.outcome; this is the truthfulness gate."
+    )
+    summary_block = _build_step_block(
+        text, "Release build summary (truthful per-step)",
+    )
+    assert summary_block, "release.yml: truthful summary step not found"
+    assert "CLEAN_SMOKE_OUTCOME" in summary_block
+    assert "CLEAN_CHECK_OUTCOME" in summary_block
+    assert ": pass" not in summary_block.lower(), (
+        "release.yml truthful summary step must NOT hard-code "
+        "': PASS' for any step; a skipped or failed smoke/check "
+        "step would otherwise be reported as PASS."
+    )
+
+
+def test_pre_tag_and_release_truthful_summaries_are_equivalent() -> None:
+    """Both workflows must use the same truthful-summary pattern.
+    A divergence between pre-tag and release summary behavior is
+    a defect per brief §11 (parity)."""
+    pre_tag = PRE_TAG_PATH.read_text()
+    release = WORKFLOW_PATH.read_text()
+
+    # Both workflows must reference the same outcome env-var names.
+    for needle in (
+        "CLEAN_SMOKE_OUTCOME",
+        "CLEAN_SMOKE_CONCLUSION",
+        "CLEAN_CHECK_OUTCOME",
+        "CLEAN_CHECK_CONCLUSION",
+    ):
+        assert needle in pre_tag, (
+            f"pre-tag summary must reference {needle}"
+        )
+        assert needle in release, (
+            f"release summary must reference {needle}"
+        )
+
+    # Both workflows must source the env vars from
+    # steps.<id>.outcome / .conclusion.
+    for sid in ("clean_smoke", "clean_check"):
+        for suffix in ("outcome", "conclusion"):
+            env_key = f"{sid.upper()}_{suffix.upper()}"
+            pattern_smk = f"{env_key}: ${{{{ steps.{sid}.{suffix} }}}}"
+            assert pattern_smk in pre_tag, (
+                f"pre-tag must define env {env_key} = "
+                f"${{{{ steps.{sid}.{suffix} }}}} for truthful "
+                f"per-step reporting"
+            )
+            assert pattern_smk in release, (
+                f"release.yml must define env {env_key} = "
+                f"${{{{ steps.{sid}.{suffix} }}}} for truthful "
+                f"per-step reporting"
+            )
+
+
+def test_workflow_summary_artifact_reporting_is_safe_when_dist_missing() -> None:
+    """A workflow that fails before ``python -m build`` runs has
+    no ``dist/`` directory. The summary must not synthesize a
+    wheel/sdist line in that case — it must explicitly report
+    ``MISSING`` so the artifact claim cannot be mistaken for a
+    successful build."""
+    # pre-tag.yml
+    pre_tag = PRE_TAG_PATH.read_text()
+    assert "MISSING (build did not produce dist/)" in pre_tag, (
+        "pre-tag summary must report MISSING when dist/ is absent "
+        "rather than synthesizing a false artifact line"
+    )
+    # release.yml
+    release = WORKFLOW_PATH.read_text()
+    assert "MISSING (build did not produce dist/)" in release, (
+        "release summary must report MISSING when dist/ is absent "
+        "rather than synthesizing a false artifact line"
+    )
+
+    # The check must be guarded by `if [ -d dist ]` (or equivalent
+    # safe-guard) so the summary does not crash on a missing
+    # directory.
+    assert "[ -d dist ]" in pre_tag, (
+        "pre-tag summary must guard artifact enumeration with "
+        "'[ -d dist ]' so a missing dist/ does not crash the "
+        "summary step"
+    )
+    assert "[ -d dist ]" in release, (
+        "release summary must guard artifact enumeration with "
+        "'[ -d dist ]' so a missing dist/ does not crash the "
+        "summary step"
+    )
+
+
+def test_pre_tag_summary_block_has_always_guard() -> None:
+    """The pre-tag build summary step must run under ``if: always()``
+    so its verdicts are emitted even when a previous step in the
+    build job failed or was skipped. Without that guard a failed
+    smoke would suppress the summary entirely."""
+    text = PRE_TAG_PATH.read_text()
+    lines = text.splitlines()
+    target_name = "Pre-tag build summary"
+    for idx, line in enumerate(lines):
+        m = re.match(r"\s*- name:\s*(.+?)\s*$", line)
+        if not m:
+            continue
+        if m.group(1).strip("'\"") != target_name:
+            continue
+        # ``if: always()`` may appear on the line directly after
+        # ``- name:`` (the common YAML placement).
+        if idx + 1 < len(lines) and re.search(
+            r"if:\s*always\(\)", lines[idx + 1],
+        ):
+            return
+        # Or on the line before (less common).
+        if idx > 0 and re.search(r"if:\s*always\(\)", lines[idx - 1]):
+            return
+        raise AssertionError(
+            "pre-tag: 'Pre-tag build summary' step must have "
+            "'if: always()' so its truthfulness verdicts run even "
+            "when a prior step failed or was skipped"
+        )
+    raise AssertionError("pre-tag: 'Pre-tag build summary' step not found")
+
+
+def test_release_truthful_summary_block_has_always_guard() -> None:
+    """The release build summary step must run under ``if: always()``."""
+    text = WORKFLOW_PATH.read_text()
+    lines = text.splitlines()
+    target_name = "Release build summary (truthful per-step)"
+    for idx, line in enumerate(lines):
+        m = re.match(r"\s*- name:\s*(.+?)\s*$", line)
+        if not m:
+            continue
+        if m.group(1).strip("'\"") != target_name:
+            continue
+        if idx + 1 < len(lines) and re.search(
+            r"if:\s*always\(\)", lines[idx + 1],
+        ):
+            return
+        if idx > 0 and re.search(r"if:\s*always\(\)", lines[idx - 1]):
+            return
+        raise AssertionError(
+            "release.yml: 'Release build summary (truthful per-step)' "
+            "step must have 'if: always()'"
+        )
+    raise AssertionError(
+        f"release.yml: '{target_name}' step not found"
+    )

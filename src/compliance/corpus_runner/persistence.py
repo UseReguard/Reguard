@@ -873,12 +873,43 @@ def list_source_cache_entries(
 # `TerminalizationConflict` so the executor surfaces a deterministic
 # INTERNAL_SCHEDULER_ERROR attempt error rather than silently
 # overwriting one verdict with another.
+#
+# RC2 reliability hardening: the connection now applies a
+# `busy_timeout` PRAGMA so SQLite itself blocks each write for up
+# to ``_TERMINALIZE_BUSY_TIMEOUT_MS`` ms waiting for the lock to
+# clear, instead of returning ``database is locked`` immediately
+# with timeout=0. The application-level outer retry loop is
+# retained as a backstop for genuinely contended paths (e.g. a
+# long-held OS-level lock beyond SQLite's own mutex) but it no
+# longer does the heavy lifting for ordinary contention — SQLite's
+# built-in busy handler does.
 
 
 _BUSY_MSG_RE = re.compile(
     r"(database is locked|database table is locked|locked|busy)",
     re.IGNORECASE,
 )
+
+
+# Busy-handler timeout applied to every connection opened by
+# terminalize_job. SQLite blocks the calling thread for up to this
+# many ms before raising ``database is locked``. 5 s is sufficient
+# for the test regime (4 worker threads, 500 jobs, single SQLite
+# file) because the lock turnover per write is sub-millisecond on
+# a clean local filesystem; the wait is rarely invoked and almost
+# always resolved before the timeout expires.
+_TERMINALIZE_BUSY_TIMEOUT_MS = 5000
+
+# Outer retry budget for terminalize_job. With
+# ``busy_timeout=5000`` the inner writes normally succeed without
+# raising; this loop is a backstop for genuinely contended paths.
+# 10 attempts × exponential backoff capped at 5 s ≈ 25 s worst
+# case — enough to absorb contention that exceeds the per-connection
+# busy timeout but bounded so a real persistence failure surfaces
+# promptly.
+_TERMINALIZE_OUTER_ATTEMPTS = 10
+_TERMINALIZE_BACKOFF_BASE_S = 0.05
+_TERMINALIZE_BACKOFF_CAP_S = 5.0
 
 
 def _execute_with_busy_retry(
@@ -897,6 +928,12 @@ def _execute_with_busy_retry(
     schema mismatch, corrupt DB) propagates immediately. The caller
     is responsible for transaction boundaries (`BEGIN` / `COMMIT` /
     `ROLLBACK`); this helper does not start or end a transaction.
+
+    Note: terminalize_job does NOT use this helper. It relies on
+    the connection's ``busy_timeout`` PRAGMA for lock wait, and
+    the outer loop in terminalize_job for the rare genuinely-
+    contended case. This helper is retained for the other
+    code paths that open ``timeout=0`` connections.
     """
     last_exc: sqlite3.OperationalError | None = None
     for i in range(attempts):
@@ -967,28 +1004,42 @@ def terminalize_job(payload: TerminalPayload, *,
     `compliance_status` differs from the payload, raise
     `TerminalizationConflict` (no silent overwrite).
 
-    All three statements run in a single transaction. Any sqlite3
-    busy/locked error inside the transaction triggers a full
-    ROLLBACK and a bounded retry of the WHOLE transaction.
+    All three statements run in a single transaction. The
+    connection applies a ``busy_timeout`` PRAGMA so SQLite itself
+    blocks the calling thread for up to
+    ``_TERMINALIZE_BUSY_TIMEOUT_MS`` ms waiting for the lock to
+    clear. The outer retry loop is a backstop for paths that
+    exceed the busy timeout (e.g. a long-held OS-level lock);
+    its envelope is bounded (``_TERMINALIZE_OUTER_ATTEMPTS``
+    iterations of capped exponential backoff).
     """
     completed_at = payload.completed_at or _now()
 
-    # Outer retry budget: 20 attempts × ~0.02 s base sleep ≈ 0.4 s
-    # worst-case before raising. With timeout=0 on every
-    # connection, individual write attempts either succeed
-    # immediately or raise "database is locked" immediately. Under
-    # contention (multiple worker threads terminalising in
-    # parallel) the retry budget lets the winner commit first
-    # without starving the losers.
-    for _ in range(20):
-        # timeout=0 means busy_timeout=0: any write against a
-        # locked DB raises sqlite3.OperationalError: database is
-        # locked immediately rather than blocking. Combined with
-        # the bounded retry in this function, this gives
-        # deterministic, fast-fail terminalization semantics under
-        # contention.
-        conn = sqlite3.connect(db_path or default_db_path(), timeout=0)
+    # Outer retry loop: a backstop for genuinely contended paths
+    # that exceed the per-connection busy_timeout. The
+    # busy_timeout on the connection itself does the heavy lifting
+    # under ordinary contention.
+    for attempt in range(_TERMINALIZE_OUTER_ATTEMPTS):
+        # Open a fresh connection per attempt so each retry runs
+        # on a clean connection with the busy_timeout re-applied.
+        # ``timeout`` (in seconds) is the upper bound on the wait
+        # for the lock — match the PRAGMA below for consistency.
+        conn = sqlite3.connect(
+            db_path or default_db_path(),
+            timeout=_TERMINALIZE_BUSY_TIMEOUT_MS / 1000,
+        )
         conn.row_factory = sqlite3.Row
+        # Apply busy_timeout explicitly. The ``timeout`` arg above
+        # sets the same value but is documented as a synonym;
+        # applying the PRAGMA makes the contract explicit and
+        # protects against any future Python/CPython change that
+        # decouples the two. SQLite's ``PRAGMA`` does not accept
+        # bound parameters; the value must be interpolated as a
+        # literal in the SQL text. The constant is module-private
+        # so this is safe from injection.
+        conn.execute(
+            f"PRAGMA busy_timeout = {_TERMINALIZE_BUSY_TIMEOUT_MS}"
+        )
         try:
             # Step 1: idempotence-guarded UPDATE.
             cur = conn.execute(
@@ -1043,15 +1094,13 @@ def terminalize_job(payload: TerminalPayload, *,
                 # Same payload: idempotent no-op. Fall through to
                 # ensure requirement_evaluations + recipe stamps are
                 # consistent.
-                # NOTE: we still execute steps 2 and 3 below so a
-                # row that was partial-terminalised by an older
-                # version can be healed. INSERT OR REPLACE for
-                # requirement_evaluations is idempotent.
                 pass
 
             # Step 2: requirement_evaluations row (INSERT OR REPLACE).
-            _execute_with_busy_retry(
-                conn,
+            # No nested busy-retry helper here — the connection's
+            # busy_timeout handles contention, and the outer loop
+            # handles anything that escapes.
+            conn.execute(
                 """
                 INSERT OR REPLACE INTO requirement_evaluations (
                     evaluation_job_id, requirement_id, requirement_version,
@@ -1069,8 +1118,7 @@ def terminalize_job(payload: TerminalPayload, *,
             )
 
             # Step 3: recipe / missing-capability stamp.
-            _execute_with_busy_retry(
-                conn,
+            conn.execute(
                 """
                 UPDATE evaluation_jobs SET
                     missing_capability = ?,
@@ -1091,20 +1139,26 @@ def terminalize_job(payload: TerminalPayload, *,
         except sqlite3.OperationalError as exc:
             if not _BUSY_MSG_RE.search(str(exc)):
                 raise
-            # Busy / locked: roll back the in-flight transaction and
-            # back off. Sleep first; on next iteration open a fresh
-            # connection (the previous one is closed by the finally
-            # block).
+            # Busy / locked: roll back the in-flight transaction.
             try:
                 conn.rollback()
             except sqlite3.OperationalError:
                 pass
-            time.sleep(0.02)
+            # If we have attempts left, back off deterministically
+            # before the next try. Cap the wait so the loop has a
+            # hard upper bound.
+            if attempt + 1 < _TERMINALIZE_OUTER_ATTEMPTS:
+                backoff_s = min(
+                    _TERMINALIZE_BACKOFF_BASE_S * (2 ** attempt),
+                    _TERMINALIZE_BACKOFF_CAP_S,
+                )
+                time.sleep(backoff_s)
+            # else: fall through to the exhausted-retry raise.
         finally:
             conn.close()
-    # Exhausted retries. The last OperationalError already
-    # propagated inside the loop; if we get here without a raise,
-    # the loop never entered the body — re-raise defensively.
+    # Exhausted retries. Surface a deterministic OperationalError so
+    # the executor can convert it to an INTERNAL_SCHEDULER_ERROR
+    # attempt error.
     raise sqlite3.OperationalError(
         "terminalize_job: exhausted busy/locked retries"
     )

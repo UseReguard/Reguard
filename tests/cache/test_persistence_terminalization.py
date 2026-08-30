@@ -409,12 +409,15 @@ def test_retry_exhaustion_raises_clearly(seeded_db: Path,
             con.close()
 
     # Shrink the retry budget so the test finishes in <1 second.
-    real_helper = crp._execute_with_busy_retry
-    def fast_retry(*args, **kwargs):
-        kwargs.setdefault("attempts", 2)
-        kwargs.setdefault("base_sleep_s", 0.005)
-        return real_helper(*args, **kwargs)
-    monkeypatch.setattr(crp, "_execute_with_busy_retry", fast_retry)
+    # terminalize_job now relies on the connection's busy_timeout
+    # PRAGMA plus a bounded outer retry loop; the legacy
+    # ``_execute_with_busy_retry`` helper is no longer on the
+    # terminalization path. We therefore shrink the new envelope
+    # instead: busy_timeout=1ms + 2 outer attempts × 1ms base.
+    monkeypatch.setattr(crp, "_TERMINALIZE_BUSY_TIMEOUT_MS", 1)
+    monkeypatch.setattr(crp, "_TERMINALIZE_OUTER_ATTEMPTS", 2)
+    monkeypatch.setattr(crp, "_TERMINALIZE_BACKOFF_BASE_S", 0.001)
+    monkeypatch.setattr(crp, "_TERMINALIZE_BACKOFF_CAP_S", 0.001)
 
     t = threading.Thread(target=holder)
     t.start()

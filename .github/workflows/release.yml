@@ -217,6 +217,7 @@ jobs:
       # data/eu_ai_compliance.db and must NOT use any PYTHONPATH /
       # editable-install override.
       - name: Clean installed-wheel smoke
+        id: clean_smoke
         shell: bash
         run: |
           set -euo pipefail
@@ -246,15 +247,6 @@ jobs:
           # Confirm the public CLI does not require the research DB.
           test ! -e data/eu_ai_compliance.db
           deactivate
-          {
-            echo "## Clean installed-wheel smoke (CLI commands)"
-            echo
-            echo "- reguard --version: PASS"
-            echo "- reguard doctor:    PASS"
-            echo "- reguard list:      PASS"
-            echo "- compliance import: site-packages (PASS)"
-            echo "- data/eu_ai_compliance.db: absent (PASS — public CLI does not require it)"
-          } >> "$GITHUB_STEP_SUMMARY"
 
       # Clean installed-wheel check: a real `reguard check` against
       # the deterministic minimal-agent fixture, executed from the
@@ -263,6 +255,7 @@ jobs:
       # earlier in this job) via the REGUARD_RUNTIME_IMAGE env var
       # declared at job scope; no public-registry pull.
       - name: Clean installed-wheel check (reguard check)
+        id: clean_check
         shell: bash
         run: |
           set -euo pipefail
@@ -282,13 +275,42 @@ jobs:
           fi
           echo "reguard check exit code: 0 (PASS)"
           deactivate
+
+      - name: Release build summary (truthful per-step)
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
           {
-            echo "## Clean installed-wheel check"
+            echo "## Release build result"
             echo
-            echo "- Command: reguard check --repo-path examples/minimal-agent --repo SWE-agent/mini-swe-agent"
-            echo "- Exit code: 0"
-            echo "- Result: PASS"
+            # Artifact reporting: only enumerate dist/ contents if
+            # the directory exists. A release run that fails before
+            # ``Build wheel and sdist`` must not synthesize false
+            # artifact lines.
+            if [ -d dist ] && ls dist/*.whl dist/*.tar.gz >/dev/null 2>&1; then
+              WHL_NAME="$(ls dist/*.whl   | head -n1 | xargs -n1 basename)"
+              SDIST_NAME="$(ls dist/*.tar.gz | head -n1 | xargs -n1 basename)"
+              echo "- Wheel:    \`${WHL_NAME}\`"
+              echo "- Sdist:    \`${SDIST_NAME}\`"
+            else
+              echo "- Wheel:    MISSING (build did not produce dist/)"
+              echo "- Sdist:    MISSING (build did not produce dist/)"
+            fi
+            # Truthful per-step verdicts via ${{ steps.<id>.outcome }}
+            # / ${{ steps.<id>.conclusion }}.
+            SMOKE_STATUS="$(printf '%s' "${CLEAN_SMOKE_OUTCOME:-skipped}" | tr '[:lower:]' '[:upper:]')"
+            SMOKE_CONCL="$(printf '%s' "${CLEAN_SMOKE_CONCLUSION:-skipped}" | tr '[:lower:]' '[:upper:]')"
+            CHECK_STATUS="$(printf '%s' "${CLEAN_CHECK_OUTCOME:-skipped}" | tr '[:lower:]' '[:upper:]')"
+            CHECK_CONCL="$(printf '%s' "${CLEAN_CHECK_CONCLUSION:-skipped}" | tr '[:lower:]' '[:upper:]')"
+            echo "- Clean installed-wheel smoke: ${SMOKE_STATUS} (conclusion: ${SMOKE_CONCL})"
+            echo "- Clean installed-wheel check: ${CHECK_STATUS} (conclusion: ${CHECK_CONCL})"
           } >> "$GITHUB_STEP_SUMMARY"
+        env:
+          CLEAN_SMOKE_OUTCOME: ${{ steps.clean_smoke.outcome }}
+          CLEAN_SMOKE_CONCLUSION: ${{ steps.clean_smoke.conclusion }}
+          CLEAN_CHECK_OUTCOME: ${{ steps.clean_check.outcome }}
+          CLEAN_CHECK_CONCLUSION: ${{ steps.clean_check.conclusion }}
 
       - name: Re-parse tag and record authoritative hashes
         id: parse
