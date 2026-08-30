@@ -1,4 +1,4 @@
 """Reguard Core — deterministic technical-control checks for AI agents."""
 from __future__ import annotations
 
-__version__ = "0.1.0rc1"
+__version__ = "0.1.0rc2"

@@ -1285,3 +1285,124 @@ def test_resume_reuses_pinned_sha(db_path, known_repos):
     # Jobs still carry the pinned SHA.
     jobs = crp.list_jobs_for_run(rid, db_path=db_path)
     assert jobs[0]["repo_sha"] == PINNED_CR1["gptme/gptme"]
+
+
+# ===========================================================================
+# EXPLICIT_DB_PATH_IS_TRANSITIVE (RC2 brief §4)
+#
+# A regression test that pins the v1.1 corpus-runner DB-path
+# propagation contract. ``_find_compliance_runtime_run_id`` MUST
+# honour an explicit ``db_path`` argument; it must NOT silently fall
+# back to :func:`crp.default_db_path` when an explicit path is
+# supplied. The original bug ignored the caller's ``db_path`` and
+# connected to whatever DB path the production default resolved to,
+# which on a clean runner pointed at a non-existent file and made
+# the runner report ``pass_count=0``.
+# ===========================================================================
+
+
+def test_explicit_db_path_is_transitive_to_find_compliance_runtime_run_id(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """``_find_compliance_runtime_run_id`` must connect to the
+    explicit ``db_path`` argument, not the production default."""
+    explicit_db = tmp_path / "explicit.db"
+    default_db = tmp_path / "default_would_fail.db"
+    # Default path resolves to a DB that does NOT exist. If the
+    # helper regresses to ``default_db_path()``, the connect raises
+    # ``sqlite3.OperationalError`` (or, worse, silently returns
+    # ``None`` because the dedup-key row is missing). The explicit
+    # path must be the one opened.
+
+    def _resolve_default() -> Path:
+        return default_db
+
+    monkeypatch.setattr(crp, "default_db_path", _resolve_default)
+
+    # Build a synthetic RunRecord so the dedup-key columns line up.
+    evidence = Evidence(
+        schema_version=EVIDENCE_SCHEMA_VERSION,
+        events=(),
+        agent_class="stub", agent_version="stub",
+        extra={"origin": "stub", "recording_category": "A",
+               "framework_persists_durably": True,
+               "framework_artifact_paths": [],
+               "harness_artifact_paths": []},
+    )
+    target = RepositoryTarget(
+        repository_id=1, full_name="SWE-agent/mini-swe-agent",
+        sha=STUB_SHA, branch="main",
+    )
+    record = RunRecord(
+        repository=target,
+        requirement_id="AI_ACT_12_1_AUTOMATIC_EVENT_LOGGING",
+        requirement_version="1.4.0",
+        runtime_version="test",
+        adapter_name="mini-swe-agent",
+        adapter_version="0",
+        scenario_id=LEGACY_S1,
+        status=RunStatus.PASS,
+        reason="",
+        result=Result(schema_version="2", status=RunStatus.PASS, reason=""),
+        evidence=evidence,
+        started_at="2026-01-01T00:00:00Z",
+        completed_at="2026-01-01T00:00:01Z",
+        duration_seconds=0.1,
+    )
+
+    # Seed a compliance_runtime_runs row in the explicit DB only.
+    conn = sqlite3.connect(explicit_db)
+    try:
+        (migrations_dir := ROOT / "migrations" / "005_compliance_runtime_runs.sql")
+        conn.executescript(migrations_dir.read_text())
+        conn.execute(
+            """
+            INSERT INTO compliance_runtime_runs (
+                repository_id, repo_full_name, repo_sha, repo_branch,
+                requirement_id, requirement_version, runtime_version,
+                adapter_name, adapter_version, status, reason,
+                result_json, evidence_json, scenario_id, started_at,
+                completed_at, duration_seconds
+            ) VALUES (?, ?, ?, 'main', ?, ?, 'test', 'mini-swe-agent',
+                      '0', 'PASS', '', '{}', '{}', ?,
+                      '2026-01-01T00:00:00Z',
+                      '2026-01-01T00:00:01Z', 0.1)
+            """,
+            (
+                target.repository_id,
+                target.full_name, target.sha,
+                record.requirement_id, record.requirement_version,
+                record.scenario_id,
+            ),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+    # Connect directly with sqlite3.connect (no Path adapter) so we
+    # capture the raw string passed in.
+    captured_paths: list[str] = []
+
+    real_connect = sqlite3.connect
+
+    def _spy_connect(path, *args, **kwargs):
+        captured_paths.append(str(path))
+        return real_connect(path, *args, **kwargs)
+
+    monkeypatch.setattr(crp.sqlite3, "connect", _spy_connect)
+    # Also patch the executor's sqlite3 import binding.
+    monkeypatch.setattr(cr_exec.sqlite3, "connect", _spy_connect)
+
+    row_id = cr_exec._find_compliance_runtime_run_id(
+        record, db_path=explicit_db,
+    )
+
+    assert row_id == 1, (
+        f"helper returned {row_id!r}; expected row id 1 from the "
+        f"explicit DB at {explicit_db}"
+    )
+    assert captured_paths, "sqlite3.connect was never called"
+    assert all(str(explicit_db) == p for p in captured_paths), (
+        f"sqlite3.connect was called with {captured_paths!r}; "
+        f"expected every call to use the explicit {explicit_db}"
+    )

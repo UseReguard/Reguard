@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import os
 import shutil
+import sqlite3
 import subprocess
 import sys
 import tempfile
@@ -77,7 +78,7 @@ def _select_working_runtime(monkeypatch):
     yield
 
 
-def test_gptme_container_frozen_sha_reproduces_pass():
+def test_gptme_container_frozen_sha_reproduces_pass(tmp_path, monkeypatch):
     """Run gptme at frozen SHA via container executor.
 
     Asserts:
@@ -89,11 +90,55 @@ def test_gptme_container_frozen_sha_reproduces_pass():
     not skipped. The dedup key is:
         (repository_id, requirement_id, requirement_version,
          repo_sha, scenario_id, adapter_name, adapter_version)
+
+    The production ``data/eu_ai_compliance.db`` is gitignored and
+    may not exist on a clean runner. Build a temp DB with the
+    required schema + an ``agent_repositories`` row for gptme and
+    point ``default_db_path()`` at it for the duration of the test.
+    The container executor and the dedup-table write then both use
+    this temp DB; nothing depends on the developer's research DB.
     """
-    db = default_db_path()
+    db = tmp_path / "gptme_test.db"
+    migrations = [
+        "001_agent_repositories.sql",
+        "003_agent_repository_audits.sql",
+        "004_article_runtime_assessments.sql",
+        "005_compliance_runtime_runs.sql",
+    ]
+    conn = sqlite3.connect(db)
+    try:
+        for name in migrations:
+            conn.executescript((ROOT / "migrations" / name).read_text())
+        # Seed the gptme row so ``_lookup_repo`` can resolve it.
+        conn.execute(
+            """
+            INSERT INTO agent_repositories (
+                github_id, full_name, owner, name, html_url, clone_url,
+                primary_language, relevance_status, enabled, archived,
+                fork, stars, discovered_at
+            ) VALUES (?, ?, ?, ?, ?, ?, 'Python', 'accepted', 1, 0, 0,
+                      8000, '2026-01-01T00:00:00Z')
+            """,
+            (
+                12345, GPTME_FULL_NAME, "gptme", "gptme",
+                f"https://github.com/{GPTME_FULL_NAME}",
+                f"https://github.com/{GPTME_FULL_NAME}.git",
+            ),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+    # ``default_db_path`` is imported into both the persistence and
+    # driver modules at load time; patch both bound names so the
+    # test does not depend on a particular module's import path.
+    from compliance.pipeline import persistence as pipe_persist
+    from compliance.pipeline import driver as pipe_driver
+    monkeypatch.setattr(pipe_persist, "default_db_path", lambda: db)
+    monkeypatch.setattr(pipe_driver, "default_db_path", lambda: db)
+
     # Pre-clear: any cached row at the frozen SHA hides fresh
     # probe results via load_run_by_dedup_key.
-    import sqlite3
     con = sqlite3.connect(db)
     try:
         con.execute(

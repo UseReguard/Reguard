@@ -16,8 +16,11 @@ the container's network-disabled policy — when network=none,
 DNS lookups cannot resolve names).
 
 The test is skipped with a clear reason if no OCI runtime
-(docker or podman) is available on PATH. It runs locally
-where the CR-1 containers are being executed.
+(docker or podman) is available on PATH. On a clean runner
+the test builds the local ``reguard-runtime:ci-test`` image
+from ``runtime/Dockerfile`` so it does NOT depend on a public
+registry pull. Hosts may override the image via the
+``REGUARD_RUNTIME_IMAGE`` environment variable.
 
 Does NOT mock filesystem permissions. Does NOT fake the
 container. Uses the real `run_in_container` function.
@@ -26,6 +29,7 @@ from __future__ import annotations
 
 import os
 import shutil
+import subprocess
 import sys
 import tempfile
 from pathlib import Path
@@ -39,6 +43,13 @@ from compliance.pipeline.container_runner import (
     DEFAULT_IMAGE,
     run_in_container,
 )
+
+
+# Local tag for the CI/runtime test. Built from runtime/Dockerfile
+# on a clean runner so the test never has to pull from a public
+# registry.
+LOCAL_RUNTIME_TAG = "reguard-runtime:ci-test"
+RUNTIME_DOCKERFILE = ROOT / "runtime" / "Dockerfile"
 
 
 _PROBE_SRC = """
@@ -97,6 +108,45 @@ def _have_oci_runtime() -> bool:
     return shutil.which("docker") is not None or shutil.which("podman") is not None
 
 
+def _oci_binary() -> str | None:
+    """Return the working OCI binary, preferring podman over docker
+    shims that may be non-functional on WSL hosts."""
+    if shutil.which("podman") is not None:
+        return "podman"
+    if shutil.which("docker") is not None:
+        return "docker"
+    return None
+
+
+def _ensure_local_runtime_image(oci: str) -> str:
+    """Build the local runtime image if it is not already present.
+
+    Returns the image tag that the test should use. On a clean
+    runner this tag is freshly built from ``runtime/Dockerfile``;
+    the test never depends on a public registry pull.
+    """
+    # Check whether the tag already exists locally.
+    try:
+        probe = subprocess.run(
+            [oci, "images", "--format", "{{.Repository}}:{{.Tag}}",
+             LOCAL_RUNTIME_TAG],
+            capture_output=True, text=True, check=False,
+        )
+    except FileNotFoundError:
+        return LOCAL_RUNTIME_TAG
+    if LOCAL_RUNTIME_TAG in (probe.stdout or "").splitlines():
+        return LOCAL_RUNTIME_TAG
+    # Build it. ``--network=host`` is fine here: this is a one-shot
+    # test build, not a runtime probe; we DO want to fetch the
+    # base image.
+    subprocess.run(
+        [oci, "build", "-f", str(RUNTIME_DOCKERFILE), "-t",
+         LOCAL_RUNTIME_TAG, str(ROOT)],
+        check=True,
+    )
+    return LOCAL_RUNTIME_TAG
+
+
 pytestmark = pytest.mark.skipif(
     not _have_oci_runtime(),
     reason="no OCI runtime on PATH (docker or podman)",
@@ -104,27 +154,36 @@ pytestmark = pytest.mark.skipif(
 
 
 @pytest.fixture(autouse=True)
-def _select_working_runtime(monkeypatch):
-    """Pick a runtime that actually works on this host.
+def _select_working_runtime(monkeypatch, request):
+    """Pick a runtime that actually works on this host and build the
+    local ``reguard-runtime:ci-test`` image if it is not present.
 
     The container_runner's discovery prefers docker first. On WSL
-    hosts where `docker` is a non-functional shim, the runner will
+    hosts where ``docker`` is a non-functional shim, the runner will
     invoke it and fail with "docker exited 1". Prefer podman when
     it works; fall back to docker only when no other runtime is
-    available. Also pin the runtime image to the local
-    `localhost/python-agent-runtime:dev` tag so the test doesn't
-    need a registry pull.
+    available. The image is built from ``runtime/Dockerfile`` once
+    per session so the test does not depend on a public registry
+    pull.
     """
-    if shutil.which("podman") is not None:
-        monkeypatch.setenv("REGUARD_RUNTIME_BINARY", "podman")
+    session = request.session
+    oci = _oci_binary()
+    if oci is not None:
+        monkeypatch.setenv("REGUARD_RUNTIME_BINARY", oci)
+        # Build the local image on first use.
+        if not getattr(session, "_reguard_runtime_image_built", False):
+            try:
+                _ensure_local_runtime_image(oci)
+            except subprocess.CalledProcessError as exc:
+                pytest.skip(
+                    f"could not build {LOCAL_RUNTIME_TAG}: {exc}"
+                )
+            session._reguard_runtime_image_built = True
     # Only override the image if the host hasn't set it explicitly
     # (some CI setups pin the image via env).
     monkeypatch.setenv(
         "REGUARD_RUNTIME_IMAGE",
-        os.environ.get(
-            "REGUARD_RUNTIME_IMAGE",
-            "localhost/python-agent-runtime:dev",
-        ),
+        os.environ.get("REGUARD_RUNTIME_IMAGE", LOCAL_RUNTIME_TAG),
     )
     yield
 

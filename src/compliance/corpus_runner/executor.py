@@ -584,7 +584,7 @@ def _execute_one_attempt(
                 record.evidence.extra.get("probe_status")
             ) or PROBE_ERROR
         return compliance_status, err_class, record.reason, \
-            _find_compliance_runtime_run_id(record)
+            _find_compliance_runtime_run_id(record, db_path=db_path)
 
     except Exception as exc:  # noqa: BLE001
         msg = repr(exc)[:4000]
@@ -604,11 +604,17 @@ def _execute_one_attempt(
                 log.exception("workspace cleanup failed")
 
 
-def _find_compliance_runtime_run_id(record) -> int | None:
+def _find_compliance_runtime_run_id(record, *, db_path: Path | None = None) -> int | None:
     """Find the row id of the persisted RunRecord in
     compliance_runtime_runs. The RunRecord does not carry its row
-    id, so we look it up by the dedup key."""
-    conn = sqlite3.connect(crp.default_db_path())
+    id, so we look it up by the dedup key.
+
+    ``db_path`` is propagated from the caller's scope; falling back
+    to :func:`crp.default_db_path` keeps the helper usable from
+    contexts (legacy tests, one-off scripts) that have not threaded
+    an explicit path through.
+    """
+    conn = sqlite3.connect(db_path or crp.default_db_path())
     try:
         row = conn.execute(
             """

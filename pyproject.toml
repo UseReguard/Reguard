@@ -1,6 +1,6 @@
 [project]
 name = "Reguard"
-version = "0.1.0rc1"
+version = "0.1.0rc2"
 description = "Deterministic technical-control checks for AI agents"
 readme = "README.md"
 requires-python = ">=3.12"

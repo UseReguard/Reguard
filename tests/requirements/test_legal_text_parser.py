@@ -1,17 +1,20 @@
 """Smoke tests for the legal-text parser.
 
 Validates the deterministic decomposition against AI Act Article 12
-text as stored in the corpus.
+text stored as a text fixture in this repository.
+
+The fixture files live under ``tests/fixtures/legal/`` so the test
+suite is self-contained on a clean checkout and does not require the
+research corpus database (which is gitignored).
 
 Note on article identification:
-    `law_articles.article_number` stores the FULL sub-point label
-    sequence (e.g. `12(a)(b)(c)(a)(b)(c)(d)`), not just the bare
-    article number. We identify articles by `law_articles.id` (the
-    integer PK) for round-trip stability.
+    The fixture text is the verbatim Article 12 (and Article 9)
+    provision from Regulation (EU) 2024/1689 (the AI Act). Paragraph
+    numbering is preserved exactly as published; sub-point labels are
+    ``(a)``, ``(b)``, ``(c)``, ``(d)``.
 """
 from __future__ import annotations
 
-import sqlite3
 import sys
 from pathlib import Path
 
@@ -24,31 +27,34 @@ from compliance.requirements.legal_text_parser import (
 )
 
 
-DB_PATH = PROJECT_ROOT / "data" / "eu_ai_compliance.db"
+FIXTURES_DIR = Path(__file__).resolve().parent.parent / "fixtures" / "legal"
 
 
-def _load_article_text(celex: str, article_id: int) -> str:
-    conn = sqlite3.connect(str(DB_PATH))
-    try:
-        row = conn.execute(
-            "SELECT text FROM law_articles WHERE celex=? AND id=?",
-            (celex, article_id),
-        ).fetchone()
-    finally:
-        conn.close()
-    if row is None:
-        raise AssertionError(f"article not found: {celex}/{article_id}")
-    return row[0]
+def _load_article_text(article_id: int) -> str:
+    """Read the article text from a local text fixture.
+
+    The fixture is the verbatim Regulation (EU) 2024/1689 text for
+    the article; it does NOT require the gitignored research corpus
+    database and so works on a clean runner.
+    """
+    path = FIXTURES_DIR / f"eu_ai_act_article_{article_id}.txt"
+    if not path.exists():
+        raise AssertionError(
+            f"missing legal text fixture: {path}. "
+            "tests/fixtures/legal/ must contain the AI Act text "
+            "snapshots used by these tests."
+        )
+    return path.read_text(encoding="utf-8")
 
 
 def test_split_paragraphs_article_12_returns_three_paragraphs():
-    text = _load_article_text("32024R1689", 12)
+    text = _load_article_text(12)
     paragraphs = split_paragraphs(text)
     assert [n for n, _ in paragraphs] == [1, 2, 3]
 
 
 def test_split_points_article_12_paragraph_1_returns_one_obligation():
-    text = _load_article_text("32024R1689", 12)
+    text = _load_article_text(12)
     para1 = next(b for n, b in split_paragraphs(text) if n == 1)
     obs = split_points(1, para1)
     assert len(obs) == 1
@@ -57,7 +63,7 @@ def test_split_points_article_12_paragraph_1_returns_one_obligation():
 
 
 def test_split_points_article_12_paragraph_2_returns_three_points():
-    text = _load_article_text("32024R1689", 12)
+    text = _load_article_text(12)
     para2 = next(b for n, b in split_paragraphs(text) if n == 2)
     obs = split_points(2, para2)
     assert len(obs) == 3
@@ -68,7 +74,7 @@ def test_split_points_article_12_paragraph_2_returns_three_points():
 
 
 def test_split_points_article_12_paragraph_3_returns_four_points():
-    text = _load_article_text("32024R1689", 12)
+    text = _load_article_text(12)
     para3 = next(b for n, b in split_paragraphs(text) if n == 3)
     obs = split_points(3, para3)
     assert len(obs) == 4
@@ -80,7 +86,7 @@ def test_split_points_article_12_paragraph_3_returns_four_points():
 
 
 def test_parse_article_12_returns_eight_atomic_obligations():
-    text = _load_article_text("32024R1689", 12)
+    text = _load_article_text(12)
     obligations = parse_article("12", text)
     # paragraph 1 (1 obligation) + paragraph 2 (a,b,c) (3) +
     # paragraph 3 (a,b,c,d) (4) = 8 obligations.
@@ -100,7 +106,7 @@ def test_atomic_id_format():
 
 def test_parse_article_9_risk_management():
     """Article 9 has 10 paragraphs. Spot-check the parser on it."""
-    text = _load_article_text("32024R1689", 9)
+    text = _load_article_text(9)
     obligations = parse_article("9", text)
     para_numbers = sorted({o.paragraph for o in obligations})
     assert para_numbers == [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
@@ -108,6 +114,13 @@ def test_parse_article_9_risk_management():
     assert p2_points == ["a", "b", "c", "d"]
     p5_points = [o.point for o in obligations if o.paragraph == 5]
     assert p5_points == ["a", "b", "c"]
+
+
+def test_legal_text_fixtures_are_present():
+    """The fixtures must be tracked in the repo so a clean checkout
+    can run the parser tests offline."""
+    assert (FIXTURES_DIR / "eu_ai_act_article_9.txt").exists()
+    assert (FIXTURES_DIR / "eu_ai_act_article_12.txt").exists()
 
 
 if __name__ == "__main__":

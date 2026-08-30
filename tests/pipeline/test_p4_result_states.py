@@ -21,6 +21,7 @@ runtime event is introduced.
 from __future__ import annotations
 
 import json
+import sqlite3
 import sys
 from pathlib import Path
 
@@ -343,10 +344,35 @@ def test_error_schema_mismatch_is_error_not_silent_pass():
 # ===========================================================================
 # 4. UNSUPPORTED — no adapter registered
 # ===========================================================================
-def test_unsupported_when_repo_not_in_registry():
+def test_unsupported_when_repo_not_in_registry(tmp_path, monkeypatch):
     """UNSUPPORTED — repository full_name not in ADAPTER_REGISTRY.
     The registry must raise KeyError; the CLI's main() catches that
-    into a synthetic UNSUPPORTED record with exit code 3."""
+    into a synthetic UNSUPPORTED record with exit code 3.
+
+    The CLI's clone-mode path opens the production SQLite DB to
+    resolve the repo row. On a clean checkout that DB does not
+    exist. The test therefore seeds a temp DB with the required
+    ``agent_repositories`` schema and points
+    :func:`pipeline.persistence.default_db_path` at it for the
+    duration of the test.
+    """
+    db = tmp_path / "research.db"
+    sql = (ROOT / "migrations" / "001_agent_repositories.sql").read_text()
+    conn = sqlite3.connect(db)
+    try:
+        conn.executescript(sql)
+        conn.commit()
+    finally:
+        conn.close()
+
+    # Point the pipeline module at the temp DB so the lookup uses it.
+    from compliance.pipeline import persistence as pipe_persist
+    monkeypatch.setattr(pipe_persist, "default_db_path", lambda: db)
+    # driver.py imports default_db_path at module load; patch its bound
+    # name too.
+    from compliance.pipeline import driver as pipe_driver
+    monkeypatch.setattr(pipe_driver, "default_db_path", lambda: db)
+
     with pytest.raises(KeyError):
         get_adapter("this-org/this-repo-does-not-exist")
 

@@ -143,10 +143,40 @@ jobs:
           python -m pip install --upgrade "pip>=23" "build>=1.0" "twine>=5" "pytest>=8"
           python -m pip install -e ".[dev]"
 
+      # The container integration tests (test_oci_artifact_write_contract,
+      # test_gptme_container_frozen_sha_reproduces_pass) need the
+      # local ``reguard-runtime:ci-test`` OCI image. Building the
+      # image up-front means the source-test step runs them with the
+      # image already present; we never depend on a public registry
+      # pull during the release gate.
+      - name: Build local runtime image for container tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          OCI_BIN="${REGUARD_RUNTIME_BINARY:-}"
+          if [ -z "${OCI_BIN}" ]; then
+            if command -v podman >/dev/null 2>&1; then
+              OCI_BIN="podman"
+            elif command -v docker >/dev/null 2>&1; then
+              OCI_BIN="docker"
+            fi
+          fi
+          if [ -z "${OCI_BIN}" ]; then
+            echo "::warning::no podman or docker on PATH; container integration tests will be skipped."
+          else
+            echo "Building local runtime image with ${OCI_BIN}..."
+            "${OCI_BIN}" build \
+              -f runtime/Dockerfile \
+              -t reguard-runtime:ci-test \
+              .
+          fi
+
       - name: Run full test suite
         shell: bash
         run: |
           set -euo pipefail
+          # The OCI tests now find the locally built image; nothing
+          # else in the source tree depends on a public registry.
           pytest tests/ -q
 
       - name: Build wheel and sdist
@@ -161,6 +191,36 @@ jobs:
         run: |
           set -euo pipefail
           python -m twine check dist/*
+
+      # Packaging tests are deliberately run AFTER the wheel is built
+      # so they exercise the exact artifact a consumer would receive
+      # (namespace coexistence, dist-info integrity, etc.).
+      - name: Packaging tests against built wheel
+        shell: bash
+        run: |
+          set -euo pipefail
+          pytest tests/packaging/ -v
+
+      # Clean wheel smoke: install the freshly built wheel into a
+      # fresh virtualenv and run the public CLI. This is the
+      # closest in-tree simulation of a real consumer installing
+      # from PyPI.
+      - name: Clean wheel smoke (install + reguard --version)
+        shell: bash
+        run: |
+          set -euo pipefail
+          WHL="$(ls dist/*.whl | head -n1)"
+          python -m venv /tmp/reguard-clean-wheel-smoke
+          # shellcheck disable=SC1091
+          source /tmp/reguard-clean-wheel-smoke/bin/activate
+          pip install --upgrade "pip>=23" >/dev/null
+          pip install "${WHL}"
+          reguard --version
+          reguard doctor
+          # A second consumer-style invocation: list the known
+          # adapter families without writing to the corpus DB.
+          reguard list
+          deactivate
 
       - name: Re-parse tag and record authoritative hashes
         id: parse
