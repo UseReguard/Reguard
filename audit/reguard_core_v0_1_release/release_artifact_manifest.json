@@ -5,7 +5,7 @@
   "pypi_project": "reguard",
   "ghcr_reference": "ghcr.io/usereguard/reguard-runtime:0.1.0rc1",
   "release_tag": "v0.1.0-rc.1",
-  "final_rc1_tag_target_sha": "PENDING_WORKFLOW_CORRECTION_COMMIT",
+  "final_rc1_tag_target_sha": "2d31c4375fa72ee7a005009c8fa3a4e4ed8c08f5",
   "final_release_source_sha": "25a72091f3fd44e5b1ff493af37a3511f70c7032",
   "final_release_source_sha_note": "Preparation commit SHA. The tag target SHA is the workflow-correction commit landed in this phase; the manifest's own SHA-recording commit does not change the artifacts.",
   "source_tree_clean": true,
@@ -25,7 +25,7 @@
     "local_pre_tag_wheel_size_bytes": 206379,
     "ci_release_wheel_sha256": "PENDING_EXTERNAL_PUBLICATION",
     "ci_release_wheel_size_bytes": "PENDING_EXTERNAL_PUBLICATION",
-    "built_from_sha": "PENDING_FINAL_RC1_TAG_TARGET_SHA",
+    "built_from_sha": "2d31c4375fa72ee7a005009c8fa3a4e4ed8c08f5",
     "ci_release_runtime_digest": "PENDING_EXTERNAL_PUBLICATION"
   },
   "sdist": {
