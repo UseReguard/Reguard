@@ -1,0 +1,270 @@
+# Reguard Core release workflow
+#
+# Trigger: push of a tag matching `v*` to UseReguard/Reguard.
+#
+# Stages (each is a separate job; jobs declare only the permissions
+# they require):
+#
+#   validate   — verify tag matches package version (fail loudly if not)
+#   build      — run tests, build exact wheel+sdist, upload as artifacts
+#   publish-pypi   — Trusted Publishing (OIDC); downloads build artifacts
+#   publish-runtime — push runtime image to GHCR (secrets.GITHUB_TOKEN)
+#   release    — create the GitHub Release with the prepared notes
+#
+# No job exposes publication credentials to the target agent runtime.
+# No long-lived PyPI tokens are stored in the repository.
+# No `latest` tag is published for an RC.
+
+name: release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions: {}
+
+env:
+  PYTHON_VERSION: "3.12"
+
+jobs:
+
+  validate:
+    name: Validate tag matches package version
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Extract package version
+        id: pkg
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -c "import tomllib, pathlib; \
+            d=tomllib.loads(pathlib.Path('pyproject.toml').read_text()); \
+            print(d['project']['version'])" > pkg_version.txt
+          PKG_VERSION=$(cat pkg_version.txt)
+          TAG=${GITHUB_REF_NAME}
+          echo "tag=${TAG}"          >> "$GITHUB_OUTPUT"
+          echo "pkg_version=${PKG_VERSION}" >> "$GITHUB_OUTPUT"
+          echo "tag=${TAG}"
+          echo "package_version=${PKG_VERSION}"
+          # Convention: tag is `vX.Y.Z` (or `vX.Y.Z-rc.N`); package version is
+          # `X.Y.Z` (or `X.Y.ZrcN`). We require that stripping the leading
+          # `v` and replacing the first hyphen with `.` reproduces the
+          # package version exactly.
+          EXPECTED=$(echo "${TAG}" | sed -E 's/^v//; s/-rc\./rc/')
+          if [ "${EXPECTED}" != "${PKG_VERSION}" ]; then
+            echo "::error::Tag ${TAG} (expected ${EXPECTED}) does not match pyproject.toml version ${PKG_VERSION}."
+            exit 1
+          fi
+
+      - name: Reject accidental non-prerelease promotion
+        shell: bash
+        run: |
+          set -euo pipefail
+          PKG_VERSION=$(cat pkg_version.txt)
+          TAG=${GITHUB_REF_NAME}
+          if echo "${PKG_VERSION}" | grep -qE 'rc|a|b|dev|alpha|beta'; then
+            echo "Prerelease version detected (${PKG_VERSION}); RC publication allowed."
+          else
+            # Stable: refuse to publish if this is the FIRST time that
+            # package version appears in any tag (basic anti-replay).
+            if gh release view "${TAG}" >/dev/null 2>&1; then
+              echo "::error::Tag ${TAG} already exists; refusing to overwrite."
+              exit 1
+            fi
+          fi
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+  build:
+    name: Test and build exact artifacts
+    needs: validate
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install build tooling
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade "pip>=23" "build>=1.0" "pytest>=8"
+
+      - name: Run tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          pytest tests/ -q
+
+      - name: Build wheel and sdist
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf build dist src/*.egg-info src/compliance.egg-info
+          python -m build --sdist --wheel
+
+      - name: twine check
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --quiet twine
+          python -m twine check dist/*
+
+      - name: Record source SHA and hashes
+        id: meta
+        shell: bash
+        run: |
+          set -euo pipefail
+          SHA=$(git rev-parse HEAD)
+          WHL_SHA=$(sha256sum dist/*.whl | awk '{print $1}')
+          SDIST_SHA=$(sha256sum dist/*.tar.gz | awk '{print $1}')
+          echo "sha=${SHA}"                >> "$GITHUB_OUTPUT"
+          echo "wheel_sha=${WHL_SHA}"      >> "$GITHUB_OUTPUT"
+          echo "sdist_sha=${SDIST_SHA}"    >> "$GITHUB_OUTPUT"
+          echo "sha=${SHA}"                >> "$GITHUB_ENV"
+          echo "wheel_sha=${WHL_SHA}"      >> "$GITHUB_ENV"
+          echo "sdist_sha=${SDIST_SHA}"    >> "$GITHUB_ENV"
+
+      - name: Upload artifacts for downstream jobs
+        uses: actions/upload-artifact@v4
+        with:
+          name: reguard-dist-${{ github.ref_name }}
+          path: |
+            dist/*.whl
+            dist/*.tar.gz
+          if-no-files-found: error
+          retention-days: 14
+
+  publish-pypi:
+    name: Publish to PyPI (Trusted Publishing)
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+    permissions:
+      id-token: write   # required for PyPI OIDC
+    steps:
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: reguard-dist-${{ github.ref_name }}
+          path: dist
+
+      - name: Publish to PyPI via Trusted Publishing
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: dist
+          # skip-existing is intentionally NOT set; refusing to overwrite
+          # the same filename is the desired behaviour (runbook §11).
+
+  publish-runtime:
+    name: Build and push GHCR runtime image
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push runtime image
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: runtime/Dockerfile
+          push: true
+          tags: |
+            ghcr.io/usereguard/reguard-runtime:${{ github.ref_name }}
+            ghcr.io/usereguard/reguard-runtime:${{ steps.meta.outputs.sha }}
+          build-args: |
+            REGUARD_SOURCE_REVISION=${{ steps.meta.outputs.sha }}
+            REGUARD_SOURCE_VERSION=${{ github.ref_name }}
+          provenance: true
+
+      - name: Record published digest
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "${{ steps.build.conclusion }}" != "success" ]; then
+            echo "::warning::Runtime build/push did not succeed; skipping digest capture."
+            exit 0
+          fi
+          DIGEST=$(docker inspect --format='{{index .RepoDigests 0}}' \
+            "ghcr.io/usereguard/reguard-runtime:${{ github.ref_name }}" || true)
+          if [ -n "${DIGEST}" ]; then
+            echo "runtime_digest=${DIGEST}" >> "$GITHUB_OUTPUT"
+            echo "runtime_digest=${DIGEST}" >> "$GITHUB_ENV"
+          fi
+
+    outputs:
+      runtime_digest: ${{ steps.build.outputs.digest }}
+
+  release:
+    name: Create GitHub Release
+    needs: [build, publish-pypi, publish-runtime]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: reguard-dist-${{ github.ref_name }}
+          path: dist
+
+      - name: Read prepared release notes
+        uses: actions/checkout@v4
+        with:
+          path: notes_src
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: "Reguard Core ${{ github.ref_name }}"
+          body_path: notes_src/audit/reguard_core_v0_1_release/rc_release_notes.md
+          draft: false
+          prerelease: ${{ contains(github.ref_name, '-rc') }}
+          files: |
+            dist/*.whl
+            dist/*.tar.gz
+          fail_on_unmatched_files: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

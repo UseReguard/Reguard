@@ -133,22 +133,22 @@ the manifest.
 Target concept:
 
 ```text
-ghcr.io/<actual-owner>/reguard-runtime:0.1.0rc1
+ghcr.io/usereguard/reguard-runtime:0.1.0rc1
 ```
 
 If the runtime image is built from the runtime/ subtree:
 
 ```bash
 cd runtime/
-docker build -t ghcr.io/<owner>/reguard-runtime:0.1.0rc1 .
-docker push ghcr.io/<owner>/reguard-runtime:0.1.0rc1
+docker build -t ghcr.io/usereguard/reguard-runtime:0.1.0rc1 .
+docker push ghcr.io/usereguard/reguard-runtime:0.1.0rc1
 ```
 
 Record the immutable digest:
 
 ```bash
 docker inspect --format='{{index .RepoDigests 0}}' \
-  ghcr.io/<owner>/reguard-runtime:0.1.0rc1
+  ghcr.io/usereguard/reguard-runtime:0.1.0rc1
 ```
 
 Persist the tag and digest in the run provenance for any
@@ -171,7 +171,7 @@ python -m twine upload dist/reguard-0.1.0rc1-py3-none-any.whl \
 ```
 
 **Preferred:** Trusted publishing. Configure on PyPI once for the
-repository `Reguard-Core/reguard` with environment `pypi` and
+repository `UseReguard/Reguard` with environment `pypi` and
 workflow file `.github/workflows/release.yml` (or whichever workflow
 runs `twine upload`). No PyPI token in GitHub Secrets required.
 
@@ -225,7 +225,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: Reguard-Core/reguard@v0.1.0-rc.1
+      - uses: UseReguard/Reguard@v0.1.0-rc.1
         with:
           reguard-version: 0.1.0rc1    # pinned for the RC
           fail-on: FAIL,ERROR,UNKNOWN,UNSUPPORTED
@@ -305,7 +305,7 @@ reguard list                       # expect: langgraph-state family listed
 In a separate, fresh consumer directory (NOT the Reguard repo):
 
 ```bash
-git clone https://github.com/Reguard-Core/reguard /tmp/reguard-v0_1_consumer_demo
+git clone https://github.com/UseReguard/Reguard /tmp/reguard-v0_1_consumer_demo
 cd /tmp/reguard-v0_1_consumer_demo/examples/minimal-agent
 reguard doctor --repo-path .
 reguard check  --repo-path .

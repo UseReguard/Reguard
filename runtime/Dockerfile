@@ -19,6 +19,20 @@
 
 FROM python:3.12-slim-bookworm
 
+# Canonical-source labels (per brief §7).
+# org.opencontainers.image.revision and org.opencontainers.image.version
+# are provided by the release workflow at build time via --build-arg.
+ARG REGUARD_SOURCE_REVISION=""
+ARG REGUARD_SOURCE_VERSION=""
+LABEL org.opencontainers.image.title="reguard-runtime" \
+      org.opencontainers.image.description="Deterministic runtime probe for Reguard Core technical-control checks." \
+      org.opencontainers.image.source="https://github.com/UseReguard/Reguard" \
+      org.opencontainers.image.url="https://github.com/UseReguard/Reguard" \
+      org.opencontainers.image.vendor="UseReguard" \
+      org.opencontainers.image.licenses="AGPL-3.0-only" \
+      org.opencontainers.image.revision="${REGUARD_SOURCE_REVISION}" \
+      org.opencontainers.image.version="${REGUARD_SOURCE_VERSION}"
+
 # ---------------------------------------------------------------------------
 # System packages
 # ---------------------------------------------------------------------------

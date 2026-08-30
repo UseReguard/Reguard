@@ -60,7 +60,7 @@ reguard check
 ### Deterministic example
 
 ```bash
-git clone https://github.com/Reguard-Core/reguard
+git clone https://github.com/UseReguard/Reguard
 cd reguard/examples/minimal-agent
 reguard check --repo-path .
 ```
@@ -83,7 +83,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: Reguard-Core/reguard@v0.1.0-rc.1
+      - uses: UseReguard/Reguard@v0.1.0-rc.1
         with:
           reguard-version: 0.1.0rc1
           fail-on: FAIL,ERROR

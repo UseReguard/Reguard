@@ -42,8 +42,9 @@ dev = [
 reguard = "compliance.cli.main:main"
 
 [project.urls]
-Repository = "https://github.com/Reguard-Core/reguard"
-Issues = "https://github.com/Reguard-Core/reguard/issues"
+Homepage = "https://github.com/UseReguard/Reguard"
+Repository = "https://github.com/UseReguard/Reguard"
+Issues = "https://github.com/UseReguard/Reguard/issues"
 
 [build-system]
 requires = ["setuptools>=77", "wheel"]

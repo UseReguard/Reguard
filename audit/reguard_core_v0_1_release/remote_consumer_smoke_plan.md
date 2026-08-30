@@ -25,9 +25,9 @@ The smoke test is run against a fresh repository that:
 
 1. **PyPI publish**: `reguard==0.1.0rc1` wheel uploaded and visible
    on https://pypi.org/project/reguard/.
-2. **GHCR publish**: `ghcr.io/reguard-core/reguard-runtime:0.1.0rc1`
+2. **GHCR publish**: `ghcr.io/usereguard/reguard-runtime:0.1.0rc1`
    image pushed and visible.
-3. **GitHub tag**: `Reguard-Core/reguard@v0.1.0-rc.1` tag pushed
+3. **GitHub tag**: `UseReguard/Reguard@v0.1.0-rc.1` tag pushed
    to GitHub.
 4. **GitHub release**: `v0.1.0-rc.1` draft release created (if
    desired; not strictly required for the smoke).
@@ -35,7 +35,7 @@ The smoke test is run against a fresh repository that:
 ## Test consumer repository
 
 Create a fresh public repository, e.g.
-`https://github.com/Reguard-Core/reguard-rc1-consumer-smoke`.
+`https://github.com/UseReguard/reguard-rc1-consumer-smoke`.
 Its only contents are:
 
 ```yaml
@@ -53,9 +53,9 @@ jobs:
       - uses: actions/checkout@v4
       - name: Add demo
         run: |
-          git clone https://github.com/Reguard-Core/reguard
+          git clone https://github.com/UseReguard/Reguard
           cp -r reguard/examples/minimal-agent/* .
-      - uses: Reguard-Core/reguard@v0.1.0-rc.1
+      - uses: UseReguard/Reguard@v0.1.0-rc.1
         with:
           reguard-version: 0.1.0rc1
           fail-on: FAIL,ERROR,UNKNOWN,UNSUPPORTED
@@ -67,7 +67,7 @@ jobs:
       OPENAI_API_KEY: ${{ secrets.SHOULD_NOT_BE_USED }}
     steps:
       - uses: actions/checkout@v4
-      - uses: Reguard-Core/reguard@v0.1.0-rc.1
+      - uses: UseReguard/Reguard@v0.1.0-rc.1
         with:
           reguard-version: 0.1.0rc1
           fail-on: FAIL,ERROR,UNKNOWN,UNSUPPORTED
@@ -97,7 +97,7 @@ Additionally:
 
 - `pip install reguard==0.1.0rc1` from PyPI installs a working
   wheel.
-- The composite action `Reguard-Core/reguard@v0.1.0-rc.1` from
+- The composite action `UseReguard/Reguard@v0.1.0-rc.1` from
   GitHub resolves.
 - The action's `reguard-version` input correctly triggers a
   PyPI install.

@@ -1,8 +1,14 @@
 {
   "reguard_version": "0.1.0rc1",
-  "source_git_sha_at_hygiene_pass": "30f2ce0ae1d535033f2a086c27096e6b21329221",
-  "source_tree_clean": false,
-  "source_tree_clean_note": "Hygiene changes are STAGED for removal/addition but NOT yet committed. The repo HEAD still reflects the pre-hygiene state. The intended release SHA is a new commit (TBD) that bundles the staged D and M entries plus the new untracked (??) entries intended for v0.1 productization (action.yml, examples/, integrations/, src/compliance/{cli,corpus_runner,integrations}/, tests/{cache,cli,corpus,evidence,integrations,security}/, audit/reguard_core_v0_1{,_release}/, audit/integration_discovery/, audit/gate2_p3/, audit/corpus_pipeline_architecture_diagnosis.md, migrations/006-011.sql, scripts/migrate_add_corpus_runs.py, etc.).",
+  "canonical_github_owner": "UseReguard",
+  "canonical_repository": "UseReguard/Reguard",
+  "pypi_project": "reguard",
+  "ghcr_reference": "ghcr.io/usereguard/reguard-runtime:0.1.0rc1",
+  "release_tag": "v0.1.0-rc.1",
+  "final_release_source_sha": "SELF_REFERENCING_FOLLOWUP_COMMIT",
+  "final_release_source_sha_note": "The first preparation commit does not record its own SHA; the SHA is recorded in the immediately following commit that records hashes. This avoids a self-referencing commit (recording the SHA of a commit that includes the SHA).",
+  "source_tree_clean": true,
+  "source_tree_clean_note": "Hygiene + productization commit landed at 62cf60a. Canonical-ownership + trusted-publishing-prep commit lands in this phase; the FINAL_RELEASE_SOURCE_SHA is recorded after that commit is created.",
   "build_timestamp": "2026-08-30",
   "python_version": "3.14.4",
   "build_tool_versions": {
@@ -14,17 +20,15 @@
   "license_expression": "AGPL-3.0-only",
   "wheel": {
     "filename": "dist/reguard-0.1.0rc1-py3-none-any.whl",
-    "sha256": "51ab440dcaf65b7728bd9a841fab32803c898ce56ae870895a362c80a462df73",
-    "size_bytes": 205601,
-    "post_schema_change": true,
-    "schema_change": "Added runtime_image_reference and runtime_image_digest fields to RunRecord and result.json (commands_check.py + pipeline/types.py)."
+    "sha256": "8118e9874b1d236c4d5f735f7c9133c20918eaa35b71c1e9cc69679ff7d5c72f",
+    "size_bytes": 206379,
+    "built_from_sha": "PREPARATION_COMMIT_SHA_TO_BE_FILLED_BY_FOLLOWUP_COMMIT"
   },
   "sdist": {
     "filename": "dist/reguard-0.1.0rc1.tar.gz",
-    "sha256": "fd8e83f5080b1602259de1cb07cf407746c116e3282975f3347216a0567c9b00",
-    "size_bytes": 170996,
-    "post_schema_change": true,
-    "schema_change": "Sdist rebuilt after adding runtime_image_reference and runtime_image_digest fields to RunRecord."
+    "sha256": "4634eefebe7fd7f59f3d7188205a2093e7e96095e62ff5a4a956fbda7c2c1098",
+    "size_bytes": 171820,
+    "built_from_sha": "PREPARATION_COMMIT_SHA_TO_BE_FILLED_BY_FOLLOWUP_COMMIT"
   },
   "reproducible_build": {
     "wheel_byte_identical": true,
@@ -129,11 +133,16 @@
     ]
   },
   "external_publication_status": {
-    "pypi_publish": "PENDING_PUBLICATION_ACTION",
-    "oci_image_publish": "PENDING_PUBLICATION_ACTION",
+    "pypi_publish": "PENDING_TRUSTED_PUBLISHER_SETUP",
+    "oci_image_publish": "PENDING_TRUSTED_PUBLISHER_SETUP",
     "remote_github_action_smoke": "PENDING_EXTERNAL_PUBLICATION",
-    "github_release_tag": "PENDING_PUBLICATION_ACTION"
+    "github_release_tag": "PENDING_TRUSTED_PUBLISHER_SETUP",
+    "release_workflow": ".github/workflows/release.yml",
+    "pypi_publisher_mode": "trusted_publishing_oidc",
+    "ghcr_publisher_mode": "github_token"
   },
+  "publication_status": "PENDING_EXTERNAL_PUBLICATION",
+  "remote_consumer_smoke_status": "PENDING_EXTERNAL_PUBLICATION",
   "oci_runtime_image": {
     "image_name": "reguard-runtime",
     "build_command": "podman build -f runtime/Dockerfile .",
@@ -141,7 +150,7 @@
     "input_mount": "/input (read-only)",
     "artifacts_mount": "/artifacts (writable)",
     "local_test_digest": "sha256:dae7aea7741739ff1c0d1765a65c534199e080609039a0ae30816a13605a4108",
-    "public_image_reference_pending": "ghcr.io/reguard-core/reguard-runtime:0.1.0rc1",
+    "public_image_reference_pending": "ghcr.io/usereguard/reguard-runtime:0.1.0rc1",
     "provenance_fields_wired": true,
     "provenance_env_vars": ["REGUARD_RUNTIME_IMAGE", "REGUARD_RUNTIME_IMAGE_DIGEST"]
   },
