@@ -237,6 +237,133 @@ def test_shasums_generated_and_uploaded() -> None:
     assert "SHA256SUMS" in text, "build job must include SHA256SUMS in upload path"
 
 
+def test_pypi_packages_dir_contains_only_distributions() -> None:
+    """PYPI_PACKAGES_DIR_CONTAINS_DISTS_ONLY invariant (brief §6).
+
+    The PyPA publisher uploads ``packages-dir/*`` to PyPI. If
+    ``SHA256SUMS`` is in that directory, Twine receives a non-distribution
+    file and the publish step fails.
+
+    The corrected workflow downloads all artifacts into
+    ``release-artifacts/`` and stages a separate ``pypi-dist/``
+    directory containing only the wheel + sdist.
+    """
+    text = _job_yaml("publish-pypi")
+
+    # The pypa step must point at pypi-dist, not at the directory
+    # containing SHA256SUMS.
+    job = _all_jobs()["publish-pypi"]
+    for step in job.get("steps", []):
+        if step.get("uses", "").startswith("pypa/gh-action-pypi-publish"):
+            with_ = step.get("with", {})
+            assert with_.get("packages-dir") == "pypi-dist", (
+                "pypa action packages-dir must be 'pypi-dist' (a dists-only directory)"
+            )
+            break
+    else:
+        pytest.fail("pypa/gh-action-pypi-publish step not found in publish-pypi")
+
+    # SHA256SUMS must NOT be passed to the PyPI action. It should
+    # be downloaded into release-artifacts (where it is verified)
+    # and the staging step copies only *.whl and *.tar.gz into pypi-dist.
+    assert "release-artifacts" in text, (
+        "publish-pypi must download artifacts into release-artifacts/"
+    )
+    assert "pypi-dist" in text, "publish-pypi must stage distributions into pypi-dist/"
+    assert "cp release-artifacts/*.whl" in text, "publish-pypi must copy wheel into pypi-dist"
+    assert "cp release-artifacts/*.tar.gz" in text, "publish-pypi must copy sdist into pypi-dist"
+
+    # The staging step must assert exactly one wheel + one sdist.
+    assert "WHL_COUNT" in text, (
+        "publish-pypi staging must count wheels in pypi-dist"
+    )
+    assert "SDIST_COUNT" in text, (
+        "publish-pypi staging must count sdists in pypi-dist"
+    )
+    assert "ALL_COUNT" in text, (
+        "publish-pypi staging must assert total file count"
+    )
+
+    # SHA256SUMS is verified but never staged into pypi-dist.
+    assert "sha256sum -c SHA256SUMS" in text, (
+        "publish-pypi must verify artifacts against SHA256SUMS before staging"
+    )
+    assert "cp release-artifacts/SHA256SUMS" not in text, (
+        "SHA256SUMS must NEVER be copied into pypi-dist"
+    )
+
+
+def test_shasums_retained_for_github_release() -> None:
+    """The release job must attach wheel + sdist + SHA256SUMS."""
+    text = _job_yaml("release")
+    assert "release-artifacts/*.whl" in text
+    assert "release-artifacts/*.tar.gz" in text
+    assert "release-artifacts/SHA256SUMS" in text
+    assert "prerelease:" in text
+
+
+def test_workflow_trigger_uses_glob_not_regex() -> None:
+    """GitHub Actions tag filters are globs, not regular expressions.
+
+    A pattern like ``v[0-9]+.[0-9]+.[0-9]+`` is interpreted literally
+    and would not match ``v0.1.0-rc.1``. The workflow must therefore
+    use a broad ``v*`` trigger and rely on the ``validate`` job to
+    reject malformed tags. This test pins that design.
+    """
+    wf = _load_workflow()
+    tags = wf[True]["push"]["tags"]
+    assert tags == ["v*"], (
+        f"workflow trigger must be the broad glob 'v*'; got {tags!r}. "
+        "GitHub Actions tag filters do NOT support regex character classes."
+    )
+
+
+def test_workflow_triggers_for_v0_1_0_rc_1() -> None:
+    """GitHub's glob ``v*`` must match ``v0.1.0-rc.1``.
+
+    This is the only tag the RC1 publication will use; if the
+    trigger does not match, the workflow never runs.
+    """
+    import fnmatch
+    assert fnmatch.fnmatchcase("v0.1.0-rc.1", "v*"), (
+        "glob 'v*' must match 'v0.1.0-rc.1'; "
+        "if this fails, the workflow trigger is wrong"
+    )
+
+
+def test_no_invalid_runtime_reference_output() -> None:
+    """The workflow must not declare a non-existent runtime_reference output.
+
+    docker/build-push-action does NOT provide a ``runtime_reference``
+    output. Only ``digest`` is consumed. Any invented output is a
+    release blocker.
+    """
+    job = _all_jobs().get("publish-runtime", {})
+    outputs = job.get("outputs", {})
+    # digest is the only documented output of build-push-action.
+    assert outputs == {"runtime_digest": "${{ steps.build.outputs.digest }}"}, (
+        f"publish-runtime.outputs must equal {{runtime_digest: <digest-expr>}}; got {outputs!r}"
+    )
+
+
+def test_digest_is_only_docker_action_output_used() -> None:
+    """Only ``digest`` is consumed from docker/build-push-action outputs.
+
+    Any other output reference (e.g. ``metadata``, ``imageID``)
+    must be intentional and documented; we currently use only the
+    digest.
+    """
+    text = _job_yaml("publish-runtime")
+    # ``steps.build.outputs.digest`` must be the action output consumed.
+    assert "steps.build.outputs.digest" in text
+    # No other ``steps.build.outputs.*`` references.
+    import re as _re
+    for m in _re.finditer(r"steps\.build\.outputs\.([a-zA-Z_]+)", text):
+        assert m.group(1) == "digest", (
+            f"unexpected docker/build-push-action output consumed: steps.build.outputs.{m.group(1)}"
+        )
+
+
 def test_runtime_digest_sourced_from_action_output() -> None:
     """Digest must come from steps.build.outputs.digest, not docker inspect."""
     text = _job_yaml("publish-runtime")
@@ -252,9 +379,9 @@ def test_runtime_digest_sourced_from_action_output() -> None:
 def test_release_attachments_include_shasums() -> None:
     """GitHub Release must attach wheel + sdist + SHA256SUMS, with prerelease flag for RCs."""
     text = _job_yaml("release")
-    assert "dist/*.whl" in text
-    assert "dist/*.tar.gz" in text
-    assert "dist/SHA256SUMS" in text
+    assert "release-artifacts/*.whl" in text
+    assert "release-artifacts/*.tar.gz" in text
+    assert "release-artifacts/SHA256SUMS" in text
     assert "prerelease:" in text
 
 
@@ -283,16 +410,16 @@ def test_github_sha_checked_against_head_in_validate() -> None:
 
 
 def test_workflow_triggers_only_on_valid_tag_shapes() -> None:
-    """on.push.tags must list only the two valid shapes."""
+    """The workflow trigger is intentionally broad; the validate job enforces shape.
+
+    GitHub Actions tag filters are globs, not regular expressions.
+    We use ``v*`` and rely on the strict ``validate`` job to reject
+    malformed tags before any publication. This test pins that
+    design.
+    """
     wf = _load_workflow()
     tags = wf[True]["push"]["tags"]
-    # Either of the two explicit patterns; no broad ``v*``.
-    assert "v*" not in tags, "broad v* trigger would accept malformed tags"
-    assert any("rc" in t for t in tags), "RC tag pattern missing"
-    # Each tag pattern contains two ``.`` characters between three
-    # ``[0-9]+`` groups (the dots are literal regex characters, not
-    # separators).
-    stable_patterns = [t for t in tags if "rc" not in t]
-    assert stable_patterns, "stable v<major>.<minor>.<patch> pattern missing"
-    for t in stable_patterns:
-        assert t.count(".") == 2, f"stable pattern {t!r} has wrong dot count"
+    assert tags == ["v*"], (
+        "workflow trigger must be exactly ['v*']; tag-shape enforcement "
+        "happens in the validate job (see test_strict_tag_parser)"
+    )

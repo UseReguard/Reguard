@@ -25,8 +25,14 @@ name: release
 on:
   push:
     tags:
-      - "v[0-9]+.[0-9]+.[0-9]+"
-      - "v[0-9]+.[0-9]+.[0-9]+-rc.[0-9]+"
+      - "v*"
+# Note: GitHub Actions tag filters are globs, not regular expressions.
+# A pattern like ``v[0-9]+.[0-9]+.[0-9]+`` does NOT match ``v0.1.0-rc.1``
+# because ``[0-9]+`` is interpreted literally. We therefore use a broad
+# ``v*`` trigger and rely on the strict ``validate`` job to reject any
+# tag whose shape is not ``v<major>.<minor>.<patch>`` or
+# ``v<major>.<minor>.<patch>-rc.<number>``. The validate job is the
+# single source of truth for tag-shape enforcement.
 
 permissions: {}
 
@@ -230,22 +236,43 @@ jobs:
     permissions:
       id-token: write
     steps:
-      - name: Download build artifacts
+      - name: Download release artifacts (wheel + sdist + SHA256SUMS)
         uses: actions/download-artifact@v4
         with:
           name: reguard-dist-${{ needs.build.outputs.git_tag }}
-          path: dist
+          path: release-artifacts
 
-      - name: Verify downloaded artifacts against authoritative hashes
+      - name: Verify downloaded artifacts against SHA256SUMS
         shell: bash
         run: |
           set -euo pipefail
-          ( cd dist && sha256sum -c SHA256SUMS )
+          ( cd release-artifacts && sha256sum -c SHA256SUMS )
+
+      - name: Stage PyPI distributions only (no SHA256SUMS)
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf pypi-dist
+          mkdir -p pypi-dist
+          cp release-artifacts/*.whl   pypi-dist/
+          cp release-artifacts/*.tar.gz pypi-dist/
+          # Assert exactly one wheel + one sdist + zero other files.
+          WHL_COUNT=$(find pypi-dist -maxdepth 1 -type f -name '*.whl'   | wc -l)
+          SDIST_COUNT=$(find pypi-dist -maxdepth 1 -type f -name '*.tar.gz' | wc -l)
+          ALL_COUNT=$(find pypi-dist -maxdepth 1 -type f | wc -l)
+          if [ "${WHL_COUNT}"   -ne 1 ] || \
+             [ "${SDIST_COUNT}" -ne 1 ] || \
+             [ "${ALL_COUNT}"   -ne 2 ]; then
+            echo "::error::pypi-dist contents invalid (wheel=${WHL_COUNT}, sdist=${SDIST_COUNT}, all=${ALL_COUNT})"
+            find pypi-dist -maxdepth 1 -type f -printf '%p\n'
+            exit 1
+          fi
+          echo "pypi-dist contains exactly one wheel and one sdist."
 
       - name: Publish to PyPI via Trusted Publishing
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
-          packages-dir: dist
+          packages-dir: pypi-dist
           # skip-existing is intentionally NOT set: a duplicate publish
           # must surface as a hard failure (runbook §11, brief §12).
 
@@ -278,7 +305,6 @@ jobs:
       packages: write
     outputs:
       runtime_digest: ${{ steps.build.outputs.digest }}
-      runtime_reference: ${{ steps.build.outputs.runtime_reference }}
     steps:
       - name: Checkout source at tag commit
         uses: actions/checkout@v4
@@ -342,11 +368,17 @@ jobs:
     permissions:
       contents: write
     steps:
-      - name: Download build artifacts
+      - name: Download release artifacts (wheel + sdist + SHA256SUMS)
         uses: actions/download-artifact@v4
         with:
           name: reguard-dist-${{ needs.build.outputs.git_tag }}
-          path: dist
+          path: release-artifacts
+
+      - name: Verify downloaded artifacts against SHA256SUMS
+        shell: bash
+        run: |
+          set -euo pipefail
+          ( cd release-artifacts && sha256sum -c SHA256SUMS )
 
       - name: Checkout source for release notes
         uses: actions/checkout@v4
@@ -363,9 +395,9 @@ jobs:
           prerelease: ${{ needs.build.outputs.is_prerelease == 'true' }}
           fail_on_unmatched_files: true
           files: |
-            dist/*.whl
-            dist/*.tar.gz
-            dist/SHA256SUMS
+            release-artifacts/*.whl
+            release-artifacts/*.tar.gz
+            release-artifacts/SHA256SUMS
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

@@ -5,11 +5,14 @@
   "pypi_project": "reguard",
   "ghcr_reference": "ghcr.io/usereguard/reguard-runtime:0.1.0rc1",
   "release_tag": "v0.1.0-rc.1",
-  "final_rc1_tag_target_sha": "2d31c4375fa72ee7a005009c8fa3a4e4ed8c08f5",
-  "final_release_source_sha": "25a72091f3fd44e5b1ff493af37a3511f70c7032",
-  "final_release_source_sha_note": "Preparation commit SHA. The tag target SHA is the workflow-correction commit landed in this phase; the manifest's own SHA-recording commit does not change the artifacts.",
+  "preparation_source_sha": "25a72091f3fd44e5b1ff493af37a3511f70c7032",
+  "preparation_source_sha_note": "Canonical-ownership + trusted-publishing-prep commit. Superseded for tag-target provenance by the workflow-correction commit landed in this phase.",
+  "workflow_hardening_parent_sha": "2d31c43002893b6875773bda4507847ee78f5d1d",
+  "workflow_hardening_parent_sha_note": "The release-workflow hardening commit (fix: harden rc release workflow). It is the parent of this correction phase. An earlier manifest draft recorded an erroneous longer-form value of this SHA (2d31c4375fa72ee7a005009c8fa3a4e4ed8c08f5); that value has been removed from active provenance. The real value above is the canonical hardening commit.",
+  "final_rc1_tag_target_sha": "PENDING_FINAL_CORRECTION_COMMIT",
+  "final_rc1_tag_target_sha_note": "The tag v0.1.0-rc.1 must be created at the SHA recorded after the final correction commit lands. The final correction commit itself becomes the tag target; recording its own SHA would be self-referential, so the SHA is recorded in a manifest-only followup commit.",
   "source_tree_clean": true,
-  "source_tree_clean_note": "Hygiene + productization commit landed at 62cf60a. Canonical-ownership + trusted-publishing-prep commit lands in this phase; the FINAL_RELEASE_SOURCE_SHA is recorded after that commit is created.",
+  "source_tree_clean_note": "Hygiene + productization at 62cf60a; canonical-ownership prep at 25a72091; workflow hardening at 2d31c43; final correction in this phase.",
   "build_timestamp": "2026-08-30",
   "python_version": "3.14.4",
   "build_tool_versions": {
@@ -21,17 +24,17 @@
   "license_expression": "AGPL-3.0-only",
   "wheel": {
     "filename": "dist/reguard-0.1.0rc1-py3-none-any.whl",
-    "local_pre_tag_wheel_sha256": "068b2b11730154ee1c36eff7698a563e55b6bbb8f0e97cbb13170d8ad89cc048",
-    "local_pre_tag_wheel_size_bytes": 206379,
+    "local_pre_tag_wheel_sha256": "PENDING_REBUILD_AT_FINAL_CORRECTION_COMMIT",
+    "local_pre_tag_wheel_size_bytes": null,
     "ci_release_wheel_sha256": "PENDING_EXTERNAL_PUBLICATION",
     "ci_release_wheel_size_bytes": "PENDING_EXTERNAL_PUBLICATION",
-    "built_from_sha": "2d31c4375fa72ee7a005009c8fa3a4e4ed8c08f5",
+    "local_pre_tag_built_from_sha": "PENDING_FINAL_CORRECTION_COMMIT",
     "ci_release_runtime_digest": "PENDING_EXTERNAL_PUBLICATION"
   },
   "sdist": {
     "filename": "dist/reguard-0.1.0rc1.tar.gz",
-    "local_pre_tag_sdist_sha256": "1384049df99513e6d08179665e5b7965d7bb542a39eb77b9f4f66f43a87227aa",
-    "local_pre_tag_sdist_size_bytes": 171833,
+    "local_pre_tag_sdist_sha256": "PENDING_REBUILD_AT_FINAL_CORRECTION_COMMIT",
+    "local_pre_tag_sdist_size_bytes": null,
     "ci_release_sdist_sha256": "PENDING_EXTERNAL_PUBLICATION",
     "ci_release_sdist_size_bytes": "PENDING_EXTERNAL_PUBLICATION"
   },
@@ -46,8 +49,8 @@
     "AI_ACT_12_1_AUTOMATIC_EVENT_LOGGING": "1.4.0"
   },
   "test_summary": {
-    "collected": 289,
-    "passed": 289,
+    "collected": 318,
+    "passed": 318,
     "failed": 0,
     "errors": 0,
     "skipped": 0,
@@ -55,7 +58,9 @@
     "frozen_five_tests_pipeline": 103,
     "frozen_five_passed": 103,
     "new_packaging_tests": 4,
-    "new_packaging_tests_file": "tests/packaging/test_namespace_coexistence.py"
+    "new_packaging_tests_file": "tests/packaging/test_namespace_coexistence.py",
+    "release_workflow_tests": 29,
+    "release_workflow_tests_file": "tests/release_workflow/test_release_workflow_validation.py"
   },
   "frozen_five_contracts": {
     "frozen_contract_version": "1.4.0",
@@ -138,13 +143,15 @@
     ]
   },
   "external_publication_status": {
-    "pypi_publish": "PENDING_TAG_TRIGGER_AND_GITHUB_PACKAGE_PERMISSION",
+    "pypi_publish": "PENDING_TRUSTED_PUBLISHER_SETUP",
     "oci_image_publish": "PENDING_TAG_TRIGGER_AND_GITHUB_PACKAGE_PERMISSION",
     "remote_github_action_smoke": "PENDING_EXTERNAL_PUBLICATION",
     "github_release_tag": "PENDING_TAG_TRIGGER_AND_GITHUB_PACKAGE_PERMISSION",
     "release_workflow": ".github/workflows/release.yml",
     "pypi_publisher_mode": "trusted_publishing_oidc",
     "ghcr_publisher_mode": "github_token",
+    "pypi_publication_status_terminology": "PENDING_TRUSTED_PUBLISHER_SETUP until owner configures Trusted Publisher; READY_FOR_TAG_TRIGGER once configured; PENDING_EXTERNAL_PUBLICATION after the tag is pushed and the workflow runs.",
+    "ghcr_publication_status_terminology": "PENDING_TAG_TRIGGER_AND_GITHUB_PACKAGE_PERMISSION or PENDING_EXTERNAL_PUBLICATION; Trusted Publisher terminology must not be used for GHCR.",
     "rc_tag_immutable": true,
     "immutable_tag_policy": "Once v0.1.0-rc.1 is pushed, the tag is permanent. Code or workflow changes after PyPI acceptance require v0.1.0-rc.2. The tag is never moved, force-pushed, deleted, or recreated."
   },
