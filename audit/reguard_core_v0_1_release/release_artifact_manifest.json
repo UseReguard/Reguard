@@ -9,8 +9,8 @@
   "preparation_source_sha_note": "Canonical-ownership + trusted-publishing-prep commit. Superseded for tag-target provenance by the workflow-correction commit landed in this phase.",
   "workflow_hardening_parent_sha": "2d31c43002893b6875773bda4507847ee78f5d1d",
   "workflow_hardening_parent_sha_note": "The release-workflow hardening commit (fix: harden rc release workflow). It is the parent of this correction phase. An earlier manifest draft recorded an erroneous longer-form value of this SHA (2d31c4375fa72ee7a005009c8fa3a4e4ed8c08f5); that value has been removed from active provenance. The real value above is the canonical hardening commit.",
-  "final_rc1_tag_target_sha": "PENDING_FINAL_CORRECTION_COMMIT",
-  "final_rc1_tag_target_sha_note": "The tag v0.1.0-rc.1 must be created at the SHA recorded after the final correction commit lands. The final correction commit itself becomes the tag target; recording its own SHA would be self-referential, so the SHA is recorded in a manifest-only followup commit.",
+  "final_rc1_tag_target_sha": "acd8b685ee6d2a7bd1a6bb25bb08ab1905131913",
+  "final_rc1_tag_target_sha_note": "The tag v0.1.0-rc.1 must point at this SHA. Resolved and verified on UseReguard/Reguard main. The bookkeeping SHA-record is recorded in a separate manifest-only commit so the final correction commit itself remains the canonical tag target.",
   "source_tree_clean": true,
   "source_tree_clean_note": "Hygiene + productization at 62cf60a; canonical-ownership prep at 25a72091; workflow hardening at 2d31c43; final correction in this phase.",
   "build_timestamp": "2026-08-30",
@@ -24,17 +24,17 @@
   "license_expression": "AGPL-3.0-only",
   "wheel": {
     "filename": "dist/reguard-0.1.0rc1-py3-none-any.whl",
-    "local_pre_tag_wheel_sha256": "PENDING_REBUILD_AT_FINAL_CORRECTION_COMMIT",
-    "local_pre_tag_wheel_size_bytes": null,
+    "local_pre_tag_wheel_sha256": "5edc6f0581b72bee4b2db68d130ba118751f5ec349e93985e1c7902de5421688",
+    "local_pre_tag_wheel_size_bytes": 206379,
     "ci_release_wheel_sha256": "PENDING_EXTERNAL_PUBLICATION",
     "ci_release_wheel_size_bytes": "PENDING_EXTERNAL_PUBLICATION",
-    "local_pre_tag_built_from_sha": "PENDING_FINAL_CORRECTION_COMMIT",
+    "local_pre_tag_built_from_sha": "acd8b685ee6d2a7bd1a6bb25bb08ab1905131913",
     "ci_release_runtime_digest": "PENDING_EXTERNAL_PUBLICATION"
   },
   "sdist": {
     "filename": "dist/reguard-0.1.0rc1.tar.gz",
-    "local_pre_tag_sdist_sha256": "PENDING_REBUILD_AT_FINAL_CORRECTION_COMMIT",
-    "local_pre_tag_sdist_size_bytes": null,
+    "local_pre_tag_sdist_sha256": "5ae54537d83a602594509d3840dad0a288675b285b7298eb8c3c899336db9ca8",
+    "local_pre_tag_sdist_size_bytes": 171836,
     "ci_release_sdist_sha256": "PENDING_EXTERNAL_PUBLICATION",
     "ci_release_sdist_size_bytes": "PENDING_EXTERNAL_PUBLICATION"
   },
@@ -49,8 +49,8 @@
     "AI_ACT_12_1_AUTOMATIC_EVENT_LOGGING": "1.4.0"
   },
   "test_summary": {
-    "collected": 318,
-    "passed": 318,
+    "collected": 324,
+    "passed": 324,
     "failed": 0,
     "errors": 0,
     "skipped": 0,
@@ -59,7 +59,7 @@
     "frozen_five_passed": 103,
     "new_packaging_tests": 4,
     "new_packaging_tests_file": "tests/packaging/test_namespace_coexistence.py",
-    "release_workflow_tests": 29,
+    "release_workflow_tests": 35,
     "release_workflow_tests_file": "tests/release_workflow/test_release_workflow_validation.py"
   },
   "frozen_five_contracts": {
