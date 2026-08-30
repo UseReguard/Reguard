@@ -208,11 +208,15 @@ jobs:
           set -euo pipefail
           pytest tests/packaging/ -v
 
-      # Clean wheel smoke: install the freshly built wheel into a
-      # fresh virtualenv and run the public CLI. This is the
+      # Clean wheel smoke — installs the freshly built wheel into a
+      # fresh virtualenv, asserts import provenance, runs the public
+      # CLI commands, and executes a real `reguard check` against
+      # the deterministic minimal-agent fixture. This is the
       # closest in-tree simulation of a real consumer installing
-      # from PyPI.
-      - name: Clean wheel smoke (install + reguard --version)
+      # from PyPI. The smoke must NOT depend on
+      # data/eu_ai_compliance.db and must NOT use any PYTHONPATH /
+      # editable-install override.
+      - name: Clean installed-wheel smoke
         shell: bash
         run: |
           set -euo pipefail
@@ -227,7 +231,64 @@ jobs:
           # A second consumer-style invocation: list the known
           # adapter families without writing to the corpus DB.
           reguard list
+          # Installed-wheel provenance: the package must resolve
+          # from site-packages, not from the checked-out source tree.
+          python - <<'PY'
+          from pathlib import Path
+          import compliance
+          path = Path(compliance.__file__).resolve()
+          print(f"compliance.__file__={path}")
+          if "site-packages" not in str(path):
+              raise SystemExit(
+                  f"expected compliance import from installed wheel site-packages, got: {path}"
+              )
+          PY
+          # Confirm the public CLI does not require the research DB.
+          test ! -e data/eu_ai_compliance.db
           deactivate
+          {
+            echo "## Clean installed-wheel smoke (CLI commands)"
+            echo
+            echo "- reguard --version: PASS"
+            echo "- reguard doctor:    PASS"
+            echo "- reguard list:      PASS"
+            echo "- compliance import: site-packages (PASS)"
+            echo "- data/eu_ai_compliance.db: absent (PASS — public CLI does not require it)"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # Clean installed-wheel check: a real `reguard check` against
+      # the deterministic minimal-agent fixture, executed from the
+      # fresh venv so the wheel is the only ``compliance`` import.
+      # Uses the local ``reguard-runtime:ci-test`` image (built
+      # earlier in this job) via the REGUARD_RUNTIME_IMAGE env var
+      # declared at job scope; no public-registry pull.
+      - name: Clean installed-wheel check (reguard check)
+        shell: bash
+        run: |
+          set -euo pipefail
+          # shellcheck disable=SC1091
+          source /tmp/reguard-clean-wheel-smoke/bin/activate
+          FIXTURE_PATH="${GITHUB_WORKSPACE}/examples/minimal-agent"
+          test -d "${FIXTURE_PATH}"
+          set +e
+          reguard check \
+            --repo-path "${FIXTURE_PATH}" \
+            --repo SWE-agent/mini-swe-agent
+          CHECK_RC=$?
+          set -e
+          if [ "${CHECK_RC}" -ne 0 ]; then
+            echo "::error::reguard check exited with non-zero status ${CHECK_RC}; clean-wheel smoke FAILED."
+            exit "${CHECK_RC}"
+          fi
+          echo "reguard check exit code: 0 (PASS)"
+          deactivate
+          {
+            echo "## Clean installed-wheel check"
+            echo
+            echo "- Command: reguard check --repo-path examples/minimal-agent --repo SWE-agent/mini-swe-agent"
+            echo "- Exit code: 0"
+            echo "- Result: PASS"
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Re-parse tag and record authoritative hashes
         id: parse

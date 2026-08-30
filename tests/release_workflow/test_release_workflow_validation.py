@@ -523,9 +523,88 @@ def test_pre_tag_workflow_runs_clean_wheel_smoke() -> None:
     """Clean wheel smoke must install the freshly built wheel into a
     fresh venv and exercise the public CLI."""
     text = PRE_TAG_PATH.read_text()
-    assert "Clean wheel smoke" in text
+    assert "Clean wheel smoke" in text or "Clean installed-wheel smoke" in text
     assert "reguard --version" in text
     assert "reguard doctor" in text
+
+
+def test_pre_tag_workflow_runs_clean_installed_wheel_check() -> None:
+    """The pre-tag gate must execute a real ``reguard check`` against
+    the deterministic minimal-agent fixture from a fresh venv that
+    contains ONLY the built wheel — no editable install, no
+    PYTHONPATH override, no research DB.
+
+    This is the authoritative Python 3.12 end-to-end check for the
+    RC2 source SHA; without it, the pre-tag gate cannot prove the
+    fresh wheel actually runs the public CLI.
+    """
+    text = PRE_TAG_PATH.read_text()
+    # The check step must exist as a separate named step so its log
+    # output is unambiguous in the Actions UI.
+    assert "Clean installed-wheel check" in text, (
+        "pre-tag must declare a dedicated 'Clean installed-wheel check' step"
+    )
+    assert "reguard check" in text, (
+        "pre-tag must invoke 'reguard check' in the installed-wheel smoke"
+    )
+    assert "examples/minimal-agent" in text, (
+        "pre-tag reguard check must target the deterministic "
+        "examples/minimal-agent fixture"
+    )
+    assert "SWE-agent/mini-swe-agent" in text, (
+        "pre-tag reguard check must run against the "
+        "SWE-agent/mini-swe-agent repository identity"
+    )
+    # Site-packages provenance: the wheel must NOT be bypassed by an
+    # editable install or PYTHONPATH override.
+    assert 'pip install "${WHL}"' in text or "pip install \"${WHL}\"" in text
+    assert "site-packages" in text, (
+        "pre-tag must assert that 'compliance' resolves from "
+        "site-packages — not from the checked-out source tree"
+    )
+    assert "compliance.__file__" in text
+    # Public CLI must not require the research DB.
+    assert "eu_ai_compliance.db" in text and "test ! -e" in text, (
+        "pre-tag must explicitly assert that data/eu_ai_compliance.db "
+        "is absent (public CLI does not require it)"
+    )
+
+
+def test_release_workflow_mirrors_pre_tag_clean_installed_wheel_check() -> None:
+    """release.yml must contain the same clean installed-wheel
+    check sequence as pre-tag.yml — divergence is a release
+    blocker (``BLOCKED_WORKFLOW_DIVERGENCE``)."""
+    pre_tag = PRE_TAG_PATH.read_text()
+    release = WORKFLOW_PATH.read_text()
+    for needle in (
+        "Clean installed-wheel smoke",
+        "Clean installed-wheel check",
+        "reguard check",
+        "examples/minimal-agent",
+        "SWE-agent/mini-swe-agent",
+        "site-packages",
+        "compliance.__file__",
+        "eu_ai_compliance.db",
+        "reguard --version",
+        "reguard doctor",
+        "reguard list",
+    ):
+        assert needle in pre_tag, f"pre-tag missing {needle!r}"
+        assert needle in release, (
+            f"release.yml missing {needle!r} — workflow divergence"
+        )
+
+    # The check step must occur AFTER the wheel-install step in BOTH
+    # workflows (no check before install).
+    for name, text in (("pre-tag", pre_tag), ("release", release)):
+        install_pos = text.find('pip install "${WHL}"')
+        check_pos = text.find("reguard check \\")
+        assert install_pos != -1 and check_pos != -1, (
+            f"{name}: missing install or check anchor"
+        )
+        assert install_pos < check_pos, (
+            f"{name}: reguard check must occur AFTER wheel install"
+        )
 
 
 def test_pre_tag_workflow_translates_pep440_to_tag() -> None:
