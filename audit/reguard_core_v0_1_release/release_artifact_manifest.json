@@ -5,8 +5,9 @@
   "pypi_project": "reguard",
   "ghcr_reference": "ghcr.io/usereguard/reguard-runtime:0.1.0rc1",
   "release_tag": "v0.1.0-rc.1",
+  "final_rc1_tag_target_sha": "PENDING_WORKFLOW_CORRECTION_COMMIT",
   "final_release_source_sha": "25a72091f3fd44e5b1ff493af37a3511f70c7032",
-  "final_release_source_sha_note": "Preparation commit SHA. Artifacts below were built from this exact commit. The manifest's own SHA-recording commit is a separate followup commit that does not change the artifacts.",
+  "final_release_source_sha_note": "Preparation commit SHA. The tag target SHA is the workflow-correction commit landed in this phase; the manifest's own SHA-recording commit does not change the artifacts.",
   "source_tree_clean": true,
   "source_tree_clean_note": "Hygiene + productization commit landed at 62cf60a. Canonical-ownership + trusted-publishing-prep commit lands in this phase; the FINAL_RELEASE_SOURCE_SHA is recorded after that commit is created.",
   "build_timestamp": "2026-08-30",
@@ -20,15 +21,19 @@
   "license_expression": "AGPL-3.0-only",
   "wheel": {
     "filename": "dist/reguard-0.1.0rc1-py3-none-any.whl",
-    "sha256": "d407046d72d187909db156f70b8650a63415ef0ff02200483f79bcaf8061b152",
-    "size_bytes": 206379,
-    "built_from_sha": "25a72091f3fd44e5b1ff493af37a3511f70c7032"
+    "local_pre_tag_wheel_sha256": "068b2b11730154ee1c36eff7698a563e55b6bbb8f0e97cbb13170d8ad89cc048",
+    "local_pre_tag_wheel_size_bytes": 206379,
+    "ci_release_wheel_sha256": "PENDING_EXTERNAL_PUBLICATION",
+    "ci_release_wheel_size_bytes": "PENDING_EXTERNAL_PUBLICATION",
+    "built_from_sha": "PENDING_FINAL_RC1_TAG_TARGET_SHA",
+    "ci_release_runtime_digest": "PENDING_EXTERNAL_PUBLICATION"
   },
   "sdist": {
     "filename": "dist/reguard-0.1.0rc1.tar.gz",
-    "sha256": "16c499eef0499e69e27b595df30f091467b72733253c27645c95d99c8fb2d52a",
-    "size_bytes": 171845,
-    "built_from_sha": "25a72091f3fd44e5b1ff493af37a3511f70c7032"
+    "local_pre_tag_sdist_sha256": "1384049df99513e6d08179665e5b7965d7bb542a39eb77b9f4f66f43a87227aa",
+    "local_pre_tag_sdist_size_bytes": 171833,
+    "ci_release_sdist_sha256": "PENDING_EXTERNAL_PUBLICATION",
+    "ci_release_sdist_size_bytes": "PENDING_EXTERNAL_PUBLICATION"
   },
   "reproducible_build": {
     "wheel_byte_identical": true,
@@ -133,13 +138,15 @@
     ]
   },
   "external_publication_status": {
-    "pypi_publish": "PENDING_TRUSTED_PUBLISHER_SETUP",
-    "oci_image_publish": "PENDING_TRUSTED_PUBLISHER_SETUP",
+    "pypi_publish": "PENDING_TAG_TRIGGER_AND_GITHUB_PACKAGE_PERMISSION",
+    "oci_image_publish": "PENDING_TAG_TRIGGER_AND_GITHUB_PACKAGE_PERMISSION",
     "remote_github_action_smoke": "PENDING_EXTERNAL_PUBLICATION",
-    "github_release_tag": "PENDING_TRUSTED_PUBLISHER_SETUP",
+    "github_release_tag": "PENDING_TAG_TRIGGER_AND_GITHUB_PACKAGE_PERMISSION",
     "release_workflow": ".github/workflows/release.yml",
     "pypi_publisher_mode": "trusted_publishing_oidc",
-    "ghcr_publisher_mode": "github_token"
+    "ghcr_publisher_mode": "github_token",
+    "rc_tag_immutable": true,
+    "immutable_tag_policy": "Once v0.1.0-rc.1 is pushed, the tag is permanent. Code or workflow changes after PyPI acceptance require v0.1.0-rc.2. The tag is never moved, force-pushed, deleted, or recreated."
   },
   "publication_status": "PENDING_EXTERNAL_PUBLICATION",
   "remote_consumer_smoke_status": "PENDING_EXTERNAL_PUBLICATION",

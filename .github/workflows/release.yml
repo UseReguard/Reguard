@@ -1,26 +1,32 @@
 # Reguard Core release workflow
 #
-# Trigger: push of a tag matching `v*` to UseReguard/Reguard.
+# Trigger: push of a tag matching `v<major>.<minor>.<patch>` or
+# `v<major>.<minor>.<patch>-rc.<number>` to UseReguard/Reguard.
 #
-# Stages (each is a separate job; jobs declare only the permissions
-# they require):
+# Stages (each is a separate job; cross-job metadata propagates
+# only through job outputs declared in this file, never via
+# environment variables):
 #
-#   validate   — verify tag matches package version (fail loudly if not)
-#   build      — run tests, build exact wheel+sdist, upload as artifacts
-#   publish-pypi   — Trusted Publishing (OIDC); downloads build artifacts
-#   publish-runtime — push runtime image to GHCR (secrets.GITHUB_TOKEN)
-#   release    — create the GitHub Release with the prepared notes
+#   validate     — strict tag-shape parsing; tag == pyproject version
+#   build        — clean-runner setup; tests; build wheel+sdist;
+#                  upload artifacts + SHA256SUMS
+#   publish-pypi — Trusted Publishing (OIDC); downloads build artifacts
+#   publish-runtime — push runtime image to GHCR (GITHUB_TOKEN);
+#                  captures digest from action output
+#   release      — create GitHub Release; attach CI artifacts
 #
 # No job exposes publication credentials to the target agent runtime.
 # No long-lived PyPI tokens are stored in the repository.
 # No `latest` tag is published for an RC.
+# RC tags are immutable: once pushed, a code/workflow change requires RC2.
 
 name: release
 
 on:
   push:
     tags:
-      - "v*"
+      - "v[0-9]+.[0-9]+.[0-9]+"
+      - "v[0-9]+.[0-9]+.[0-9]+-rc.[0-9]+"
 
 permissions: {}
 
@@ -30,63 +36,75 @@ env:
 jobs:
 
   validate:
-    name: Validate tag matches package version
+    name: Validate tag shape and package-version match
     runs-on: ubuntu-latest
     permissions:
       contents: read
+    outputs:
+      git_tag: ${{ steps.parse.outputs.git_tag }}
+      package_version: ${{ steps.parse.outputs.package_version }}
+      source_sha: ${{ steps.parse.outputs.source_sha }}
+      is_prerelease: ${{ steps.parse.outputs.is_prerelease }}
     steps:
-      - name: Checkout source
+      - name: Checkout source at tag commit
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 1
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
-      - name: Extract package version
-        id: pkg
+      - name: Strict tag parsing and version comparison
+        id: parse
         shell: bash
         run: |
           set -euo pipefail
-          python -c "import tomllib, pathlib; \
-            d=tomllib.loads(pathlib.Path('pyproject.toml').read_text()); \
-            print(d['project']['version'])" > pkg_version.txt
-          PKG_VERSION=$(cat pkg_version.txt)
-          TAG=${GITHUB_REF_NAME}
-          echo "tag=${TAG}"          >> "$GITHUB_OUTPUT"
-          echo "pkg_version=${PKG_VERSION}" >> "$GITHUB_OUTPUT"
-          echo "tag=${TAG}"
-          echo "package_version=${PKG_VERSION}"
-          # Convention: tag is `vX.Y.Z` (or `vX.Y.Z-rc.N`); package version is
-          # `X.Y.Z` (or `X.Y.ZrcN`). We require that stripping the leading
-          # `v` and replacing the first hyphen with `.` reproduces the
-          # package version exactly.
-          EXPECTED=$(echo "${TAG}" | sed -E 's/^v//; s/-rc\./rc/')
-          if [ "${EXPECTED}" != "${PKG_VERSION}" ]; then
-            echo "::error::Tag ${TAG} (expected ${EXPECTED}) does not match pyproject.toml version ${PKG_VERSION}."
+
+          GIT_TAG="${GITHUB_REF_NAME}"
+          SOURCE_SHA="$(git rev-parse HEAD)"
+
+          # Strict shape validation (brief §16).
+          if [[ "${GIT_TAG}" =~ ^v([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
+            IS_PRERELEASE="false"
+            EXPECTED_PKG_VERSION="${BASH_REMATCH[1]}.${BASH_REMATCH[2]}.${BASH_REMATCH[3]}"
+          elif [[ "${GIT_TAG}" =~ ^v([0-9]+)\.([0-9]+)\.([0-9]+)-rc\.([0-9]+)$ ]]; then
+            IS_PRERELEASE="true"
+            EXPECTED_PKG_VERSION="${BASH_REMATCH[1]}.${BASH_REMATCH[2]}.${BASH_REMATCH[3]}rc${BASH_REMATCH[4]}"
+          else
+            echo "::error::Tag '${GIT_TAG}' is not a recognized release tag shape."
+            echo "::error::Expected: v<major>.<minor>.<patch> or v<major>.<minor>.<patch>-rc.<number>"
             exit 1
           fi
 
-      - name: Reject accidental non-prerelease promotion
-        shell: bash
-        run: |
-          set -euo pipefail
-          PKG_VERSION=$(cat pkg_version.txt)
-          TAG=${GITHUB_REF_NAME}
-          if echo "${PKG_VERSION}" | grep -qE 'rc|a|b|dev|alpha|beta'; then
-            echo "Prerelease version detected (${PKG_VERSION}); RC publication allowed."
-          else
-            # Stable: refuse to publish if this is the FIRST time that
-            # package version appears in any tag (basic anti-replay).
-            if gh release view "${TAG}" >/dev/null 2>&1; then
-              echo "::error::Tag ${TAG} already exists; refusing to overwrite."
-              exit 1
-            fi
+          PKG_VERSION="$(python -c "import tomllib, pathlib; \
+            print(tomllib.loads(pathlib.Path('pyproject.toml').read_text())['project']['version'])")"
+
+          if [ "${EXPECTED_PKG_VERSION}" != "${PKG_VERSION}" ]; then
+            echo "::error::Tag '${GIT_TAG}' implies package version '${EXPECTED_PKG_VERSION}' but pyproject.toml declares '${PKG_VERSION}'."
+            exit 1
           fi
-        env:
-          GH_TOKEN: ${{ github.token }}
+
+          # Defense against tag-confusion attacks: confirm GITHUB_SHA == HEAD.
+          if [ "${GITHUB_SHA}" != "${SOURCE_SHA}" ]; then
+            echo "::error::GITHUB_SHA (${GITHUB_SHA}) does not match git rev-parse HEAD (${SOURCE_SHA})."
+            exit 1
+          fi
+
+          echo "git_tag=${GIT_TAG}"            >> "$GITHUB_OUTPUT"
+          echo "package_version=${PKG_VERSION}" >> "$GITHUB_OUTPUT"
+          echo "source_sha=${SOURCE_SHA}"      >> "$GITHUB_OUTPUT"
+          echo "is_prerelease=${IS_PRERELEASE}" >> "$GITHUB_OUTPUT"
+
+          {
+            echo "## Release validation"
+            echo
+            echo "- Git tag:        \`${GIT_TAG}\`"
+            echo "- Package version:\`${PKG_VERSION}\`"
+            echo "- Source SHA:     \`${SOURCE_SHA}\`"
+            echo "- Pre-release:    ${IS_PRERELEASE}"
+          } >> "$GITHUB_STEP_SUMMARY"
 
   build:
     name: Test and build exact artifacts
@@ -94,22 +112,32 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+    outputs:
+      source_sha: ${{ steps.meta.outputs.source_sha }}
+      git_tag: ${{ steps.parse.outputs.git_tag }}
+      package_version: ${{ steps.parse.outputs.package_version }}
+      wheel_sha256: ${{ steps.meta.outputs.wheel_sha }}
+      sdist_sha256: ${{ steps.meta.outputs.sdist_sha }}
+      is_prerelease: ${{ steps.parse.outputs.is_prerelease }}
     steps:
-      - name: Checkout source
+      - name: Checkout source at tag commit
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
-      - name: Install build tooling
+      - name: Install project and dev dependencies (clean runner)
         shell: bash
         run: |
           set -euo pipefail
-          python -m pip install --upgrade "pip>=23" "build>=1.0" "pytest>=8"
+          python -m pip install --upgrade "pip>=23" "build>=1.0" "twine>=5" "pytest>=8"
+          python -m pip install -e ".[dev]"
 
-      - name: Run tests
+      - name: Run full test suite
         shell: bash
         run: |
           set -euo pipefail
@@ -126,55 +154,120 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          python -m pip install --quiet twine
           python -m twine check dist/*
 
-      - name: Record source SHA and hashes
+      - name: Re-parse tag and record authoritative hashes
+        id: parse
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "git_tag=${{ needs.validate.outputs.git_tag }}"             >> "$GITHUB_OUTPUT"
+          echo "package_version=${{ needs.validate.outputs.package_version }}" >> "$GITHUB_OUTPUT"
+          echo "is_prerelease=${{ needs.validate.outputs.is_prerelease }}" >> "$GITHUB_OUTPUT"
+
+      - name: Record source SHA and authoritative artifact hashes
         id: meta
         shell: bash
         run: |
           set -euo pipefail
-          SHA=$(git rev-parse HEAD)
-          WHL_SHA=$(sha256sum dist/*.whl | awk '{print $1}')
-          SDIST_SHA=$(sha256sum dist/*.tar.gz | awk '{print $1}')
-          echo "sha=${SHA}"                >> "$GITHUB_OUTPUT"
-          echo "wheel_sha=${WHL_SHA}"      >> "$GITHUB_OUTPUT"
-          echo "sdist_sha=${SDIST_SHA}"    >> "$GITHUB_OUTPUT"
-          echo "sha=${SHA}"                >> "$GITHUB_ENV"
-          echo "wheel_sha=${WHL_SHA}"      >> "$GITHUB_ENV"
-          echo "sdist_sha=${SDIST_SHA}"    >> "$GITHUB_ENV"
+          SOURCE_SHA="$(git rev-parse HEAD)"
+          if [ "${SOURCE_SHA}" != "${{ needs.validate.outputs.source_sha }}" ]; then
+            echo "::error::Local HEAD (${SOURCE_SHA}) drifted from validate.outputs.source_sha (${{ needs.validate.outputs.source_sha }})."
+            exit 1
+          fi
 
-      - name: Upload artifacts for downstream jobs
+          WHL_FILE="$(ls dist/*.whl | head -n1)"
+          SDIST_FILE="$(ls dist/*.tar.gz | head -n1)"
+
+          WHL_SHA="$(sha256sum "${WHL_FILE}" | awk '{print $1}')"
+          SDIST_SHA="$(sha256sum "${SDIST_FILE}" | awk '{print $1}')"
+
+          WHL_SIZE="$(stat -c '%s' "${WHL_FILE}")"
+          SDIST_SIZE="$(stat -c '%s' "${SDIST_FILE}")"
+
+          {
+            printf '%s  %s\n' "${WHL_SHA}"   "$(basename "${WHL_FILE}")"
+            printf '%s  %s\n' "${SDIST_SHA}" "$(basename "${SDIST_FILE}")"
+          } > dist/SHA256SUMS
+          # Verify the SHA256SUMS file itself.
+          ( cd dist && sha256sum -c SHA256SUMS )
+
+          echo "source_sha=${SOURCE_SHA}"     >> "$GITHUB_OUTPUT"
+          echo "wheel_sha=${WHL_SHA}"         >> "$GITHUB_OUTPUT"
+          echo "sdist_sha=${SDIST_SHA}"       >> "$GITHUB_OUTPUT"
+          echo "wheel_file=${WHL_FILE}"       >> "$GITHUB_OUTPUT"
+          echo "sdist_file=${SDIST_FILE}"     >> "$GITHUB_OUTPUT"
+          echo "wheel_size=${WHL_SIZE}"       >> "$GITHUB_OUTPUT"
+          echo "sdist_size=${SDIST_SIZE}"     >> "$GITHUB_OUTPUT"
+
+          {
+            echo "## Build artifacts"
+            echo
+            echo "- Wheel:    \`$(basename "${WHL_FILE}")\`  (${WHL_SIZE} bytes)"
+            echo "  - SHA256: \`${WHL_SHA}\`"
+            echo "- Sdist:    \`$(basename "${SDIST_FILE}")\`  (${SDIST_SIZE} bytes)"
+            echo "  - SHA256: \`${SDIST_SHA}\`"
+            echo "- SHA256SUMS: \`dist/SHA256SUMS\` (verified)"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload release artifacts (wheel + sdist + SHA256SUMS)
         uses: actions/upload-artifact@v4
         with:
-          name: reguard-dist-${{ github.ref_name }}
+          name: reguard-dist-${{ needs.validate.outputs.git_tag }}
           path: |
             dist/*.whl
             dist/*.tar.gz
+            dist/SHA256SUMS
           if-no-files-found: error
           retention-days: 14
 
   publish-pypi:
-    name: Publish to PyPI (Trusted Publishing)
+    name: Publish to PyPI (Trusted Publishing, OIDC)
     needs: build
     runs-on: ubuntu-latest
     environment:
       name: pypi
     permissions:
-      id-token: write   # required for PyPI OIDC
+      id-token: write
     steps:
       - name: Download build artifacts
         uses: actions/download-artifact@v4
         with:
-          name: reguard-dist-${{ github.ref_name }}
+          name: reguard-dist-${{ needs.build.outputs.git_tag }}
           path: dist
+
+      - name: Verify downloaded artifacts against authoritative hashes
+        shell: bash
+        run: |
+          set -euo pipefail
+          ( cd dist && sha256sum -c SHA256SUMS )
 
       - name: Publish to PyPI via Trusted Publishing
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           packages-dir: dist
-          # skip-existing is intentionally NOT set; refusing to overwrite
-          # the same filename is the desired behaviour (runbook §11).
+          # skip-existing is intentionally NOT set: a duplicate publish
+          # must surface as a hard failure (runbook §11, brief §12).
+
+      - name: Record PyPI publication status
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          {
+            echo "## PyPI publication"
+            echo
+            if [ "${{ job.status }}" = "success" ]; then
+              echo "- Status:    ✅ SUCCESS"
+              echo "- Project:   \`reguard\`"
+              echo "- Version:   \`${{ needs.build.outputs.package_version }}\`"
+              echo "- Source:    \`${{ needs.build.outputs.source_sha }}\`"
+              echo "- Target:    https://pypi.org/project/reguard/${{ needs.build.outputs.package_version }}/"
+            else
+              echo "- Status:    ❌ FAILED"
+              echo "- See job logs for the underlying error."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
 
   publish-runtime:
     name: Build and push GHCR runtime image
@@ -183,9 +276,14 @@ jobs:
     permissions:
       contents: read
       packages: write
+    outputs:
+      runtime_digest: ${{ steps.build.outputs.digest }}
+      runtime_reference: ${{ steps.build.outputs.runtime_reference }}
     steps:
-      - name: Checkout source
+      - name: Checkout source at tag commit
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -209,35 +307,36 @@ jobs:
           context: .
           file: runtime/Dockerfile
           push: true
-          tags: |
-            ghcr.io/usereguard/reguard-runtime:${{ github.ref_name }}
-            ghcr.io/usereguard/reguard-runtime:${{ steps.meta.outputs.sha }}
-          build-args: |
-            REGUARD_SOURCE_REVISION=${{ steps.meta.outputs.sha }}
-            REGUARD_SOURCE_VERSION=${{ github.ref_name }}
           provenance: true
+          tags: |
+            ghcr.io/usereguard/reguard-runtime:${{ needs.build.outputs.package_version }}
+            ghcr.io/usereguard/reguard-runtime:${{ needs.build.outputs.source_sha }}
+          build-args: |
+            REGUARD_SOURCE_REVISION=${{ needs.build.outputs.source_sha }}
+            REGUARD_SOURCE_VERSION=${{ needs.build.outputs.package_version }}
 
-      - name: Record published digest
+      - name: Record GHCR publication status
         if: always()
         shell: bash
         run: |
           set -euo pipefail
-          if [ "${{ steps.build.conclusion }}" != "success" ]; then
-            echo "::warning::Runtime build/push did not succeed; skipping digest capture."
-            exit 0
-          fi
-          DIGEST=$(docker inspect --format='{{index .RepoDigests 0}}' \
-            "ghcr.io/usereguard/reguard-runtime:${{ github.ref_name }}" || true)
-          if [ -n "${DIGEST}" ]; then
-            echo "runtime_digest=${DIGEST}" >> "$GITHUB_OUTPUT"
-            echo "runtime_digest=${DIGEST}" >> "$GITHUB_ENV"
-          fi
-
-    outputs:
-      runtime_digest: ${{ steps.build.outputs.digest }}
+          {
+            echo "## GHCR publication"
+            echo
+            if [ "${{ steps.build.conclusion }}" = "success" ]; then
+              echo "- Status:    ✅ SUCCESS"
+              echo "- Reference: \`ghcr.io/usereguard/reguard-runtime:${{ needs.build.outputs.package_version }}\`"
+              echo "- SHA tag:   \`ghcr.io/usereguard/reguard-runtime:${{ needs.build.outputs.source_sha }}\`"
+              echo "- Digest:    \`${{ steps.build.outputs.digest }}\`"
+            else
+              echo "- Status:    ❌ FAILED"
+              echo "- See step logs for the underlying error."
+              echo "- On a transient/config failure, rerun only this job against the same tag."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
 
   release:
-    name: Create GitHub Release
+    name: Create GitHub Release with CI artifacts
     needs: [build, publish-pypi, publish-runtime]
     runs-on: ubuntu-latest
     permissions:
@@ -246,25 +345,45 @@ jobs:
       - name: Download build artifacts
         uses: actions/download-artifact@v4
         with:
-          name: reguard-dist-${{ github.ref_name }}
+          name: reguard-dist-${{ needs.build.outputs.git_tag }}
           path: dist
 
-      - name: Read prepared release notes
+      - name: Checkout source for release notes
         uses: actions/checkout@v4
         with:
+          fetch-depth: 1
           path: notes_src
 
-      - name: Create release
+      - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.ref_name }}
-          name: "Reguard Core ${{ github.ref_name }}"
+          tag_name: ${{ needs.build.outputs.git_tag }}
+          name: "Reguard Core ${{ needs.build.outputs.git_tag }}"
           body_path: notes_src/audit/reguard_core_v0_1_release/rc_release_notes.md
-          draft: false
-          prerelease: ${{ contains(github.ref_name, '-rc') }}
+          prerelease: ${{ needs.build.outputs.is_prerelease == 'true' }}
+          fail_on_unmatched_files: true
           files: |
             dist/*.whl
             dist/*.tar.gz
-          fail_on_unmatched_files: false
+            dist/SHA256SUMS
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Record release status
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          {
+            echo "## GitHub Release"
+            echo
+            if [ "${{ job.status }}" = "success" ]; then
+              echo "- Status:    ✅ SUCCESS"
+              echo "- Tag:       \`${{ needs.build.outputs.git_tag }}\`"
+              echo "- URL:       https://github.com/UseReguard/Reguard/releases/tag/${{ needs.build.outputs.git_tag }}"
+              echo "- Attached:  wheel + sdist + SHA256SUMS"
+            else
+              echo "- Status:    ❌ FAILED"
+              echo "- PyPI and GHCR may still have succeeded; rerun only this job against the same tag."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"

@@ -278,16 +278,73 @@ been used successfully by at least one external consumer.
 
 ## 11. Roll-back plan (if a publication issue surfaces)
 
-PyPI does not allow re-uploading the same `filename`. To roll back:
+PyPI does not allow re-uploading the same `filename`. The recovery
+policy is documented in §11a below. GHCR allows tag deletion; use
+carefully.
 
-1. Yank the release on PyPI (the project's "yank" UI; the version
-   remains installed by `pip install` for already-resolved
-   environments but is excluded from new resolutions).
-2. Tag and publish a v0.1.0rc2 with the fix.
-3. Do NOT push a v0.1.0-rc.1 tag over the existing one; PyPI will
-   reject the duplicate filename.
+---
 
-GHCR allows tag deletion; use carefully.
+## 11a. Failure recovery matrix
+
+Once a tag has been pushed publicly, it is **immutable**. Do not
+move, force-push, delete, or re-create `v0.1.0-rc.1`. The tag
+identifies exactly one source commit forever.
+
+| Failure point                       | PyPI published? | Source change required? | Recovery                                                                            |
+|-------------------------------------|---------------:|-----------------------:|-------------------------------------------------------------------------------------|
+| `validate`                          |             no |                  maybe | Fix before tag is created, OR cut `v0.1.0-rc.2` if the tag was already public       |
+| `build`                             |             no |                  maybe | Re-run if transient; cut `v0.1.0-rc.2` if a source/workflow fix is required         |
+| `publish-pypi`                      |             no |                  maybe | Re-run if configuration/transient and same immutable source                          |
+| `publish-runtime` after PyPI success |            yes |                    no | Re-run only `publish-runtime` against the same tag                                  |
+| `publish-runtime` after PyPI success |            yes |                   yes | Publish `0.1.0rc2`; do NOT replace RC1                                              |
+| `release` after PyPI/GHCR success   |            yes |                    no | Re-run only `release` against the same tag                                          |
+| Remote consumer smoke               |            yes |                  maybe | Document the defect; cut `v0.1.0rc2` for fixes                                      |
+
+**Key invariant:** Once PyPI has accepted `0.1.0rc1`, any
+code/workflow change that affects released behaviour requires
+`0.1.0rc2`.
+
+---
+
+## 11b. Operator release sequence
+
+The canonical release flow uses the corrected workflow at
+`.github/workflows/release.yml`:
+
+1. Configure the PyPI Trusted Publisher (values in
+   `trusted_publishing_setup.md`).
+2. Create the GitHub `pypi` environment with optional required
+   reviewer.
+3. Verify Actions has `Read and write permissions` (or
+   `Read repository contents and packages permissions`).
+4. Confirm `UseReguard` allows package publication (org-level).
+5. Verify the release workflow at the exact `main` SHA targeted
+   for tagging.
+6. Create the immutable tag:
+
+   ```bash
+   git tag -a v0.1.0-rc.1 <FINAL_RC1_TAG_TARGET_SHA> \
+     -m "Reguard Core 0.1.0rc1 release candidate"
+   ```
+
+7. Push the tag **once**:
+
+   ```bash
+   git push origin v0.1.0-rc.1
+   ```
+
+   Do not re-push, force-push, move, delete, or replace the tag.
+
+8. Monitor the workflow run; failures should be classified against
+   the recovery matrix above.
+9. Re-run only the failed jobs when the failure is transient or
+   configuration-only. If a code/workflow change is required, cut
+   RC2 (do NOT modify RC1).
+10. After the workflow succeeds, run the clean remote consumer
+    smoke from `remote_consumer_smoke_plan.md`.
+
+**RC1 is immutable.** Any move, force-push, deletion, or replacement
+of `v0.1.0-rc.1` is prohibited.
 
 ---
 
