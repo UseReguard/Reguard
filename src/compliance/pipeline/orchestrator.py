@@ -350,29 +350,46 @@ def main() -> int:
         }, indent=2), encoding="utf-8")
         return 1
 
-    # Scan workspace + /tmp for any framework-created artifacts.
-    # The framework did not write; both lists should be empty.
-    observed: list[str] = []
-    candidates: list[Path] = []
+    # Snapshot the workspace before running. A real framework
+    # recorder (any category other than E) creates or modifies files
+    # as a side effect. Pre-existing files inside the repo checkout
+    # are static assets — they are NOT framework artefacts and
+    # must not be counted. We diff against the baseline.
+    pre_existing: set[tuple[str, int]] = set()
     if WORKSPACE.exists():
-        candidates.append(WORKSPACE)
-    candidates.append(Path("/tmp"))
-    for root in candidates:
-        if not root.exists():
-            continue
-        for p in root.rglob("*"):
+        for p in WORKSPACE.rglob("*"):
+            if not p.is_file():
+                continue
+            try:
+                pre_existing.add((str(p.resolve()), p.stat().st_mtime_ns))
+            except OSError:
+                pass
+
+    # Scan the workspace for any framework-created artefacts. The
+    # framework is a Python library that runs inside the user
+    # checkout; anything it might emit is constrained to that
+    # checkout. Scanning /tmp or other shared runtime scratch
+    # locations is unsafe: those contain pip/uv/cache noise and
+    # per-step logs the runtime itself wrote, none of which are
+    # framework artefacts.
+    observed: list[str] = []
+    if WORKSPACE.exists():
+        for p in WORKSPACE.rglob("*"):
             if not p.is_file():
                 continue
             if p.suffix not in (".json", ".log", ".jsonl", ".txt"):
                 continue
-            # Skip the probe's own trajectory file.
             try:
                 if p.resolve() == OUTPUT.resolve():
                     continue
             except OSError:
                 pass
-            # Skip pre-existing files in /tmp that are obviously
-            # unrelated to PocketFlow (e.g. container runtime noise).
+            try:
+                key = (str(p.resolve()), p.stat().st_mtime_ns)
+            except OSError:
+                continue
+            if key in pre_existing:
+                continue
             observed.append(str(p))
 
     OUTPUT.write_text(json.dumps({
@@ -403,33 +420,54 @@ The framework wrote the file; the harness only mirrors it.
 """
 import json
 import os
+import shutil
 import sys
 import tempfile
 from pathlib import Path
 
 OUTPUT = Path(os.environ["COMPLIANCE_TRAJECTORY_PATH"])
 OUTPUT.parent.mkdir(parents=True, exist_ok=True)
+# `/artifacts` is the runtime's bind-mounted host directory. We copy
+# the framework's persisted log file there so the host-side adapter
+# can verify the file actually exists outside the container.
+ARTIFACTS_DIR = Path(os.environ.get("REGUARD_ARTIFACTS_DIR", "/artifacts"))
+ARTIFACTS_DIR.mkdir(parents=True, exist_ok=True)
 
 
 def main() -> int:
     task = sys.argv[1] if len(sys.argv) > 1 else "hello"
 
     log_root = Path(tempfile.mkdtemp(prefix="reguard_gptme_"))
-    log_dir = log_root / "logs"
+    chat_id = "compliance-12-1-probe"
+    log_dir = log_root / chat_id
     log_dir.mkdir(parents=True, exist_ok=True)
+
+    # gptme's LogManager writes conversation.jsonl under
+    # `get_logs_dir() / chat_id / conversation.jsonl`, where
+    # `get_logs_dir()` honours `GPTME_LOGS_HOME`. Pointing that env
+    # var at our scratch root makes the framework's output land
+    # inside our workspace where we can inspect it.
+    os.environ["GPTME_LOGS_HOME"] = str(log_root)
 
     try:
         from gptme.logmanager.manager import LogManager
+        from gptme.message import Message
 
-        session_id = "compliance-12-1-probe"
-        log_file = log_dir / f"{session_id}.jsonl"
-        log_manager = LogManager(log_file=log_file)
+        log_manager = LogManager(logdir=log_dir)
+        log_file = log_root / chat_id / "conversation.jsonl"
 
-        log_manager.append({"role": "user", "content": task})
-        log_manager.append({"role": "assistant", "content": "hello"})
+        log_manager.append(Message(role="user", content=task))
+        log_manager.append(Message(role="assistant", content="hello"))
 
         if not log_file.exists() or log_file.stat().st_size == 0:
             raise RuntimeError("framework did not write the log file")
+
+        # Copy the framework-written log into the host-visible
+        # artifacts dir so the adapter can verify persistence from
+        # outside the container. The copy preserves the original
+        # path semantics: the framework wrote it; we just mirror.
+        artifact_log = ARTIFACTS_DIR / "framework_conversation.jsonl"
+        shutil.copyfile(log_file, artifact_log)
 
         # Read the persisted turns back. The harness re-reads what
         # the framework already wrote; we never fabricate events.
@@ -456,9 +494,9 @@ def main() -> int:
     OUTPUT.write_text(json.dumps({
         "probe_status": "ok",
         "scenario_id": task,
-        "log_file_path": str(log_file),
+        "log_file_path": str(artifact_log),
         "log_size_bytes": log_file.stat().st_size,
-        "session_id": session_id,
+        "session_id": chat_id,
         "turns": turns,
         "gptme_version": version,
     }, indent=2), encoding="utf-8")
@@ -492,6 +530,7 @@ def run_probe(
     repo_checkout: Path,
     work_root: Path,
     executor: str = "subprocess",
+    container_skip_install: bool = False,
 ) -> ProbeOutputs:
     """Run the probe for the given adapter against a fresh venv.
 
@@ -509,6 +548,11 @@ def run_probe(
     writes the runtime's structured result to the artifacts directory
     but does not surface it through this function (the caller already
     persists the JSON).
+
+    `container_skip_install=True` (container only) bypasses the
+    runtime's install step. Use when the framework dependency is
+    already installed in the runtime image and the container runs
+    with `--network none`.
     """
     if executor == "container":
         return _run_probe_container(
@@ -516,6 +560,7 @@ def run_probe(
             scenario=scenario,
             repo_checkout=repo_checkout,
             work_root=work_root,
+            skip_install=container_skip_install,
         )
     if executor != "subprocess":
         raise ValueError(f"unknown executor: {executor!r}; expected 'subprocess' or 'container'")
@@ -556,6 +601,15 @@ def run_probe(
     env["PYTHONDONTWRITEBYTECODE"] = "1"
     env["PYTHONUNBUFFERED"] = "1"
     env["COMPLIANCE_TRAJECTORY_PATH"] = str(trajectory_path)
+    # Generic artifact-output contract: the probe (whichever
+    # adapter it implements for) mirrors any framework-written
+    # artifact into this directory. In subprocess mode the probe
+    # is a host-side subprocess, so REGUARD_ARTIFACTS_DIR must be a
+    # host filesystem path the probe can actually write to.
+    # In container mode, container_runner.run_in_container passes
+    # the container-side /artifacts via the inner env, which takes
+    # precedence over this default because it is set later.
+    env.setdefault("REGUARD_ARTIFACTS_DIR", str(artifacts))
 
     run = subprocess.run(
         [py, str(probe_path), task],
@@ -581,6 +635,7 @@ def _run_probe_container(
     scenario: Scenario,
     repo_checkout: Path,
     work_root: Path,
+    skip_install: bool = False,
 ) -> ProbeOutputs:
     """Container-backed probe execution. Delegates to `container_runner`.
 
@@ -589,6 +644,13 @@ def _run_probe_container(
     outside the container. The container only runs the probe and
     returns raw artifacts; this wrapper re-emits them in the
     `ProbeOutputs` shape the rest of the pipeline already understands.
+
+    `skip_install=True` switches the runtime to its `test` mode with
+    `--no-auto-setup` so the install step is skipped. This is the
+    correct path when the framework dependency is preinstalled in
+    the runtime image (no `pip install -e .` is needed at probe time)
+    AND the container runs with `--network none` (so a fresh install
+    cannot reach PyPI).
     """
     # Import here to keep the subprocess path free of the container
     # dependency (podman / docker) when not requested.
@@ -614,6 +676,10 @@ def _run_probe_container(
         probe_extra_env={
             "PYTHONDONTWRITEBYTECODE": "1",
             "PYTHONUNBUFFERED": "1",
+            # Inside the container, /artifacts is the bind-mounted
+            # host artifacts dir; the probe mirrors any
+            # framework-written artifact there for the adapter.
+            "REGUARD_ARTIFACTS_DIR": "/artifacts",
         },
         # The runtime treats --timeout-seconds as a total budget for
         # the whole exec mode (setup + install + exec). The host
@@ -625,6 +691,7 @@ def _run_probe_container(
             adapter.capabilities.install_timeout_seconds
             + adapter.capabilities.run_timeout_seconds,
         ),
+        skip_install=skip_install,
     )
 
     # If the container wrote a trajectory, copy it to the work_root

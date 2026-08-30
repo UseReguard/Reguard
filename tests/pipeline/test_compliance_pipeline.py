@@ -1,15 +1,16 @@
 """Tests for compliance_pipeline.
 
-This suite is the v1.3 synthetic test set: each test names a known shape
+This suite is the v1.4 synthetic test set: each test names a known shape
 of input and pins the expected output. The point is to lock the
-behaviour of the Article 12(1) v1.3 contract, the A-E category
+behaviour of the Article 12(1) v1.4 contract, the A-E category
 verdict map, the adapters, and the persistence layer.
 
 Cases
 -----
 T01  PASS — category A, step + tool + framework-emitted exit
-T02  FAIL — category A but no terminal event
-T03  FAIL — category A but only steps, no terminal
+T02  PASS — category A without terminal event (v1.4.0: terminal no
+     longer required)
+T03  PASS — category A with only steps, no terminal (v1.4.0)
 T04  UNKNOWN — empty event list (handled upstream; here re-produced)
 T05  ERROR — schema_version mismatch
 T06  FAIL — category B without framework_persists_durably flag set
@@ -20,7 +21,7 @@ T10  PASS — adapter parser: mini-swe-agent fixture (SYSTEM_NATIVE, A)
 T11  PASS — adapter parser: CoreCoder fixture (D)
 T12  PASS — adapter parser: nanobot fixture (C, framework's
      TurnCompleted is the terminal event)
-T13  PASS — registry exposes Article121 at v1.3.0
+T13  PASS — registry exposes Article121 at v1.4.0
 T14  PASS — persistence roundtrip + dedup, category A
 T15  PASS — probe_status='ok' fall-through, category C is FAIL
 T16  PASS — load_run_by_dedup_key roundtrip, category D
@@ -139,24 +140,25 @@ def test_t01_pass_full_path_category_a():
 
 
 # ----- T02 -----
-def test_t02_fail_category_a_missing_terminal():
+def test_t02_pass_category_a_without_terminal_v1_4():
+    """v1.4.0 dropped the terminal-event requirement. A category A
+    framework that recorded step + tool events durably demonstrates
+    Article 12(1) capability without an explicit terminal marker."""
     ev = _ev([
         {"kind": "step", "ts": "t1", "name": "plan"},
         {"kind": "tool", "ts": "t2", "name": "bash", "content": "ls"},
     ], category="A")
     result = _REQ.evaluate(ev)
-    assert result.status == RunStatus.FAIL
-    failed_names = {c["name"] for c in result.checks if not c["passed"]}
-    assert "TERMINAL_KIND_PRESENT" in failed_names
+    assert result.status == RunStatus.PASS, result.reason
 
 
 # ----- T03 -----
-def test_t03_fail_category_a_only_steps():
+def test_t03_pass_category_a_only_steps_v1_4():
+    """v1.4.0 dropped the terminal-event requirement. A category A
+    framework that recorded only step events durably is still PASS."""
     ev = _ev([{"kind": "step", "ts": "t1", "name": "x"}], category="A")
     result = _REQ.evaluate(ev)
-    assert result.status == RunStatus.FAIL
-    failed = {c["name"] for c in result.checks if not c["passed"]}
-    assert "TERMINAL_KIND_PRESENT" in failed
+    assert result.status == RunStatus.PASS, result.reason
 
 
 # ----- T04 -----
@@ -336,13 +338,13 @@ def test_t12_nanobot_parser_category_c(tmp_path: Path):
 
 
 # ----- T13 -----
-def test_t13_registry_exposes_article_121_v1_3():
+def test_t13_registry_exposes_article_121_v1_4():
     req_ids = list_registered_requirements()
     assert "AI_ACT_12_1_AUTOMATIC_EVENT_LOGGING" in req_ids
     r = get_requirement("AI_ACT_12_1_AUTOMATIC_EVENT_LOGGING")
     assert r.id == "AI_ACT_12_1_AUTOMATIC_EVENT_LOGGING"
     assert r.version  # non-empty
-    assert r.version == "1.3.0"
+    assert r.version == "1.4.0"
 
 
 # ----- T14 -----

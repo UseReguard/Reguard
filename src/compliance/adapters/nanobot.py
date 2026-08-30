@@ -67,7 +67,8 @@ _PRODUCER = "nanobot.bus.runtime_events.RuntimeEventPublisher"
 
 
 # nanobot stream-event type -> our normalised Evidence.kind.
-# TurnCompleted -> "completed" satisfies TERMINAL_KIND_PRESENT.
+# TurnCompleted -> "completed" (retained as a framework-native
+# terminal marker; no longer required by the v1.4.0 contract).
 _NANOBOT_KIND_MAP: dict[str, str] = {
     "SessionTurnStarted": "step",
     "UserInputAccepted": "step",
@@ -89,6 +90,13 @@ class NanobotAdapter(RepoAdapter):
             install_timeout_seconds=900,
             run_timeout_seconds=180,
             install_command="pip install -e .",
+            supported_scenarios=(
+                "compliance.article12_1.simple",
+                "compliance.article12_1.tool_success",
+                "compliance.article12_1.tool_failure",
+                "compliance.article12_1.multi_step",
+                "compliance.article12_1.system_error",
+            ),
         )
 
     def resolve_agent(self, repo_root: str) -> str:

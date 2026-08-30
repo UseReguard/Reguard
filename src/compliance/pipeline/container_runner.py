@@ -171,6 +171,8 @@ def run_in_container(
     tmp_size: str = "6g",
     workspace_size: str = "8g",
     result_json_filename: str = "container_result.json",
+    network: Optional[str] = "none",
+    skip_install: bool = False,
 ) -> ContainerRunResult:
     """Execute a Reguard probe inside the frozen runtime container.
 
@@ -227,19 +229,18 @@ def run_in_container(
     for k, v in DEFAULT_ENV.items():
         env_args += ["--env", f"{k}={v}"]
 
-    # Inner-level env (exec subcommand --env): vars that need to reach
-    # the host-supplied probe subprocess. The runtime's run_subprocess
-    # builds the subprocess env from an allow-list and only adds
-    # extra_env; setting outer --env alone would be dropped.
-    exec_env_args: list[str] = []
+    # Inner-level env: vars that need to reach the host-supplied probe
+    # subprocess. The runtime's `exec` mode exposes `--env` (consumed
+    # as exec_env). The runtime's `test` mode also exposes `--env`
+    # (consumed as test_env) so probe-side vars reach the test
+    # command subprocess.
+    inner_exec_env_args: list[str] = []
     # The probe writes to the container-internal /artifacts path. The
     # bind mount maps /artifacts → artifacts_dir on the host, so the
     # file ends up at trajectory_host_path from the host's POV.
-    exec_env_args += [
-        "--env", "COMPLIANCE_TRAJECTORY_PATH=/artifacts/trajectory.json",
-    ]
+    inner_exec_env_args += ["--env", "COMPLIANCE_TRAJECTORY_PATH=/artifacts/trajectory.json"]
     for k, v in (probe_extra_env or {}).items():
-        exec_env_args += ["--env", f"{k}={v}"]
+        inner_exec_env_args += ["--env", f"{k}={v}"]
 
     invocation = [
         runtime, "run", "--rm",
@@ -248,6 +249,11 @@ def run_in_container(
         "--pids-limit", str(pids_limit),
         "--memory", memory_limit,
         "--cpus", cpus_limit,
+        *(
+            ["--network", network]
+            if network is not None
+            else []
+        ),
         # /tmp is left on the container's writable overlay (not a
         # tmpfs). On the GitHub Actions runners the tmpfs that
         # podman / docker build by default refuses mmap of shared
@@ -267,27 +273,32 @@ def run_in_container(
         f"{',U=true' if needs_uid_remap_suffix else ''}",
         *env_args,
         image,
-        "exec",
+        # When skip_install=True, switch to `test` mode with
+        # --no-auto-setup so the runtime does NOT run the install
+        # step (pip install -e .) before running the test command.
+        # The runtime's `exec` mode does NOT support
+        # --no-auto-setup; only `test` mode exposes that flag.
+        # --command is the test-mode flag for the host-supplied
+        # command; --exec_command is the exec-mode flag.
+        ("test" if skip_install else "exec"),
         "--repo-path", "/input",
         "--artifacts-dir", "/artifacts",
         "--output", "/artifacts/container_result.json",
         "--timeout-seconds", str(timeout_seconds),
-        *exec_env_args,
-        # Use /usr/local/bin/python3 explicitly. The runtime's
-        # run_subprocess uses sys.executable which works, but passing
-        # the probe.py path as the first arg of --command would
-        # trigger Popen to try executing it directly (Exec format
-        # error). The runtime then prepends sys.executable. So we
-        # pass just the probe path + task and rely on the runtime's
-        # exec semantics — but the runtime's exec_cmd currently
-        # treats argv[0] as the executable. We must pass
-        # `[python, probe.py, task]` as argv.
-        "--command", f"/usr/local/bin/python3 {PROBE_SCRIPT_CONTAINER_PATH} {probe_task}",
+        *(["--no-auto-setup"] if skip_install else []),
+        *inner_exec_env_args,
+        # The runtime's `test` mode treats argv[0] of --command as
+        # the executable. The runtime's `exec` mode uses
+        # `--command` (with dest=exec_command). We must pass
+        # `[python, probe.py, task]` as argv so Popen does not
+        # try executing probe.py directly (Exec format error).
+        "--command",
+        f"/usr/local/bin/python3 {PROBE_SCRIPT_CONTAINER_PATH} {probe_task}",
     ]
 
     started = time.monotonic()
     proc = subprocess.run(
-        invocation,
+        args=invocation,
         capture_output=True,
         text=True,
         timeout=timeout_seconds + 60,  # outer guard above runtime's inner one

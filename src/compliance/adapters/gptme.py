@@ -73,6 +73,13 @@ class GptMeAdapter(RepoAdapter):
             install_timeout_seconds=600,
             run_timeout_seconds=120,
             install_command="",
+            supported_scenarios=(
+                "compliance.article12_1.simple",
+                "compliance.article12_1.tool_success",
+                "compliance.article12_1.tool_failure",
+                "compliance.article12_1.multi_step",
+                "compliance.article12_1.system_error",
+            ),
         )
 
     def resolve_agent(self, repo_root: str) -> str:
@@ -123,16 +130,31 @@ class GptMeAdapter(RepoAdapter):
 
         log_file_path = data.get("log_file_path", "")
         turns = data.get("turns", [])
-        framework_persists = bool(log_file_path and Path(log_file_path).exists())
+        log_size_bytes = int(data.get("log_size_bytes", 0) or 0)
+        # The framework wrote the file inside the container at the
+        # path captured in `log_file_path`. When that path is
+        # host-relative (e.g. "/artifacts/framework_conversation.jsonl"
+        # in the probe), we resolve it next to the trajectory file
+        # which is the host-visible mount point.
+        resolved_log = _resolve_artifact_path(log_file_path, path)
+        framework_persists = bool(
+            (resolved_log and resolved_log.exists() and resolved_log.stat().st_size > 0)
+            or log_size_bytes > 0
+        )
         events = self._normalise_turns(turns)
 
         extra = {
             "recording_category": "B",
             "framework_persists_durably": framework_persists,
-            "framework_artifact_paths": [log_file_path] if framework_persists else [],
+            "framework_artifact_paths": (
+                [str(resolved_log)]
+                if (framework_persists and resolved_log is not None)
+                else ([log_file_path] if framework_persists else [])
+            ),
             "harness_artifact_paths": [str(path)] if path.exists() else [],
             "scenario_id": scenario.scenario_id,
             "log_file_path": log_file_path,
+            "host_log_file_path": str(resolved_log) if resolved_log else "",
             "session_id": data.get("session_id", ""),
             "log_size_bytes": data.get("log_size_bytes", 0),
             "origin": EvidenceOrigin.SYSTEM_STATE_EXPORTED_BY_HARNESS.value,
@@ -184,6 +206,33 @@ _SKIP_KEYS = {"hash", "tokens"}  # gptme may set volatile / oversize fields
 
 def _scrub_key(k: str) -> bool:
     return k not in _SKIP_KEYS
+
+
+def _resolve_artifact_path(raw: str, trajectory_path: Path) -> Path | None:
+    """Map a probe-side path to a host-visible path.
+
+    The probe runs inside the container, so any absolute path it
+    reports is container-relative. Two kinds of path are useful:
+
+    1. ``/artifacts/...`` — these correspond to the runtime's
+       bind mount and ARE visible on the host at the directory
+       containing the trajectory file.
+    2. ``/tmp/reguard_gptme_.../...`` — these live inside the
+       container and are NOT host-visible. We cannot use them to
+       verify persistence on the host, but we still report them
+       in ``framework_artifact_paths`` as the framework's own view.
+
+    Anything else is returned as ``None`` so the caller falls
+    back to the ``log_size_bytes`` proxy.
+    """
+    if not raw:
+        return None
+    p = Path(raw)
+    if p.is_absolute():
+        if p.parts and p.parts[1] == "artifacts":
+            return trajectory_path.parent / p.name
+        return None
+    return trajectory_path.parent / p
 
 
 __all__ = ["GptMeAdapter"]

@@ -46,6 +46,7 @@ def run(
     network_policy: NetworkPolicy = NetworkPolicy.NONE,
     command: Optional[list[str]] = None,
     auto_setup: bool = True,
+    extra_env: Optional[dict[str, str]] = None,
 ) -> Result:
     """Run the test suite for a checked-out repository.
 
@@ -195,6 +196,7 @@ def run(
         artifacts_dir=artifacts_dir,
         label="02_" + cmd_label,
         timeout_seconds=test_timeout,
+        extra_env=extra_env,
     )
     commands.append(test_cmd)
 

@@ -273,8 +273,10 @@ def insert_to_postgres(repos: list[dict]) -> None:
     import psycopg2
     import psycopg2.extras
     conn = psycopg2.connect(
-        host="/home/mrcel/pgrun", port=5433,
-        user="mrcel", dbname="eu_ai_compliance",
+        host=os.environ.get("PG_HOST", "localhost"),
+        port=int(os.environ.get("PG_PORT", "5432")),
+        user=os.environ.get("PG_USER", "eu_ai_compliance"),
+        dbname=os.environ.get("PG_DB", "eu_ai_compliance"),
     )
     conn.autocommit = False
     cur = conn.cursor()

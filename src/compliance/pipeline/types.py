@@ -161,6 +161,13 @@ class RunRecord:
     started_at: str            # ISO8601 UTC
     completed_at: str          # ISO8601 UTC
     duration_seconds: float
+    # OCI runtime provenance (optional; absent when the subprocess driver
+    # is used). When present, `runtime_image_reference` is the mutable
+    # tag (e.g. `ghcr.io/.../reguard-runtime:0.1.0rc1`); the immutable
+    # `runtime_image_digest` is the sha256:... resolved at run time.
+    # Both may remain empty until the public runtime image is published.
+    runtime_image_reference: str = ""
+    runtime_image_digest: str = ""
 
     def result_json(self) -> str:
         return self.result.to_json()

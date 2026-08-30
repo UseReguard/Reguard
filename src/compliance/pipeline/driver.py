@@ -110,6 +110,21 @@ def _clone_to_tempdir(full_name: str, sha: str) -> Path:
         capture_output=True,
         timeout=60,
     )
+    # The clone inherits whatever umask `git clone` uses; on a default
+    # POSIX umask of 077 the working tree is owner-only (0700 / 0644)
+    # which the container's unprivileged user (UID 10001) cannot read
+    # across the bind mount. Force world-readability on the clone so
+    # the runtime can `stat` the files. This is the standard pattern
+    # for any host that intends to pass the clone into a non-root
+    # container.
+    try:
+        subprocess.run(
+            ["chmod", "-R", "a+rX", str(tmp)],
+            check=False,
+            capture_output=True,
+        )
+    except FileNotFoundError:
+        pass
     # remove .git so the probe cannot reach back to origin.
     subprocess.run(["rm", "-rf", ".git"], cwd=str(tmp), check=False)
     return tmp
@@ -167,6 +182,7 @@ def _run_pipeline(
     work_root_parent: Path | None,
     persist: bool,
     executor: str = "subprocess",
+    container_skip_install: bool = False,
 ) -> tuple[RunRecord, Path | None]:
     """Core execution: probe + assert + (optional) persist.
 
@@ -201,6 +217,7 @@ def _run_pipeline(
                 repo_checkout=Path(repo_checkout),
                 work_root=work_root,
                 executor=executor,
+                container_skip_install=container_skip_install,
             )
         except Exception as exc:  # noqa: BLE001
             evidence = collect_evidence(
@@ -274,6 +291,8 @@ def run_one(
     sha: str,
     requirement_id: str = "AI_ACT_12_1_AUTOMATIC_EVENT_LOGGING",
     keep_repo: bool = False,
+    executor: str = "subprocess",
+    container_skip_install: bool = False,
 ) -> RunRecord:
     """Clone-mode run.
 
@@ -287,6 +306,9 @@ def run_one(
     the expensive probe work.
 
     `keep_repo=True` skips the tempdir cleanup; useful for debugging.
+    `executor` selects the probe backend: "subprocess" (default,
+    fresh venv + host subprocess) or "container" (frozen
+    runtime container via container_runner.run_in_container).
     """
     db_path = default_db_path()
     repo_row = _lookup_repo(db_path, full_name)
@@ -325,11 +347,69 @@ def run_one(
             evidence_output_dir=None,
             work_root_parent=None,
             persist=True,
+            executor=executor,
+            container_skip_install=container_skip_install,
         )
         return record
     finally:
         if not keep_repo:
             shutil.rmtree(repo_checkout, ignore_errors=True)
+
+
+def run_with_prepared_checkout(
+    *,
+    full_name: str,
+    sha: str,
+    repo_checkout: Path,
+    requirement_id: str = "AI_ACT_12_1_AUTOMATIC_EVENT_LOGGING",
+    executor: str = "subprocess",
+    container_skip_install: bool = False,
+) -> RunRecord:
+    """Run the deterministic pipeline against a pre-materialised
+    checkout. Used by Corpus Runner v1.1.1: the executor's
+    RepositoryMaterializer has already produced an independent
+    snapshot at `repo_checkout`; this function does not clone.
+
+    Idempotent against `compliance_runtime_runs` (same dedup key as
+    `run_one`). The caller owns the workspace and must destroy it
+    after this call returns.
+    """
+    db_path = default_db_path()
+    repo_row = _lookup_repo(db_path, full_name)
+    adapter = get_adapter(full_name)
+    requirement = get_requirement(requirement_id)
+
+    target = RepositoryTarget(
+        repository_id=repo_row.repository_id,
+        full_name=full_name,
+        sha=sha,
+        branch=repo_row.default_branch,
+    )
+
+    existing = load_run_by_dedup_key(
+        db_path,
+        repository_id=target.repository_id,
+        requirement_id=requirement.id,
+        requirement_version=requirement.version,
+        repo_sha=target.sha,
+        scenario_id=DEFAULT_SCENARIO_12_1.scenario_id,
+        adapter_name=adapter.name,
+        adapter_version=adapter.version,
+    )
+    if existing is not None:
+        return existing
+
+    record, _ = _run_pipeline(
+        target=target,
+        requirement_id=requirement_id,
+        repo_checkout=Path(repo_checkout),
+        evidence_output_dir=None,
+        work_root_parent=None,
+        persist=True,
+        executor=executor,
+        container_skip_install=container_skip_install,
+    )
+    return record
 
 
 def run_path_mode(

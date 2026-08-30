@@ -12,6 +12,7 @@ build/
 dist/
 *.egg-info/
 *.egg
+src/*.egg-info/
 
 # Local environment
 .venv/
@@ -33,3 +34,35 @@ data/*.db.backup-*
 data/*.sqlite-journal
 # Local run outputs (mirrored into audit/ on success)
 out/
+
+# Reguard CLI run outputs (mutable per-run artefacts)
+.reguard/
+examples/*/.reguard/
+tests/runtime/fixtures/.reguard/
+
+# Untracked local working databases (development state)
+data/*.db
+audit/*.db
+
+# Third-party standards and reference material (kept outside the
+# public repo due to redistribution uncertainty — see
+# audit/reguard_core_v0_1_release/third_party_content_audit.md)
+data/raw/ISO27001*
+data/raw/ISO42001*
+data/raw/SOC2*
+data/raw/PCI-DSS*
+data/raw/NEN7510*
+data/raw/NIST-CSF*
+data/raw/HIPAA-*
+data/raw/CCPA*
+data/raw/ISO9001*
+data/manual_download_log.json
+
+# Personal Obsidian vault shortcuts (path-leaking, machine-specific)
+notes/
+
+# Runtime image build context (kept out of repo; rebuilt from Dockerfile)
+runtime/build_context/
+
+# Editor / Claude local state
+.claude/

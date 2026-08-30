@@ -68,6 +68,13 @@ class CoreCoderAdapter(RepoAdapter):
             install_timeout_seconds=600,
             run_timeout_seconds=120,
             install_command="pip install -e .",
+            supported_scenarios=(
+                "compliance.article12_1.simple",
+                "compliance.article12_1.tool_success",
+                "compliance.article12_1.tool_failure",
+                "compliance.article12_1.multi_step",
+                "compliance.article12_1.system_error",
+            ),
         )
 
     def resolve_agent(self, repo_root: str) -> str:

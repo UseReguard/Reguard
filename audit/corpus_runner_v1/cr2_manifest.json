@@ -1,0 +1,22 @@
+{
+  "SWE-agent/mini-swe-agent": "25941c89cfbc91eb40b3f8756348c91d9977d57e",
+  "gptme/gptme": "c574b83d34f970f816af18183bd77d01b22bd504",
+  "HKUDS/nanobot": "4d204ba077a86dc42225c16f8f90032013ea1969",
+  "he-yufeng/CoreCoder": "a03ef36412e432fc49d972d4007b36ce44ec5d9a",
+  "The-Pocket/PocketFlow": "f74d023f93607b8c3268133339a5e532a949898c",
+  "NousResearch/hermes-agent": "b1ff8722a53ee223485ac9804945acf07ef5c601",
+  "Significant-Gravitas/AutoGPT": "32a43d005c0c42079ceba68d9a49c28e0eeaa6c7",
+  "langchain-ai/langchain": "5893459c4f2bfac6c8d3262cae1e3f2246d9287f",
+  "browser-use/browser-use": "2e32d260341fae39c80bc8529ec174bad91e7672",
+  "bytedance/deer-flow": "c6f6a01f56b04b6c99d73df82ed6053beb8c1a10",
+  "shareAI-lab/learn-claude-code": "0dcafa2ae053a1ddd6a72f265431104b08a5aa13",
+  "FoundationAgents/MetaGPT": "11cdf466d042aece04fc6cfd13b28e1a70341b1f",
+  "ZhuLinsen/daily_stock_analysis": "0cf61c637f671c935831d6918eba41933cccb10e",
+  "crewAIInc/crewAI": "da4daadba0e5049abc00fee8bc31b8b8019c60dd",
+  "calesthio/OpenMontage": "cd9f3c1f03368be87b140af494914b8ee4e3c7a4",
+  "rohitg00/ai-engineering-from-scratch": "39ea8a1c6d0b61f071226eff7ede4d4105fed820",
+  "hugohe3/ppt-master": "77eaa78a85f15b0d2824ca2c3733c3e57ee3ca12",
+  "zhayujie/CowAgent": "ed5bb344cfe42cee443c8266ba47ee666d8d7471",
+  "agno-agi/agno": "c96291cbd0f644774d48a398c30101e90c947354",
+  "langchain-ai/langgraph": "11ee185999b86bfea2d8c0e69cef9a5e37acf686"
+}

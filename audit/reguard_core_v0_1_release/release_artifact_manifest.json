@@ -1,0 +1,165 @@
+{
+  "reguard_version": "0.1.0rc1",
+  "source_git_sha_at_hygiene_pass": "30f2ce0ae1d535033f2a086c27096e6b21329221",
+  "source_tree_clean": false,
+  "source_tree_clean_note": "Hygiene changes are STAGED for removal/addition but NOT yet committed. The repo HEAD still reflects the pre-hygiene state. The intended release SHA is a new commit (TBD) that bundles the staged D and M entries plus the new untracked (??) entries intended for v0.1 productization (action.yml, examples/, integrations/, src/compliance/{cli,corpus_runner,integrations}/, tests/{cache,cli,corpus,evidence,integrations,security}/, audit/reguard_core_v0_1{,_release}/, audit/integration_discovery/, audit/gate2_p3/, audit/corpus_pipeline_architecture_diagnosis.md, migrations/006-011.sql, scripts/migrate_add_corpus_runs.py, etc.).",
+  "build_timestamp": "2026-08-30",
+  "python_version": "3.14.4",
+  "build_tool_versions": {
+    "build": "1.6.0",
+    "setuptools": "78.1.1",
+    "wheel": "0.46.3",
+    "twine": "7.0.0"
+  },
+  "license_expression": "AGPL-3.0-only",
+  "wheel": {
+    "filename": "dist/reguard-0.1.0rc1-py3-none-any.whl",
+    "sha256": "51ab440dcaf65b7728bd9a841fab32803c898ce56ae870895a362c80a462df73",
+    "size_bytes": 205601,
+    "post_schema_change": true,
+    "schema_change": "Added runtime_image_reference and runtime_image_digest fields to RunRecord and result.json (commands_check.py + pipeline/types.py)."
+  },
+  "sdist": {
+    "filename": "dist/reguard-0.1.0rc1.tar.gz",
+    "sha256": "fd8e83f5080b1602259de1cb07cf407746c116e3282975f3347216a0567c9b00",
+    "size_bytes": 170996,
+    "post_schema_change": true,
+    "schema_change": "Sdist rebuilt after adding runtime_image_reference and runtime_image_digest fields to RunRecord."
+  },
+  "reproducible_build": {
+    "wheel_byte_identical": true,
+    "wheel_note": "Wheel hash is byte-identical across two consecutive `python -m build` invocations from the same working tree (verified 2026-08-30).",
+    "sdist_byte_identical": false,
+    "sdist_note": "Sdist gzipped tar varies in archive metadata (mtime/ordering); extracted file content is byte-identical across two builds (verified via `diff -r --brief` on extracted trees). This is a known artifact of `python -m build` and is acceptable: the SHA that matters is the wheel's; the sdist is a fallback source distribution whose payload is identical and whose archive metadata is non-deterministic.",
+    "byte_reproducible_summary": "WHEEL_BYTE_REPRODUCIBLE = TRUE ; SDIST_CONTENT_REPRODUCIBLE = TRUE ; SDIST_HASH_REPRODUCIBLE = FALSE (cosmetic only)"
+  },
+  "requirement_contracts": {
+    "AI_ACT_12_1_AUTOMATIC_EVENT_LOGGING": "1.4.0"
+  },
+  "test_summary": {
+    "collected": 289,
+    "passed": 289,
+    "failed": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xfail": 0,
+    "frozen_five_tests_pipeline": 103,
+    "frozen_five_passed": 103,
+    "new_packaging_tests": 4,
+    "new_packaging_tests_file": "tests/packaging/test_namespace_coexistence.py"
+  },
+  "frozen_five_contracts": {
+    "frozen_contract_version": "1.4.0",
+    "adapters": [
+      {"short": "A", "adapter": "mini-swe-agent", "expected_status": "PASS", "frozen_sha": "25941c89cfbc91eb40b3f8756348c91d9977d57e"},
+      {"short": "B", "adapter": "gptme",           "expected_status": "PASS", "frozen_sha": "frozen-in-v1.4.0"},
+      {"short": "C", "adapter": "nanobot",         "expected_status": "FAIL", "frozen_sha": "4d204ba077a86dc42225c16f8f90032013ea1969"},
+      {"short": "D", "adapter": "CoreCoder",       "expected_status": "FAIL", "frozen_sha": "a03ef36412e432fc49d972d4007b36ce44ec5d9a"},
+      {"short": "E", "adapter": "PocketFlow",      "expected_status": "FAIL", "frozen_sha": "frozen-in-v1.4.0"}
+    ]
+  },
+  "hygiene_changes_summary": {
+    "removed_from_tracking": [
+      "notes/README.md",
+      "notes/open-vault.sh",
+      "data/eu_ai_compliance.db",
+      "data/manual_download_log.json",
+      "data/raw/CCPA.html",
+      "data/raw/HIPAA-General-Provisions.xml",
+      "data/raw/HIPAA-Privacy-Rule.xml",
+      "data/raw/HIPAA-Security-Rule.xml",
+      "data/raw/ISO27001-AnnexA.json",
+      "data/raw/ISO42001-README.md",
+      "data/raw/ISO42001.skill",
+      "data/raw/ISO42001/SKILL.md",
+      "data/raw/ISO42001/references/iso42001-ai-risk-assessment.md",
+      "data/raw/ISO42001/references/iso42001-clauses-requirements.md",
+      "data/raw/ISO42001/references/iso42001-controls-annex-a.md",
+      "data/raw/ISO9001-Wikipedia.html",
+      "data/raw/NEN7510.json",
+      "data/raw/NIST-CSF-v2.pdf",
+      "data/raw/PCI-DSS-v4.yml",
+      "data/raw/SOC2-TSC.json",
+      "audit/2026-08-27-corpus-quality.md",
+      "audit/2026-08-28-metrics.json",
+      "audit/2026-08-28-readmes.json",
+      "audit/2026-08-28-report.md",
+      "audit/2026-08-28-sample.json",
+      "audit/2026-08-28-verdicts-batch-00.json",
+      "audit/2026-08-28-verdicts-batch-01.json",
+      "audit/2026-08-28-verdicts-batch-02.json",
+      "audit/2026-08-28-verdicts-batch-03.json",
+      "audit/2026-08-28-verdicts-batch-04.json",
+      "audit/p3_selection.md",
+      "docs/laws-for-product.md",
+      "docs/licensing.md",
+      "docs/agentic-compliance-validation.md",
+      "docs/scanner-architecture.md",
+      "docs/ingestion.md",
+      "docs/audit-2026-08-28-decision.md",
+      "docs/design-partner-plan.md",
+      "runtime/REPORT.md",
+      "scripts/run_repo_corpus.sh"
+    ],
+    "developer_path_leaks_fixed": [
+      "tests/cli/test_cli.py: hardcoded /home/mrcel/.../compliance-tool cwd",
+      "scripts/maintenance/collect_eu_ai_repos.py: hardcoded PostgreSQL host/user",
+      "scripts/maintenance/sync_article_notes.py: hardcoded Obsidian vault path",
+      "scripts/maintenance/sync_regulation_index.py: hardcoded Obsidian vault path",
+      "scripts/maintenance/article_runtime_pipeline.py: hardcoded Obsidian vault path",
+      "docs/technical-requirements.md: hardcoded /home/mrcel/... paths"
+    ],
+    "gitignore_added": [
+      ".reguard/",
+      "examples/*/.reguard/",
+      "data/*.db",
+      "audit/*.db",
+      "data/raw/ISO27001*",
+      "data/raw/ISO42001*",
+      "data/raw/SOC2*",
+      "data/raw/PCI-DSS*",
+      "data/raw/NEN7510*",
+      "data/raw/NIST-CSF*",
+      "data/raw/HIPAA-*",
+      "data/raw/CCPA*",
+      "data/raw/ISO9001*",
+      "data/manual_download_log.json",
+      "notes/",
+      "src/*.egg-info/"
+    ]
+  },
+  "external_publication_status": {
+    "pypi_publish": "PENDING_PUBLICATION_ACTION",
+    "oci_image_publish": "PENDING_PUBLICATION_ACTION",
+    "remote_github_action_smoke": "PENDING_EXTERNAL_PUBLICATION",
+    "github_release_tag": "PENDING_PUBLICATION_ACTION"
+  },
+  "oci_runtime_image": {
+    "image_name": "reguard-runtime",
+    "build_command": "podman build -f runtime/Dockerfile .",
+    "user": "uid=10001(runtime) gid=10001(runtime) groups=10001(runtime)",
+    "input_mount": "/input (read-only)",
+    "artifacts_mount": "/artifacts (writable)",
+    "local_test_digest": "sha256:dae7aea7741739ff1c0d1765a65c534199e080609039a0ae30816a13605a4108",
+    "public_image_reference_pending": "ghcr.io/reguard-core/reguard-runtime:0.1.0rc1",
+    "provenance_fields_wired": true,
+    "provenance_env_vars": ["REGUARD_RUNTIME_IMAGE", "REGUARD_RUNTIME_IMAGE_DIGEST"]
+  },
+  "namespace_collision": {
+    "verdict": "NO_COLLISION",
+    "rename_required_before_release": false,
+    "audit_doc": "audit/reguard_core_v0_1_release/namespace_collision_audit.md",
+    "regression_tests": "tests/packaging/test_namespace_coexistence.py"
+  },
+  "platform_support": {
+    "python_advertised": ["3.12", "3.14"],
+    "python_3_13_classifier_removed": true,
+    "os_supported": ["Linux (Ubuntu)", "GitHub Actions ubuntu-latest", "Docker", "Podman", "WSL 2"],
+    "os_untested": ["macOS", "Windows native", "Linux arm64"],
+    "matrix_doc": "audit/reguard_core_v0_1_release/platform_support_matrix.md"
+  },
+  "preflight_verdict": "READY",
+  "preflight_report": "audit/reguard_core_v0_1_release/rc_publication_preflight.md",
+  "release_notes": "audit/reguard_core_v0_1_release/rc_release_notes.md",
+  "remote_smoke_plan": "audit/reguard_core_v0_1_release/remote_consumer_smoke_plan.md"
+}

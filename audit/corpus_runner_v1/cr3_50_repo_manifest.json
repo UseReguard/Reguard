@@ -1,0 +1,516 @@
+{
+  "frozen_shas": {
+    "HKUDS/nanobot": "4d204ba077a86dc42225c16f8f90032013ea1969",
+    "SWE-agent/mini-swe-agent": "25941c89cfbc91eb40b3f8756348c91d9977d57e",
+    "The-Pocket/PocketFlow": "f74d023f93607b8c3268133339a5e532a949898c",
+    "gptme/gptme": "c574b83d34f970f816af18183bd77d01b22bd504",
+    "he-yufeng/CoreCoder": "a03ef36412e432fc49d972d4007b36ce44ec5d9a"
+  },
+  "items": [
+    {
+      "clone_url": "https://github.com/SWE-agent/mini-swe-agent.git",
+      "full_name": "SWE-agent/mini-swe-agent",
+      "position": 0,
+      "repository_id": 316,
+      "resolved_sha": "25941c89cfbc91eb40b3f8756348c91d9977d57e",
+      "sha_resolution_class": "pinned",
+      "sha_resolution_message": "supplied via cfg.pinned_shas",
+      "stars": 6787
+    },
+    {
+      "clone_url": "https://github.com/gptme/gptme.git",
+      "full_name": "gptme/gptme",
+      "position": 1,
+      "repository_id": 71,
+      "resolved_sha": "c574b83d34f970f816af18183bd77d01b22bd504",
+      "sha_resolution_class": "pinned",
+      "sha_resolution_message": "supplied via cfg.pinned_shas",
+      "stars": 4399
+    },
+    {
+      "clone_url": "https://github.com/HKUDS/nanobot.git",
+      "full_name": "HKUDS/nanobot",
+      "position": 2,
+      "repository_id": 15,
+      "resolved_sha": "4d204ba077a86dc42225c16f8f90032013ea1969",
+      "sha_resolution_class": "pinned",
+      "sha_resolution_message": "supplied via cfg.pinned_shas",
+      "stars": 47436
+    },
+    {
+      "clone_url": "https://github.com/he-yufeng/CoreCoder.git",
+      "full_name": "he-yufeng/CoreCoder",
+      "position": 3,
+      "repository_id": 347,
+      "resolved_sha": "a03ef36412e432fc49d972d4007b36ce44ec5d9a",
+      "sha_resolution_class": "pinned",
+      "sha_resolution_message": "supplied via cfg.pinned_shas",
+      "stars": 1678
+    },
+    {
+      "clone_url": "https://github.com/The-Pocket/PocketFlow.git",
+      "full_name": "The-Pocket/PocketFlow",
+      "position": 4,
+      "repository_id": 856,
+      "resolved_sha": "f74d023f93607b8c3268133339a5e532a949898c",
+      "sha_resolution_class": "pinned",
+      "sha_resolution_message": "supplied via cfg.pinned_shas",
+      "stars": 11135
+    },
+    {
+      "clone_url": "https://github.com/NousResearch/hermes-agent.git",
+      "full_name": "NousResearch/hermes-agent",
+      "position": 5,
+      "repository_id": 6,
+      "resolved_sha": "",
+      "sha_resolution_class": "sha_resolution_error",
+      "sha_resolution_message": "git ls-remote timed out after 30s",
+      "stars": 236958
+    },
+    {
+      "clone_url": "https://github.com/Significant-Gravitas/AutoGPT.git",
+      "full_name": "Significant-Gravitas/AutoGPT",
+      "position": 6,
+      "repository_id": 578,
+      "resolved_sha": "32a43d005c0c42079ceba68d9a49c28e0eeaa6c7",
+      "sha_resolution_class": "ok",
+      "sha_resolution_message": "resolved from https://github.com/Significant-Gravitas/AutoGPT.git",
+      "stars": 186910
+    },
+    {
+      "clone_url": "https://github.com/langchain-ai/langchain.git",
+      "full_name": "langchain-ai/langchain",
+      "position": 7,
+      "repository_id": 7,
+      "resolved_sha": "5893459c4f2bfac6c8d3262cae1e3f2246d9287f",
+      "sha_resolution_class": "ok",
+      "sha_resolution_message": "resolved from https://github.com/langchain-ai/langchain.git",
+      "stars": 145088
+    },
+    {
+      "clone_url": "https://github.com/browser-use/browser-use.git",
+      "full_name": "browser-use/browser-use",
+      "position": 8,
+      "repository_id": 9,
+      "resolved_sha": "2e32d260341fae39c80bc8529ec174bad91e7672",
+      "sha_resolution_class": "ok",
+      "sha_resolution_message": "resolved from https://github.com/browser-use/browser-use.git",
+      "stars": 111105
+    },
+    {
+      "clone_url": "https://github.com/bytedance/deer-flow.git",
+      "full_name": "bytedance/deer-flow",
+      "position": 9,
+      "repository_id": 10,
+      "resolved_sha": "bf740ffa9077f55661fce80186b656651f497c89",
+      "sha_resolution_class": "ok",
+      "sha_resolution_message": "resolved from https://github.com/bytedance/deer-flow.git",
+      "stars": 80969
+    },
+    {
+      "clone_url": "https://github.com/shareAI-lab/learn-claude-code.git",
+      "full_name": "shareAI-lab/learn-claude-code",
+      "position": 10,
+      "repository_id": 306,
+      "resolved_sha": "0dcafa2ae053a1ddd6a72f265431104b08a5aa13",
+      "sha_resolution_class": "ok",
+      "sha_resolution_message": "resolved from https://github.com/shareAI-lab/learn-claude-code.git",
+      "stars": 75395
+    },
+    {
+      "clone_url": "https://github.com/FoundationAgents/MetaGPT.git",
+      "full_name": "FoundationAgents/MetaGPT",
+      "position": 11,
+      "repository_id": 1392,
+      "resolved_sha": "11cdf466d042aece04fc6cfd13b28e1a70341b1f",
+      "sha_resolution_class": "ok",
+      "sha_resolution_message": "resolved from https://github.com/FoundationAgents/MetaGPT.git",
+      "stars": 70053
+    },
+    {
+      "clone_url": "https://github.com/ZhuLinsen/daily_stock_analysis.git",
+      "full_name": "ZhuLinsen/daily_stock_analysis",
+      "position": 12,
+      "repository_id": 307,
+      "resolved_sha": "03e11fe35c5fcedb2d1516b3a18698d254b2ae7b",
+      "sha_resolution_class": "ok",
+      "sha_resolution_message": "resolved from https://github.com/ZhuLinsen/daily_stock_analysis.git",
+      "stars": 64039
+    },
+    {
+      "clone_url": "https://github.com/crewAIInc/crewAI.git",
+      "full_name": "crewAIInc/crewAI",
+      "position": 13,
+      "repository_id": 13,
+      "resolved_sha": "da4daadba0e5049abc00fee8bc31b8b8019c60dd",
+      "sha_resolution_class": "ok",
+      "sha_resolution_message": "resolved from https://github.com/crewAIInc/crewAI.git",
+      "stars": 57658
+    },
+    {
+      "clone_url": "https://github.com/calesthio/OpenMontage.git",
+      "full_name": "calesthio/OpenMontage",
+      "position": 14,
+      "repository_id": 847,
+      "resolved_sha": "cd9f3c1f03368be87b140af494914b8ee4e3c7a4",
+      "sha_resolution_class": "ok",
+      "sha_resolution_message": "resolved from https://github.com/calesthio/OpenMontage.git",
+      "stars": 51443
+    },
+    {
+      "clone_url": "https://github.com/rohitg00/ai-engineering-from-scratch.git",
+      "full_name": "rohitg00/ai-engineering-from-scratch",
+      "position": 15,
+      "repository_id": 14,
+      "resolved_sha": "39ea8a1c6d0b61f071226eff7ede4d4105fed820",
+      "sha_resolution_class": "ok",
+      "sha_resolution_message": "resolved from https://github.com/rohitg00/ai-engineering-from-scratch.git",
+      "stars": 49672
+    },
+    {
+      "clone_url": "https://github.com/hugohe3/ppt-master.git",
+      "full_name": "hugohe3/ppt-master",
+      "position": 16,
+      "repository_id": 308,
+      "resolved_sha": "bf81f3ece547e769095a6c0b82f40d33be3d2cf7",
+      "sha_resolution_class": "ok",
+      "sha_resolution_message": "resolved from https://github.com/hugohe3/ppt-master.git",
+      "stars": 49660
+    },
+    {
+      "clone_url": "https://github.com/zhayujie/CowAgent.git",
+      "full_name": "zhayujie/CowAgent",
+      "position": 17,
+      "repository_id": 16,
+      "resolved_sha": "ed5bb344cfe42cee443c8266ba47ee666d8d7471",
+      "sha_resolution_class": "ok",
+      "sha_resolution_message": "resolved from https://github.com/zhayujie/CowAgent.git",
+      "stars": 46694
+    },
+    {
+      "clone_url": "https://github.com/agno-agi/agno.git",
+      "full_name": "agno-agi/agno",
+      "position": 18,
+      "repository_id": 18,
+      "resolved_sha": "c96291cbd0f644774d48a398c30101e90c947354",
+      "sha_resolution_class": "ok",
+      "sha_resolution_message": "resolved from https://github.com/agno-agi/agno.git",
+      "stars": 41938
+    },
+    {
+      "clone_url": "https://github.com/langchain-ai/langgraph.git",
+      "full_name": "langchain-ai/langgraph",
+      "position": 19,
+      "repository_id": 19,
+      "resolved_sha": "11ee185999b86bfea2d8c0e69cef9a5e37acf686",
+      "sha_resolution_class": "ok",
+      "sha_resolution_message": "resolved from https://github.com/langchain-ai/langgraph.git",
+      "stars": 40516
+    },
+    {
+      "clone_url": "https://github.com/HKUDS/DeepTutor.git",
+      "full_name": "HKUDS/DeepTutor",
+      "position": 20,
+      "repository_id": 21,
+      "resolved_sha": "07bb3c19e91af04b1c7b4f52c2b711d88ea451c0",
+      "sha_resolution_class": "ok",
+      "sha_resolution_message": "resolved from https://github.com/HKUDS/DeepTutor.git",
+      "stars": 37596
+    },
+    {
+      "clone_url": "https://github.com/ashishpatel26/500-AI-Agents-Projects.git",
+      "full_name": "ashishpatel26/500-AI-Agents-Projects",
+      "position": 21,
+      "repository_id": 22,
+      "resolved_sha": "9beeb721c2af551bacaab827a76bddaecaa0ca5e",
+      "sha_resolution_class": "ok",
+      "sha_resolution_message": "resolved from https://github.com/ashishpatel26/500-AI-Agents-Projects.git",
+      "stars": 37035
+    },
+    {
+      "clone_url": "https://github.com/MadsLorentzen/ai-job-search.git",
+      "full_name": "MadsLorentzen/ai-job-search",
+      "position": 22,
+      "repository_id": 23,
+      "resolved_sha": "93fb0e6c474eac50f8ee9c239fdcf2c73c4be383",
+      "sha_resolution_class": "ok",
+      "sha_resolution_message": "resolved from https://github.com/MadsLorentzen/ai-job-search.git",
+      "stars": 36613
+    },
+    {
+      "clone_url": "https://github.com/VectifyAI/PageIndex.git",
+      "full_name": "VectifyAI/PageIndex",
+      "position": 23,
+      "repository_id": 24,
+      "resolved_sha": "9fee239b174fcc205fec28df105e519ac7171522",
+      "sha_resolution_class": "ok",
+      "sha_resolution_message": "resolved from https://github.com/VectifyAI/PageIndex.git",
+      "stars": 35333
+    },
+    {
+      "clone_url": "https://github.com/agentscope-ai/QwenPaw.git",
+      "full_name": "agentscope-ai/QwenPaw",
+      "position": 24,
+      "repository_id": 25,
+      "resolved_sha": "1a4f4d8a9c29753002172c044a166b04136bd37f",
+      "sha_resolution_class": "ok",
+      "sha_resolution_message": "resolved from https://github.com/agentscope-ai/QwenPaw.git",
+      "stars": 34519
+    },
+    {
+      "clone_url": "https://github.com/HKUDS/Vibe-Trading.git",
+      "full_name": "HKUDS/Vibe-Trading",
+      "position": 25,
+      "repository_id": 310,
+      "resolved_sha": "e90b6c6cd9fea23067a85667e7fbf74f9d73ea48",
+      "sha_resolution_class": "ok",
+      "sha_resolution_message": "resolved from https://github.com/HKUDS/Vibe-Trading.git",
+      "stars": 31807
+    },
+    {
+      "clone_url": "https://github.com/CloakHQ/CloakBrowser.git",
+      "full_name": "CloakHQ/CloakBrowser",
+      "position": 26,
+      "repository_id": 27,
+      "resolved_sha": "bb6f2f00e4ca6bdf91ce4ef02c1d33858020efd9",
+      "sha_resolution_class": "ok",
+      "sha_resolution_message": "resolved from https://github.com/CloakHQ/CloakBrowser.git",
+      "stars": 30853
+    },
+    {
+      "clone_url": "https://github.com/agentscope-ai/agentscope.git",
+      "full_name": "agentscope-ai/agentscope",
+      "position": 27,
+      "repository_id": 1393,
+      "resolved_sha": "e90f1c7592896cc95f6e5ee506194f533378247d",
+      "sha_resolution_class": "ok",
+      "sha_resolution_message": "resolved from https://github.com/agentscope-ai/agentscope.git",
+      "stars": 29730
+    },
+    {
+      "clone_url": "https://github.com/Fosowl/agenticSeek.git",
+      "full_name": "Fosowl/agenticSeek",
+      "position": 28,
+      "repository_id": 579,
+      "resolved_sha": "ae57a2357745a9706cb12d0fd76d954c84d166fa",
+      "sha_resolution_class": "ok",
+      "sha_resolution_message": "resolved from https://github.com/Fosowl/agenticSeek.git",
+      "stars": 27027
+    },
+    {
+      "clone_url": "https://github.com/deepset-ai/haystack.git",
+      "full_name": "deepset-ai/haystack",
+      "position": 29,
+      "repository_id": 29,
+      "resolved_sha": "e318778c9bf60a1963e3b5f451359655dd696c30",
+      "sha_resolution_class": "ok",
+      "sha_resolution_message": "resolved from https://github.com/deepset-ai/haystack.git",
+      "stars": 26325
+    },
+    {
+      "clone_url": "https://github.com/google/adk-python.git",
+      "full_name": "google/adk-python",
+      "position": 30,
+      "repository_id": 32,
+      "resolved_sha": "c3d3730250b64156129508354b45120372f95334",
+      "sha_resolution_class": "ok",
+      "sha_resolution_message": "resolved from https://github.com/google/adk-python.git",
+      "stars": 21303
+    },
+    {
+      "clone_url": "https://github.com/hummingbot/hummingbot.git",
+      "full_name": "hummingbot/hummingbot",
+      "position": 31,
+      "repository_id": 34,
+      "resolved_sha": "2bfaccc48dd49e71a5b6d9b3011808e127dd00cd",
+      "sha_resolution_class": "ok",
+      "sha_resolution_message": "resolved from https://github.com/hummingbot/hummingbot.git",
+      "stars": 19630
+    },
+    {
+      "clone_url": "https://github.com/emcie-co/parlant.git",
+      "full_name": "emcie-co/parlant",
+      "position": 32,
+      "repository_id": 35,
+      "resolved_sha": "ea737442b8ae65854a842542e544fbe7e6144bad",
+      "sha_resolution_class": "ok",
+      "sha_resolution_message": "resolved from https://github.com/emcie-co/parlant.git",
+      "stars": 18270
+    },
+    {
+      "clone_url": "https://github.com/microsoft/agent-lightning.git",
+      "full_name": "microsoft/agent-lightning",
+      "position": 33,
+      "repository_id": 851,
+      "resolved_sha": "88528bf4b7360d852f5bc5d023943697953ec332",
+      "sha_resolution_class": "ok",
+      "sha_resolution_message": "resolved from https://github.com/microsoft/agent-lightning.git",
+      "stars": 17867
+    },
+    {
+      "clone_url": "https://github.com/TransformerOptimus/SuperAGI.git",
+      "full_name": "TransformerOptimus/SuperAGI",
+      "position": 34,
+      "repository_id": 580,
+      "resolved_sha": "c3c1982e7bd6a11cfed53c5a193ea502f924b1b6",
+      "sha_resolution_class": "ok",
+      "sha_resolution_message": "resolved from https://github.com/TransformerOptimus/SuperAGI.git",
+      "stars": 17660
+    },
+    {
+      "clone_url": "https://github.com/browser-use/browser-harness.git",
+      "full_name": "browser-use/browser-harness",
+      "position": 35,
+      "repository_id": 1,
+      "resolved_sha": "e3e8069c0ca40befb1a8a0a74da547270767a8be",
+      "sha_resolution_class": "ok",
+      "sha_resolution_message": "resolved from https://github.com/browser-use/browser-harness.git",
+      "stars": 17167
+    },
+    {
+      "clone_url": "https://github.com/cft0808/edict.git",
+      "full_name": "cft0808/edict",
+      "position": 36,
+      "repository_id": 38,
+      "resolved_sha": "14a207557719c046af0f993a7bff1cc5a5015b33",
+      "sha_resolution_class": "ok",
+      "sha_resolution_message": "resolved from https://github.com/cft0808/edict.git",
+      "stars": 16604
+    },
+    {
+      "clone_url": "https://github.com/raga-ai-hub/RagaAI-Catalyst.git",
+      "full_name": "raga-ai-hub/RagaAI-Catalyst",
+      "position": 37,
+      "repository_id": 852,
+      "resolved_sha": "ab67893310891140211280a496402003e52cdab5",
+      "sha_resolution_class": "ok",
+      "sha_resolution_message": "resolved from https://github.com/raga-ai-hub/RagaAI-Catalyst.git",
+      "stars": 16150
+    },
+    {
+      "clone_url": "https://github.com/xbtlin/ai-berkshire.git",
+      "full_name": "xbtlin/ai-berkshire",
+      "position": 38,
+      "repository_id": 312,
+      "resolved_sha": "fd83d06347c6e3ee50133cda6962f40e226b5252",
+      "sha_resolution_class": "ok",
+      "sha_resolution_message": "resolved from https://github.com/xbtlin/ai-berkshire.git",
+      "stars": 15915
+    },
+    {
+      "clone_url": "https://github.com/opensandbox-group/OpenSandbox.git",
+      "full_name": "opensandbox-group/OpenSandbox",
+      "position": 39,
+      "repository_id": 313,
+      "resolved_sha": "48b0215f1bd097b31d0f022a44640e00c11ac49d",
+      "sha_resolution_class": "ok",
+      "sha_resolution_message": "resolved from https://github.com/opensandbox-group/OpenSandbox.git",
+      "stars": 14742
+    },
+    {
+      "clone_url": "https://github.com/img2threejs/img2threejs.git",
+      "full_name": "img2threejs/img2threejs",
+      "position": 40,
+      "repository_id": 40,
+      "resolved_sha": "9fbd0ca5bbcc3b13bebe712745d6784d33db0b85",
+      "sha_resolution_class": "ok",
+      "sha_resolution_message": "resolved from https://github.com/img2threejs/img2threejs.git",
+      "stars": 14049
+    },
+    {
+      "clone_url": "https://github.com/lsdefine/GenericAgent.git",
+      "full_name": "lsdefine/GenericAgent",
+      "position": 41,
+      "repository_id": 314,
+      "resolved_sha": "7ad2162f3080771a80477d6f51b67d1490842c73",
+      "sha_resolution_class": "ok",
+      "sha_resolution_message": "resolved from https://github.com/lsdefine/GenericAgent.git",
+      "stars": 14044
+    },
+    {
+      "clone_url": "https://github.com/e2b-dev/E2B.git",
+      "full_name": "e2b-dev/E2B",
+      "position": 42,
+      "repository_id": 42,
+      "resolved_sha": "5a56c87e9db0e221b138662805af7743e75f1082",
+      "sha_resolution_class": "ok",
+      "sha_resolution_message": "resolved from https://github.com/e2b-dev/E2B.git",
+      "stars": 13560
+    },
+    {
+      "clone_url": "https://github.com/microsoft/agent-framework.git",
+      "full_name": "microsoft/agent-framework",
+      "position": 43,
+      "repository_id": 854,
+      "resolved_sha": "edfe115ea06bca57ae5a123d0fac5b3fdda13603",
+      "sha_resolution_class": "ok",
+      "sha_resolution_message": "resolved from https://github.com/microsoft/agent-framework.git",
+      "stars": 13137
+    },
+    {
+      "clone_url": "https://github.com/neuml/txtai.git",
+      "full_name": "neuml/txtai",
+      "position": 44,
+      "repository_id": 43,
+      "resolved_sha": "546e7777f1fc362a20a9440e89706ecc4c104c87",
+      "sha_resolution_class": "ok",
+      "sha_resolution_message": "resolved from https://github.com/neuml/txtai.git",
+      "stars": 12909
+    },
+    {
+      "clone_url": "https://github.com/simular-ai/Agent-S.git",
+      "full_name": "simular-ai/Agent-S",
+      "position": 45,
+      "repository_id": 44,
+      "resolved_sha": "bffdb59c60cbbb38c3a190b2e91da12039e4063c",
+      "sha_resolution_class": "ok",
+      "sha_resolution_message": "resolved from https://github.com/simular-ai/Agent-S.git",
+      "stars": 12193
+    },
+    {
+      "clone_url": "https://github.com/ValueCell-ai/valuecell.git",
+      "full_name": "ValueCell-ai/valuecell",
+      "position": 46,
+      "repository_id": 857,
+      "resolved_sha": "9793e9c0563fbf56fc096757d8bb80e209ac7aab",
+      "sha_resolution_class": "ok",
+      "sha_resolution_message": "resolved from https://github.com/ValueCell-ai/valuecell.git",
+      "stars": 11004
+    },
+    {
+      "clone_url": "https://github.com/kedro-org/kedro.git",
+      "full_name": "kedro-org/kedro",
+      "position": 47,
+      "repository_id": 858,
+      "resolved_sha": "b2fb60e975215fd2e391bfee6fe1b5f344d187be",
+      "sha_resolution_class": "ok",
+      "sha_resolution_message": "resolved from https://github.com/kedro-org/kedro.git",
+      "stars": 10971
+    },
+    {
+      "clone_url": "https://github.com/omnigent-ai/omnigent.git",
+      "full_name": "omnigent-ai/omnigent",
+      "position": 48,
+      "repository_id": 47,
+      "resolved_sha": "1bcf2f429f5f89f3cc61d520c9d393413151ff5b",
+      "sha_resolution_class": "ok",
+      "sha_resolution_message": "resolved from https://github.com/omnigent-ai/omnigent.git",
+      "stars": 9316
+    },
+    {
+      "clone_url": "https://github.com/GetBindu/Bindu.git",
+      "full_name": "GetBindu/Bindu",
+      "position": 49,
+      "repository_id": 315,
+      "resolved_sha": "7d5b6d256364abdbcff97bd96c82581a03607096",
+      "sha_resolution_class": "ok",
+      "sha_resolution_message": "resolved from https://github.com/GetBindu/Bindu.git",
+      "stars": 9186
+    }
+  ],
+  "schema_version": "1",
+  "selection_authoritative_source": "corpus_run_repositories (authoritative; regenerated from DB to eliminate pre-resolution / run-resolution drift)",
+  "selection_completed_at": "2026-08-29T16:27:45Z",
+  "selection_rule": "frozen five by spec order + 45 by agent_repositories.STARS DESC, agent_repositories.id ASC WHERE enabled=1 AND relevance_status='accepted' AND primary_language='Python' AND archived=0 AND fork=0 AND full_name NOT IN (frozen five)",
+  "selection_started_at": "2026-08-29T16:27:45Z"
+}

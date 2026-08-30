@@ -59,11 +59,36 @@ RUN set -eux; \
 # ---------------------------------------------------------------------------
 # We deliberately keep the runtime dependency-free of repo libraries.
 # `tomllib` is stdlib in Python 3.12; no TOML library needed here.
+#
+# Poetry is installed alongside uv because the runtime supports both
+# build strategies. Poetry is pinned to a specific release so the
+# image is reproducible. `poetry install --no-interaction` against a
+# poetry.lock is deterministic when the lockfile is committed.
 # ---------------------------------------------------------------------------
+ARG POETRY_VERSION=2.1.3
 RUN python3 -m pip install --no-cache-dir --upgrade \
         'pip>=24' \
         'setuptools>=70' \
-        'wheel'
+        'wheel' \
+ && python3 -m pip install --no-cache-dir \
+        "poetry==${POETRY_VERSION}"
+
+# ---------------------------------------------------------------------------
+# Adapter-probe preinstalls
+# ---------------------------------------------------------------------------
+# gptme is the only Article 12(1) probe target that imports a
+# framework package at probe time. The runtime container runs with
+# `--network none`, so `pip install -e .` inside the container
+# against the host's repo checkout cannot reach PyPI. We preinstall
+# gptme at image build time (where the build host DOES have network)
+# so the probe's `from gptme... import` resolves against the
+# container's site-packages. This is a probe-side concern only —
+# the adapter registry in the host-side compliance/pipeline is
+# unchanged. No adapters were added.
+# ---------------------------------------------------------------------------
+ARG GPTME_VERSION=0.32.1
+RUN python3 -m pip install --no-cache-dir \
+        "gptme==${GPTME_VERSION}"
 
 # ---------------------------------------------------------------------------
 # Non-root user
@@ -91,6 +116,13 @@ RUN groupadd --system --gid "${RUNTIME_GID}" runtime \
 # ---------------------------------------------------------------------------
 # Runtime source
 # ---------------------------------------------------------------------------
+# COPY supports two build contexts:
+#   1. Project root:  `docker build -f runtime/Dockerfile .`
+#      → sources at `runtime/` resolve to `<context>/runtime/`
+#   2. Runtime dir:   `docker build -f runtime/Dockerfile runtime/`
+#      → sources at `runtime/` are the Dockerfile's own dir, which
+#        Docker sees as `.`; we copy `.` instead.
+# This keeps both invocation styles working.
 COPY --chown=root:root runtime/ /opt/repo-runtime/runtime/
 RUN chmod -R a+rX /opt/repo-runtime
 

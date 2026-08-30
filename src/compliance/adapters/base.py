@@ -11,7 +11,7 @@ The adapter does NOT decide pass/fail. That is the RequirementTest's job.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from compliance.pipeline.types import Evidence, RepositoryTarget, Scenario
 
@@ -29,6 +29,13 @@ class AdapterCapabilities:
     install_command: str = ""
     """Shell command run inside the repo working dir during probe
     install. Empty means: install via `pip install -e .` (auto)."""
+    supported_scenarios: tuple[str, ...] = field(default_factory=tuple)
+    """Scenario IDs the adapter's probe currently exercises. Used by
+    the Corpus Runner for orchestration-level eligibility checks.
+    Adapters that do not declare any scenario are conservatively
+    treated as supporting the baseline Article 12(1) scenario only.
+    This field is additive and does not change verdict semantics.
+    """
 
 
 class RepoAdapter(ABC):

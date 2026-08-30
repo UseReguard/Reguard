@@ -1,0 +1,46 @@
+{
+  "schema_version": "1",
+  "gate": "CR-2 v1.1 replay",
+  "source_replay_run_id": 9,
+  "new_corpus_run_id": 10,
+  "requirement_id": "AI_ACT_12_1_AUTOMATIC_EVENT_LOGGING",
+  "requirement_version": "1.4.0",
+  "scenario_id": "compliance.article12_1.simple",
+  "executor": "subprocess",
+  "manifest_source": "audit/corpus_runner_v1/cr2_manifest.json",
+  "manifest_repo_count": 20,
+  "results": {
+    "PASS": 2,
+    "FAIL": 3,
+    "UNKNOWN": 0,
+    "ERROR": 0,
+    "UNSUPPORTED": 15,
+    "SKIPPED": 0
+  },
+  "five_frozen_regression_match": true,
+  "five_frozen_regression_observed": {
+    "SWE-agent/mini-swe-agent": "PASS",
+    "gptme/gptme": "PASS",
+    "HKUDS/nanobot": "FAIL",
+    "he-yufeng/CoreCoder": "FAIL",
+    "The-Pocket/PocketFlow": "FAIL"
+  },
+  "v1_1_metadata": {
+    "jobs_total": 20,
+    "jobs_with_requirement_evaluations_row": 20,
+    "jobs_with_execution_recipe_id": 20,
+    "jobs_with_missing_capability_token": 15
+  },
+  "cache_metrics": {
+    "source_cache_hits": 0,
+    "source_cache_misses": 0,
+    "bytes_downloaded": null,
+    "workspaces_created": 0,
+    "workspaces_destroyed": 0,
+    "orphaned_workspaces": 0,
+    "source_cache_size": 0
+  },
+  "cache_metrics_note": "The v1.1 architecture adds the source cache + workspace manager as new infrastructure, but the v1 driver._clone_to_tempdir path still does its own per-attempt git clone. Cache metrics are therefore 0 in this replay: the new cache module is integrated additively (no behavioural change to compliance verdicts). The replay proves the v1.1 metadata layer works; cache integration with the driver is the next architectural step (see v1.1.1).",
+  "compliance_behaviour_unchanged": true,
+  "what_may_differ": "Cache behaviour. No metrics were collected because the executor path through driver._clone_to_tempdir does not yet call into SourceCache.materialize_checkout; that integration is part of v1.1.1 (out of scope for v1.1 architecture + replay)."
+}

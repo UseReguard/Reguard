@@ -1,0 +1,253 @@
+{
+  "frozen_five_shas": {
+    "HKUDS/nanobot": "4d204ba077a86dc42225c16f8f90032013ea1969",
+    "SWE-agent/mini-swe-agent": "25941c89cfbc91eb40b3f8756348c91d9977d57e",
+    "The-Pocket/PocketFlow": "f74d023f93607b8c3268133339a5e532a949898c",
+    "gptme/gptme": "c574b83d34f970f816af18183bd77d01b22bd504",
+    "he-yufeng/CoreCoder": "a03ef36412e432fc49d972d4007b36ce44ec5d9a"
+  },
+  "manifest_repo_count": 20,
+  "phase_a": {
+    "corpus_run_id": 1,
+    "cumulative_metrics": {
+      "bytes_fetched": null,
+      "materialization_duration_seconds": 36.5543789939984,
+      "orphaned_workspaces": 0,
+      "source_cache_bytes_after": 478682277,
+      "source_cache_bytes_before": 0,
+      "source_cache_fetch_failures": 0,
+      "source_cache_fetches": 5,
+      "source_cache_hits": 0,
+      "source_cache_misses": 5,
+      "workspace_cleanup_failures": 0,
+      "workspaces_created": 5,
+      "workspaces_destroyed": 5
+    },
+    "expected_distribution": {
+      "error": 0,
+      "fail": 3,
+      "pass": 2,
+      "skipped": 0,
+      "unknown": 0,
+      "unsupported": 15
+    },
+    "final_counts": {
+      "error": 0,
+      "fail": 3,
+      "pass": 2,
+      "skipped": 0,
+      "unknown": 0,
+      "unsupported": 15
+    },
+    "match": true,
+    "per_run_metric_deltas": {
+      "bytes_fetched": null,
+      "materialization_duration_seconds": 36.5543789939984,
+      "orphaned_workspaces": 0,
+      "source_cache_bytes_after": 478682277,
+      "source_cache_bytes_before": 0,
+      "source_cache_fetch_failures": 0,
+      "source_cache_fetches": 5,
+      "source_cache_hits": 0,
+      "source_cache_misses": 5,
+      "workspace_cleanup_failures": 0,
+      "workspaces_created": 5,
+      "workspaces_destroyed": 5
+    },
+    "run_name": "cold",
+    "surviving_workspaces": [],
+    "workspace_states": {
+      "/tmp/reguard_v111_ws/1788019210_1_c22207db": {
+        "has_cleanup_marker": true,
+        "has_materialized_marker": false
+      },
+      "/tmp/reguard_v111_ws/1788019219_2_a52db7c3": {
+        "has_cleanup_marker": true,
+        "has_materialized_marker": false
+      },
+      "/tmp/reguard_v111_ws/1788019236_3_2cfcbd2a": {
+        "has_cleanup_marker": true,
+        "has_materialized_marker": false
+      },
+      "/tmp/reguard_v111_ws/1788019238_4_b683ad4f": {
+        "has_cleanup_marker": true,
+        "has_materialized_marker": false
+      },
+      "/tmp/reguard_v111_ws/1788019242_5_c79d8fb1": {
+        "has_cleanup_marker": true,
+        "has_materialized_marker": false
+      }
+    },
+    "workspaces_created_this_run": 5
+  },
+  "phase_a_cache_cleanup_ok": true,
+  "phase_a_cache_entries_after": 5,
+  "phase_a_cache_entries_before": 0,
+  "phase_a_cold_started": true,
+  "phase_a_workspace_states_summary": "5 workspaces seen; 0 with materialized marker remaining (orphans).",
+  "phase_b": {
+    "corpus_run_id": 2,
+    "cumulative_metrics": {
+      "bytes_fetched": null,
+      "materialization_duration_seconds": 0.6576162959972862,
+      "orphaned_workspaces": 0,
+      "source_cache_bytes_after": 478682277,
+      "source_cache_bytes_before": 478682277,
+      "source_cache_fetch_failures": 0,
+      "source_cache_fetches": 0,
+      "source_cache_hits": 5,
+      "source_cache_misses": 0,
+      "workspace_cleanup_failures": 0,
+      "workspaces_created": 5,
+      "workspaces_destroyed": 5
+    },
+    "expected_distribution": {
+      "error": 0,
+      "fail": 3,
+      "pass": 2,
+      "skipped": 0,
+      "unknown": 0,
+      "unsupported": 15
+    },
+    "final_counts": {
+      "error": 0,
+      "fail": 3,
+      "pass": 2,
+      "skipped": 0,
+      "unknown": 0,
+      "unsupported": 15
+    },
+    "match": true,
+    "per_run_metric_deltas": {
+      "bytes_fetched": null,
+      "materialization_duration_seconds": 0.6576162959972862,
+      "orphaned_workspaces": 0,
+      "source_cache_bytes_after": 478682277,
+      "source_cache_bytes_before": 478682277,
+      "source_cache_fetch_failures": 0,
+      "source_cache_fetches": 0,
+      "source_cache_hits": 5,
+      "source_cache_misses": 0,
+      "workspace_cleanup_failures": 0,
+      "workspaces_created": 5,
+      "workspaces_destroyed": 5
+    },
+    "run_name": "warm",
+    "surviving_workspaces": [],
+    "workspace_states": {
+      "/tmp/reguard_v111_ws/1788019242_21_d59981cf": {
+        "has_cleanup_marker": true,
+        "has_materialized_marker": false
+      },
+      "/tmp/reguard_v111_ws/1788019243_22_3ae377fb": {
+        "has_cleanup_marker": true,
+        "has_materialized_marker": false
+      },
+      "/tmp/reguard_v111_ws/1788019243_23_faeb7678": {
+        "has_cleanup_marker": true,
+        "has_materialized_marker": false
+      },
+      "/tmp/reguard_v111_ws/1788019243_24_f7a0c147": {
+        "has_cleanup_marker": true,
+        "has_materialized_marker": false
+      },
+      "/tmp/reguard_v111_ws/1788019243_25_28e0a8ad": {
+        "has_cleanup_marker": true,
+        "has_materialized_marker": false
+      }
+    },
+    "workspaces_created_this_run": 5
+  },
+  "phase_b_cache_cleanup_ok": true,
+  "phase_b_cache_entries_after": 5,
+  "phase_b_cache_entries_before": 5,
+  "phase_b_workspace_states_summary": "5 workspaces seen; 0 with materialized marker remaining (orphans).",
+  "phase_b_workspaces_disjoint_from_cold": true,
+  "phase_c": {
+    "compliance_status_after": 41,
+    "compliance_status_after_actual": "PASS",
+    "compliance_status_before": "PASS",
+    "corpus_run_id": 3,
+    "deltas": {
+      "bytes_fetched": null,
+      "materialization_duration_seconds": 3.6074888830007694,
+      "orphaned_workspaces": 0,
+      "source_cache_bytes_after": 478682277,
+      "source_cache_bytes_before": 443980408,
+      "source_cache_fetch_failures": 0,
+      "source_cache_fetches": 1,
+      "source_cache_hits": 0,
+      "source_cache_misses": 1,
+      "workspace_cleanup_failures": 0,
+      "workspaces_created": 1,
+      "workspaces_destroyed": 1
+    },
+    "final_counts": {
+      "error": 0,
+      "fail": 0,
+      "pass": 1,
+      "skipped": 0,
+      "unknown": 0,
+      "unsupported": 0
+    },
+    "run_name": "refetch",
+    "semantic_match": true
+  },
+  "phase_c_cache_entries_after_delete": 4,
+  "phase_c_deletion": {
+    "cache_key": "ccaeba3b4bbbac75ce75e8bced888e9e",
+    "cache_path": "/tmp/reguard_v111_cache/ccaeba3b4bbbac75ce75e8bced888e9e",
+    "deleted": true,
+    "existed": true,
+    "full_name": "SWE-agent/mini-swe-agent",
+    "sha": "25941c89cfbc91eb40b3f8756348c91d9977d57e"
+  },
+  "phase_c_target": {
+    "full_name": "SWE-agent/mini-swe-agent",
+    "sha": "25941c89cfbc91eb40b3f8756348c91d9977d57e"
+  },
+  "phase_c_warm_result_before": {
+    "compliance_status": "PASS"
+  },
+  "phase_c_warm_run_id": 2,
+  "phase_d": {
+    "hot_path": "run_with_prepared_checkout (via RepositoryMaterializer.prepare)",
+    "legacy_clone_definition": "run_one in compliance.pipeline.driver is reachable ONLY when the executor's materializer argument is None; run_corpus_run instantiates RepositoryMaterializer() by default (line 674), so CorpusRunner never reaches it.",
+    "legacy_clone_reachable_from_corpus_runner": false,
+    "n_compliance_runtime_runs_total": 0,
+    "n_runs_recent": 0
+  },
+  "phase_e": {
+    "cold_per_run_deltas": {
+      "bytes_fetched": null,
+      "materialization_duration_seconds": 36.5543789939984,
+      "orphaned_workspaces": 0,
+      "source_cache_bytes_after": 478682277,
+      "source_cache_bytes_before": 0,
+      "source_cache_fetch_failures": 0,
+      "source_cache_fetches": 5,
+      "source_cache_hits": 0,
+      "source_cache_misses": 5,
+      "workspace_cleanup_failures": 0,
+      "workspaces_created": 5,
+      "workspaces_destroyed": 5
+    },
+    "cold_workspaces_destroyed": 5,
+    "root_cause_analysis": "Cleanup is invoked via materializer.cleanup(prepared) in the executor's finally block (executor.py:567-568). The metric is incremented in materializer.cleanup when the workspace_manager.cleanup returns True. Per-run accounting uses fresh materializer instances per run, so the workspace_destroyed counter for a run matches the workspaces_created for that run.",
+    "warm_per_run_deltas": {
+      "bytes_fetched": null,
+      "materialization_duration_seconds": 0.6576162959972862,
+      "orphaned_workspaces": 0,
+      "source_cache_bytes_after": 478682277,
+      "source_cache_bytes_before": 478682277,
+      "source_cache_fetch_failures": 0,
+      "source_cache_fetches": 0,
+      "source_cache_hits": 5,
+      "source_cache_misses": 0,
+      "workspace_cleanup_failures": 0,
+      "workspaces_created": 5,
+      "workspaces_destroyed": 5
+    },
+    "warm_workspaces_destroyed": 5
+  }
+}

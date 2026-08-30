@@ -1,0 +1,25 @@
+schema_version: 1
+
+integration:
+  recipe: langgraph-state
+  recipe_version: 1.0.0
+  package_root: libs/langgraph
+
+  entrypoint:
+    target: langgraph.graph:StateGraph
+    mode: sync
+
+  model:
+    strategy: deterministic_stub
+
+  observers:
+    - langgraph-state.callback-observer
+
+  normalizer:
+    id: langgraph-state.canonical-normalizer
+
+  params:
+    invocation_mode: live
+
+scenarios:
+  - compliance.article12_1.simple

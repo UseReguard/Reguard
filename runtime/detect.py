@@ -68,7 +68,7 @@ BUILD_STRATEGY_PIPENV    = "pipenv"   # reported but unsupported by MVP
 # The runtime image installs `uv` only. Poetry and pipenv are NOT
 # installed to keep the image small and reproducible. Repos that
 # require them get status=unsupported with a clear message.
-UNSUPPORTED_STRATEGIES = frozenset({"poetry", "pipenv", "none"})
+UNSUPPORTED_STRATEGIES = frozenset({"pipenv", "none"})
 
 
 @dataclass(frozen=True)
@@ -105,6 +105,38 @@ _PRUNE_DIRS = {
 }
 
 
+def _safe_is_file(p: Path) -> bool:
+    """`Path.is_file()` that tolerates permission errors.
+
+    The container user (uid 10001) cannot `stat` every file in a
+    read-only bind mount — some files have restrictive modes
+    from upstream, and the bind mount only allows the container
+    user to read what the host user's group/world permissions
+    allow. Treat any OSError as "not present" so detection
+    never crashes the runtime on a permission edge case.
+    """
+    try:
+        return p.is_file()
+    except OSError:
+        return False
+
+
+def _safe_is_dir(p: Path) -> bool:
+    """`Path.is_dir()` that tolerates permission errors."""
+    try:
+        return p.is_dir()
+    except OSError:
+        return False
+
+
+def _safe_iter(p: Path):
+    """`Path.iterdir()` that tolerates permission errors."""
+    try:
+        yield from p.iterdir()
+    except OSError:
+        return
+
+
 def detect(repo_root: Path) -> tuple[Detection, BuildStrategy]:
     """Walk `repo_root` once and produce both the Detection summary and the
     concrete BuildStrategy.
@@ -114,16 +146,16 @@ def detect(repo_root: Path) -> tuple[Detection, BuildStrategy]:
     """
     files = _walk_python_files(repo_root)
 
-    has_uv_lock      = (repo_root / "uv.lock").is_file()
-    has_poetry_lock  = (repo_root / "poetry.lock").is_file()
-    has_pipfile      = (repo_root / "Pipfile").is_file()
-    has_pyproject    = (repo_root / "pyproject.toml").is_file()
-    has_setup_py     = (repo_root / "setup.py").is_file()
-    has_setup_cfg    = (repo_root / "setup.cfg").is_file()
+    has_uv_lock      = _safe_is_file(repo_root / "uv.lock")
+    has_poetry_lock  = _safe_is_file(repo_root / "poetry.lock")
+    has_pipfile      = _safe_is_file(repo_root / "Pipfile")
+    has_pyproject    = _safe_is_file(repo_root / "pyproject.toml")
+    has_setup_py     = _safe_is_file(repo_root / "setup.py")
+    has_setup_cfg    = _safe_is_file(repo_root / "setup.cfg")
     has_requirements = any(
-        p.is_file() and p.name.startswith("requirements")
-        for p in repo_root.iterdir() if p.is_file()
-    ) if repo_root.is_dir() else False
+        _safe_is_file(p) and p.name.startswith("requirements")
+        for p in _safe_iter(repo_root)
+    ) if _safe_is_dir(repo_root) else False
 
     pyproject = _safe_read_text(repo_root / "pyproject.toml") if has_pyproject else None
     setup_py  = _safe_read_text(repo_root / "setup.py")        if has_setup_py     else None
@@ -197,7 +229,7 @@ def _walk_python_files(repo_root: Path) -> list[Path]:
     `MAX_WALK_FILES`. Order is sorted by relative path to keep inspect
     output stable across runs and filesystems.
     """
-    if not repo_root.is_dir():
+    if not _safe_is_dir(repo_root):
         return []
 
     out: list[Path] = []
@@ -369,11 +401,11 @@ def _detect_test_framework(
         if p.name.startswith("test_") or p.name.endswith("_test.py"):
             return "pytest"
     # pytest.ini / conftest.py
-    if (repo_root / "pytest.ini").is_file() or (repo_root / "conftest.py").is_file():
+    if _safe_is_file(repo_root / "pytest.ini") or _safe_is_file(repo_root / "conftest.py"):
         return "pytest"
     # tox.ini has pytest envs
     tox = repo_root / "tox.ini"
-    if tox.is_file():
+    if _safe_is_file(tox):
         txt = _safe_read_text(tox) or ""
         if "[pytest]" in txt or "[testenv]" in txt:
             return "pytest"
@@ -413,15 +445,56 @@ def _build_strategy(
             setup=["uv", "sync", "--frozen"],
         )
     if has_poetry_lock:
-        # Poetry is not installed in the image. Mark unsupported.
-        return BuildStrategy(strategy="poetry", command=[])
+        # Poetry is installed in the image. `poetry install --no-interaction`
+        # against a committed poetry.lock is deterministic; non-interactive
+        # suppresses any prompt that would otherwise hang the run.
+        #
+        # Three adjustments versus a vanilla Poetry install:
+        #
+        # 1. We disable Poetry's automatic virtualenv so dependencies land
+        #    in the runtime's system Python, which is what the exec step
+        #    uses. Without this, Poetry creates /tmp/.cache/pypoetry/
+        #    virtualenvs/... and `import gptme` from system Python fails
+        #    with ModuleNotFoundError.
+        #
+        # 2. We install only the "main" group. Several real-world Poetry
+        #    projects (e.g. gptme) pin transitive dev-dep versions
+        #    (virtualenv, etc.) that are incompatible with the
+        #    Poetry/runtime Python combo, and the probe only needs the
+        #    runtime library, not docs / tests.
+        #
+        # 3. We DO install the project itself (no `--no-root`) so
+        #    `import gptme` resolves to the editable install in the
+        #    checkout.
+        return BuildStrategy(
+            strategy="poetry",
+            command=[
+                "poetry", "install", "--no-interaction",
+                "--only", "main",
+            ],
+            setup=[
+                "sh", "-c",
+                "poetry config virtualenvs.create false --local && "
+                "poetry install --no-interaction --only main",
+            ],
+        )
     if has_pipfile:
         # MVP does not implement pipenv. Surface it explicitly.
         return BuildStrategy(strategy="pipenv", command=[])
     if has_pyproject:
         if _pyproject_uses_poetry(pyproject_text):
-            # Poetry-style pyproject without a lockfile → also unsupported.
-            return BuildStrategy(strategy="poetry", command=[])
+            # Poetry-style pyproject without a lockfile → install with
+            # Poetry, again disabling its automatic venv so deps land
+            # in the runtime's system Python.
+            return BuildStrategy(
+                strategy="poetry",
+                command=["poetry", "install", "--no-interaction"],
+                setup=[
+                    "sh", "-c",
+                    "poetry config virtualenvs.create false --local && "
+                    "poetry install --no-interaction --only main",
+                ],
+            )
         # Plain PEP 621 pyproject.toml — install with pip in editable mode.
         return BuildStrategy(
             strategy="pip",
@@ -430,8 +503,8 @@ def _build_strategy(
     if has_requirements:
         req_files = sorted(
             str(p.relative_to(repo_root))
-            for p in repo_root.iterdir()
-            if p.is_file() and p.name.startswith("requirements")
+            for p in _safe_iter(repo_root)
+            if _safe_is_file(p) and p.name.startswith("requirements")
         )
         target = req_files[0] if req_files else "requirements.txt"
         return BuildStrategy(

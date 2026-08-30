@@ -1,12 +1,29 @@
 [project]
 name = "Reguard"
-version = "0.1.0"
-description = "Deterministic runtime compliance checks for AI agents"
+version = "0.1.0rc1"
+description = "Deterministic technical-control checks for AI agents"
+readme = "README.md"
 requires-python = ">=3.12"
+license = "AGPL-3.0-only"
+authors = [
+    { name = "Reguard Core maintainers" },
+]
+keywords = ["ai-agents", "compliance", "eu-ai-act", "governance", "ci"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Software Development :: Quality Assurance",
+]
+
 dependencies = [
     "sqlalchemy>=2.0",
     "httpx>=0.27",
     "pydantic>=2.0",
+    "PyYAML>=6.0",
 ]
 
 [project.optional-dependencies]
@@ -15,25 +32,40 @@ pgvector = [
     "psycopg2-binary>=2.9",
     "pgvector>=0.3",
 ]
-yaml = ["PyYAML>=6.0"]
 pdf = ["pypdf>=4.0"]
 dev = [
     "pytest>=8.0",
-    "pyyaml>=6.0",
-    "pypdf>=4.0",
+    "build>=1.0",
 ]
 
+[project.scripts]
+reguard = "compliance.cli.main:main"
+
+[project.urls]
+Repository = "https://github.com/Reguard-Core/reguard"
+Issues = "https://github.com/Reguard-Core/reguard/issues"
+
 [build-system]
-requires = ["setuptools>=68", "wheel"]
+requires = ["setuptools>=77", "wheel"]
 build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+license-files = ["LICENSE"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
 include = ["compliance*"]
+
+[tool.setuptools.package-data]
+compliance = [
+    "integrations/*.yml",
+    "py.typed",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = [".", "src"]
 addopts = "-ra"
 # Fixtures are repositories-under-test, NOT pytest test modules.
+# `norecursedirs` skips subtrees during test discovery.
 norecursedirs = ["tests/runtime/fixtures"]

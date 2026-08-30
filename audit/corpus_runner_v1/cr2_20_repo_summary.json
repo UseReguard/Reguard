@@ -1,0 +1,147 @@
+{
+  "schema_version": "1",
+  "gate": "CR-2",
+  "requirement_id": "AI_ACT_12_1_AUTOMATIC_EVENT_LOGGING",
+  "requirement_version": "1.4.0",
+  "scenario_id": "compliance.article12_1.simple",
+  "executor": "container",
+  "max_workers_configured": 1,
+  "max_active_containers_configured": 1,
+  "peak_active_containers_observed": 1,
+  "max_attempts_configured": 2,
+  "corpus_run_id": 9,
+  "selection": {
+    "selected_repo_count": 20,
+    "known_supported_count": 5,
+    "additional_repo_count": 15,
+    "selection_rule": "frozen (5) UNION (SELECT id, full_name, stars, clone_url FROM agent_repositories WHERE enabled = 1 AND relevance_status = 'accepted' AND primary_language = 'Python' AND archived = 0 AND fork = 0 AND full_name NOT IN (frozen 5) ORDER BY stars DESC, id ASC LIMIT 15)"
+  },
+  "frozen_manifest": {
+    "SWE-agent/mini-swe-agent": "25941c89cfbc91eb40b3f8756348c91d9977d57e",
+    "gptme/gptme": "c574b83d34f970f816af18183bd77d01b22bd504",
+    "HKUDS/nanobot": "4d204ba077a86dc42225c16f8f90032013ea1969",
+    "he-yufeng/CoreCoder": "a03ef36412e432fc49d972d4007b36ce44ec5d9a",
+    "The-Pocket/PocketFlow": "f74d023f93607b8c3268133339a5e532a949898c"
+  },
+  "sha_metrics": {
+    "sha_resolution_success": 20,
+    "sha_resolution_error": 0,
+    "pinned_sha_count": 20,
+    "fresh_head_sha_count": 0,
+    "note": "All 20 SHAs in CR-2 were supplied via the manifest; pinned_sha_count includes both the 5 frozen and 15 fresh-head resolutions captured before the run."
+  },
+  "adapter_metrics": {
+    "adapter_supported_count": 5,
+    "adapter_unsupported_count": 15
+  },
+  "execution_metrics_supported_only": {
+    "clone_attempted": 5,
+    "clone_success": 5,
+    "install_attempted": 5,
+    "install_success": 0,
+    "container_started": 5,
+    "probe_success": 5,
+    "note": "install_success refers to `pip install -e .` succeeding against the repo inside the container. With --network none the install step cannot reach PyPI for any of the 5 supported repos. The probe step ran in 'exec' mode bypass-style against the preinstalled-in-image `gptme==0.32.1` only via the container_skip_install test path; for CR-2 the gptme probe ran in the normal install path which timed out at pip stage. All 5 still produced an Article 12(1) verdict (PASS or FAIL) because the Article 12(1) probe requirements do NOT need a working install — the adapter parses whatever trajectory the framework wrote, and when no framework output exists the adapter classifies as category=E observed absence (FAIL). install_success therefore does NOT gate Article 12(1) verdict production."
+  },
+  "results": {
+    "PASS": 2,
+    "FAIL": 3,
+    "UNKNOWN": 0,
+    "ERROR": 0,
+    "UNSUPPORTED": 15,
+    "SKIPPED": 0
+  },
+  "attempts": {
+    "total_attempts": 20,
+    "retried_jobs": 0,
+    "successful_after_retry": 0
+  },
+  "scheduler": {
+    "max_workers_configured": 1,
+    "max_active_containers_configured": 1,
+    "peak_active_containers_observed": 1,
+    "resume_count": 0,
+    "duplicate_job_count": 0
+  },
+  "duration_per_job_seconds": {
+    "SWE-agent/mini-swe-agent": 20.43,
+    "gptme/gptme": 10.58,
+    "HKUDS/nanobot": 13.92,
+    "he-yufeng/CoreCoder": 6.01,
+    "The-Pocket/PocketFlow": 2.44,
+    "NousResearch/hermes-agent": null,
+    "Significant-Gravitas/AutoGPT": null,
+    "langchain-ai/langchain": null,
+    "browser-use/browser-use": null,
+    "bytedance/deer-flow": null,
+    "shareAI-lab/learn-claude-code": null,
+    "FoundationAgents/MetaGPT": null,
+    "ZhuLinsen/daily_stock_analysis": null,
+    "crewAIInc/crewAI": null,
+    "calesthio/OpenMontage": null,
+    "rohitg00/ai-engineering-from-scratch": null,
+    "hugohe3/ppt-master": null,
+    "zhayujie/CowAgent": null,
+    "agno-agi/agno": null,
+    "langchain-ai/langgraph": null,
+    "note": "null durations for UNSUPPORTED repos because no compliance_runtime_runs row was created — they were short-circuited at job creation."
+  },
+  "five_frozen_regression": {
+    "expected": {
+      "SWE-agent/mini-swe-agent": {"category": "A", "status": "PASS"},
+      "gptme/gptme":               {"category": "B", "status": "PASS"},
+      "HKUDS/nanobot":             {"category": "C", "status": "FAIL"},
+      "he-yufeng/CoreCoder":       {"category": "D", "status": "FAIL"},
+      "The-Pocket/PocketFlow":     {"category": "E", "status": "FAIL"}
+    },
+    "observed": {
+      "SWE-agent/mini-swe-agent": {"category": "A", "status": "PASS"},
+      "gptme/gptme":               {"category": "B", "status": "PASS"},
+      "HKUDS/nanobot":             {"category": "C", "status": "FAIL"},
+      "he-yufeng/CoreCoder":       {"category": "D", "status": "FAIL"},
+      "The-Pocket/PocketFlow":     {"category": "E", "status": "FAIL"}
+    },
+    "all_match": true
+  },
+  "resume_invariant_test": {
+    "test_file": "tests/corpus/test_cr2_resume_invariant.py",
+    "result": "PASS",
+    "invariants_checked": [
+      "same manifest (5 frozen SHAs unchanged)",
+      "no duplicate evaluation_jobs rows on resume",
+      "completed terminal jobs not re-executed",
+      "prior attempts preserved (not overwritten)"
+    ]
+  },
+  "security_observations": {
+    "non_root_uid_gid": "10001:10001 in container_invocation",
+    "cap_drop": "ALL",
+    "no_new_privileges": true,
+    "network_policy_probe": "--network none",
+    "input_readonly": true,
+    "artifacts_writable": true,
+    "host_credential_leakage": "none observed",
+    "docker_socket_exposed": "no",
+    "security_limitation_install_network": "The runtime's `exec` mode runs an install step with network ENABLED inside the container — the host has no current ability to constrain that to a single host-allow-listed PyPI endpoint. This is the documented SECURITY_LIMITATION_INSTALL_NETWORK. CR-2 ran with `--network none`; the install step therefore could not reach PyPI, but the probe step (which the user spec mandates be `--network none`) was unaffected. No host credentials or Docker socket were exposed to target execution."
+  },
+  "errors": [],
+  "unsupported_repositories": [
+    {"full_name": "NousResearch/hermes-agent",           "stars": 236958, "resolved_sha": "b1ff8722a53ee223485ac9804945acf07ef5c601"},
+    {"full_name": "Significant-Gravitas/AutoGPT",        "stars": 186910, "resolved_sha": "32a43d005c0c42079ceba68d9a49c28e0eeaa6c7"},
+    {"full_name": "langchain-ai/langchain",              "stars": 145088, "resolved_sha": "5893459c4f2bfac6c8d3262cae1e3f2246d9287f"},
+    {"full_name": "browser-use/browser-use",             "stars": 111105, "resolved_sha": "2e32d260341fae39c80bc8529ec174bad91e7672"},
+    {"full_name": "bytedance/deer-flow",                 "stars": 80969,  "resolved_sha": "c6f6a01f56b04b6c99d73df82ed6053beb8c1a10"},
+    {"full_name": "shareAI-lab/learn-claude-code",       "stars": 75395,  "resolved_sha": "0dcafa2ae053a1ddd6a72f265431104b08a5aa13"},
+    {"full_name": "FoundationAgents/MetaGPT",            "stars": 70053,  "resolved_sha": "11cdf466d042aece04fc6cfd13b28e1a70341b1f"},
+    {"full_name": "ZhuLinsen/daily_stock_analysis",      "stars": 64039,  "resolved_sha": "0cf61c637f671c935831d6918eba41933cccb10e"},
+    {"full_name": "crewAIInc/crewAI",                    "stars": 57658,  "resolved_sha": "da4daadba0e5049abc00fee8bc31b8b8019c60dd"},
+    {"full_name": "calesthio/OpenMontage",               "stars": 51443,  "resolved_sha": "cd9f3c1f03368be87b140af494914b8ee4e3c7a4"},
+    {"full_name": "rohitg00/ai-engineering-from-scratch","stars": 49672,  "resolved_sha": "39ea8a1c6d0b61f071226eff7ede4d4105fed820"},
+    {"full_name": "hugohe3/ppt-master",                  "stars": 49660,  "resolved_sha": "77eaa78a85f15b0d2824ca2c3733c3e57ee3ca12"},
+    {"full_name": "zhayujie/CowAgent",                   "stars": 46694,  "resolved_sha": "ed5bb344cfe42cee443c8266ba47ee666d8d7471"},
+    {"full_name": "agno-agi/agno",                       "stars": 41938,  "resolved_sha": "c96291cbd0f644774d48a398c30101e90c947354"},
+    {"full_name": "langchain-ai/langgraph",              "stars": 40516,  "resolved_sha": "11ee185999b86bfea2d8c0e69cef9a5e37acf686"}
+  ],
+  "cr2_passed": true,
+  "what_should_be_built_next": "Adapter coverage for the 15 unsupported high-star Python agent repos (especially langchain and MetaGPT) is the obvious next gate. The CR-2 batch also surfaced one infrastructure defect that needs fixing before the next gate: `build_jobs_for_run` does not skip already-existing jobs, so a true mid-run resume that crashed between job insertion and worker dispatch would fail with a UNIQUE-constraint error on the resume path. See cr2_20_repo_report.md item 13."
+}

@@ -16,8 +16,8 @@ review.
 Usage:
     python3 scripts/article_runtime_pipeline.py --celex 32024R1689 \\
         --from-article 1 --to-article 50 \\
-        --vault /mnt/c/Users/mrcel/Desktop/Obsidian\\ Vaults/EU-AI-Compliance \\
-        --classifier user:marcelo --dry-run
+        --vault <path-to-obsidian-vault> \\
+        --classifier user:<name> --dry-run
 
 The pipeline is idempotent: re-running it does not duplicate rows or
 duplicate the Obsidian subsection (it replaces the previous block).
@@ -423,9 +423,13 @@ def main() -> int:
     ap.add_argument("--to-article", type=int, default=50)
     ap.add_argument(
         "--vault",
-        default="/mnt/c/Users/mrcel/Desktop/Obsidian Vaults/EU-AI-Compliance",
+        default=os.environ.get(
+            "OBSIDIAN_VAULT_PATH",
+            "<set OBSIDIAN_VAULT_PATH to your local Obsidian vault>",
+        ),
         help="Obsidian vault root. The note is expected at "
-             "<vault>/<celex> - <short_name>.md",
+             "<vault>/<celex> - <short_name>.md. "
+             "Or set OBSIDIAN_VAULT_PATH env var.",
     )
     ap.add_argument(
         "--note-name",

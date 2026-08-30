@@ -1,0 +1,267 @@
+{
+  "discovery_cache_root": "/home/mrcel/.reguard/discovery_cache",
+  "discovery_workspace_root": "/home/mrcel/.reguard/discovery_ws",
+  "frozen_manifest_source": "audit/corpus_runner_v1/cr3_50_repo_manifest.json",
+  "items": [
+    {
+      "clone_url": "https://github.com/Significant-Gravitas/AutoGPT.git",
+      "full_name": "Significant-Gravitas/AutoGPT",
+      "materialization": {
+        "attempt_id": null,
+        "cache_hit": false,
+        "cache_key": "direct_clone",
+        "cache_path": "(direct clone, not via SourceCache)",
+        "clone_url": "https://github.com/Significant-Gravitas/AutoGPT.git",
+        "full_name": "Significant-Gravitas/AutoGPT",
+        "note": "direct git clone - SourceCache materialization failed (network transient or archive symlink-safety)",
+        "repo_sha": "32a43d005c0c42079ceba68d9a49c28e0eeaa6c7",
+        "repository_id": 578,
+        "workspace_id": "direct_Significant-Gravitas_AutoGPT",
+        "workspace_path": "/home/mrcel/.reguard/discovery_ws/direct_Significant-Gravitas_AutoGPT"
+      },
+      "position": 6,
+      "rationale": "Classic CLI autonomous-loop architecture - long-running agent process driven by command queue; not a single-call invocation. Tests the CLI/session family.",
+      "repository_id": 578,
+      "resolved_sha": "32a43d005c0c42079ceba68d9a49c28e0eeaa6c7",
+      "stars": 186910
+    },
+    {
+      "clone_url": "https://github.com/langchain-ai/langchain.git",
+      "full_name": "langchain-ai/langchain",
+      "materialization": {
+        "attempt_id": 1788024761615940,
+        "cache_hit": false,
+        "cache_key": "4f9820f36e499d3810b19885053dbbd9",
+        "cache_path": "/home/mrcel/.reguard/discovery_cache",
+        "clone_url": "https://github.com/langchain-ai/langchain.git",
+        "full_name": "langchain-ai/langchain",
+        "repo_sha": "5893459c4f2bfac6c8d3262cae1e3f2246d9287f",
+        "repository_id": 7,
+        "workspace_id": "1788024832_1788024761615940_e9d67ffe",
+        "workspace_path": "/home/mrcel/.reguard/discovery_ws/1788024832_1788024761615940_e9d67ffe/repo"
+      },
+      "position": 7,
+      "rationale": "LangChain core - primary representative of the constructor(model, tools) + chain/agent run() family. Most-cited dependency in the sample.",
+      "repository_id": 7,
+      "resolved_sha": "5893459c4f2bfac6c8d3262cae1e3f2246d9287f",
+      "stars": 145088
+    },
+    {
+      "clone_url": "https://github.com/browser-use/browser-use.git",
+      "full_name": "browser-use/browser-use",
+      "materialization": {
+        "attempt_id": 1788025172128904,
+        "cache_hit": false,
+        "cache_key": "a10bc20aa3ffadd218e41ee69066a928",
+        "cache_path": "/home/mrcel/.reguard/discovery_cache",
+        "clone_url": "https://github.com/browser-use/browser-use.git",
+        "full_name": "browser-use/browser-use",
+        "repo_sha": "2e32d260341fae39c80bc8529ec174bad91e7672",
+        "repository_id": 9,
+        "workspace_id": "1788025180_1788025172128904_654d3a0e",
+        "workspace_path": "/home/mrcel/.reguard/discovery_ws/1788025180_1788025172128904_654d3a0e/repo"
+      },
+      "position": 8,
+      "rationale": "Browser-driven agent - Agent(task, llm) -> .run(). External browser runtime dependency; different integration shape.",
+      "repository_id": 9,
+      "resolved_sha": "2e32d260341fae39c80bc8529ec174bad91e7672",
+      "stars": 111105
+    },
+    {
+      "clone_url": "https://github.com/bytedance/deer-flow.git",
+      "full_name": "bytedance/deer-flow",
+      "materialization": {
+        "attempt_id": 1788025180337206,
+        "cache_hit": false,
+        "cache_key": "dcfb8bbc297844277e8eaf81e9fb7584",
+        "cache_path": "/home/mrcel/.reguard/discovery_cache",
+        "clone_url": "https://github.com/bytedance/deer-flow.git",
+        "full_name": "bytedance/deer-flow",
+        "repo_sha": "bf740ffa9077f55661fce80186b656651f497c89",
+        "repository_id": 10,
+        "workspace_id": "1788025203_1788025180337206_19f0ae19",
+        "workspace_path": "/home/mrcel/.reguard/discovery_ws/1788025203_1788025180337206_19f0ae19/repo"
+      },
+      "position": 9,
+      "rationale": "Deep-research workflow orchestration - graph + sub-agent delegation. LangGraph-style state + multi-step LLM calls.",
+      "repository_id": 10,
+      "resolved_sha": "bf740ffa9077f55661fce80186b656651f497c89",
+      "stars": 80969
+    },
+    {
+      "clone_url": "https://github.com/FoundationAgents/MetaGPT.git",
+      "full_name": "FoundationAgents/MetaGPT",
+      "materialization": {
+        "attempt_id": 1788025155357296,
+        "cache_hit": false,
+        "cache_key": "df0462fc6b65a829a5f09a23e6cc9ea6",
+        "cache_path": "/home/mrcel/.reguard/discovery_cache",
+        "clone_url": "https://github.com/FoundationAgents/MetaGPT.git",
+        "full_name": "FoundationAgents/MetaGPT",
+        "repo_sha": "11cdf466d042aece04fc6cfd13b28e1a70341b1f",
+        "repository_id": 1392,
+        "workspace_id": "1788025171_1788025155357296_384f9862",
+        "workspace_path": "/home/mrcel/.reguard/discovery_ws/1788025171_1788025155357296_384f9862/repo"
+      },
+      "position": 11,
+      "rationale": "Software-engineering multi-agent (architect / engineer / PM roles) - Team / Role collaboration. Distinct from crewAI role model.",
+      "repository_id": 1392,
+      "resolved_sha": "11cdf466d042aece04fc6cfd13b28e1a70341b1f",
+      "stars": 70053
+    },
+    {
+      "clone_url": "https://github.com/crewAIInc/crewAI.git",
+      "full_name": "crewAIInc/crewAI",
+      "materialization": {
+        "attempt_id": 1788024871851702,
+        "cache_hit": false,
+        "cache_key": "7d2c2ab3bb8dc928c542d18deef410f1",
+        "cache_path": "/home/mrcel/.reguard/discovery_cache",
+        "clone_url": "https://github.com/crewAIInc/crewAI.git",
+        "full_name": "crewAIInc/crewAI",
+        "repo_sha": "da4daadba0e5049abc00fee8bc31b8b8019c60dd",
+        "repository_id": 13,
+        "workspace_id": "1788024903_1788024871851702_c6e0c52a",
+        "workspace_path": "/home/mrcel/.reguard/discovery_ws/1788024903_1788024871851702_c6e0c52a/repo"
+      },
+      "position": 13,
+      "rationale": "Role-based crew orchestration - Agent(role, goal, backstory) -> Crew(agents, tasks) -> kickoff(). Different model-injection surface than LangChain.",
+      "repository_id": 13,
+      "resolved_sha": "da4daadba0e5049abc00fee8bc31b8b8019c60dd",
+      "stars": 57658
+    },
+    {
+      "clone_url": "https://github.com/agno-agi/agno.git",
+      "full_name": "agno-agi/agno",
+      "materialization": {
+        "attempt_id": null,
+        "cache_hit": false,
+        "cache_key": "direct_clone",
+        "cache_path": "(direct clone, not via SourceCache)",
+        "clone_url": "https://github.com/agno-agi/agno.git",
+        "full_name": "agno-agi/agno",
+        "note": "direct git clone - SourceCache materialization failed (network transient or archive symlink-safety)",
+        "repo_sha": "c96291cbd0f644774d48a398c30101e90c947354",
+        "repository_id": 18,
+        "workspace_id": "direct_agno-agi_agno",
+        "workspace_path": "/home/mrcel/.reguard/discovery_ws/direct_agno-agi_agno"
+      },
+      "position": 18,
+      "rationale": "Newer multi-agent framework - Agent(model, tools, instructions) -> .arun() / .run(). Provides explicit storage/postgres hook.",
+      "repository_id": 18,
+      "resolved_sha": "c96291cbd0f644774d48a398c30101e90c947354",
+      "stars": 41938
+    },
+    {
+      "clone_url": "https://github.com/langchain-ai/langgraph.git",
+      "full_name": "langchain-ai/langgraph",
+      "materialization": {
+        "attempt_id": 1788024833463169,
+        "cache_hit": false,
+        "cache_key": "6234c20ea003762a0b5ceb3b0057a81b",
+        "cache_path": "/home/mrcel/.reguard/discovery_cache",
+        "clone_url": "https://github.com/langchain-ai/langgraph.git",
+        "full_name": "langchain-ai/langgraph",
+        "repo_sha": "11ee185999b86bfea2d8c0e69cef9a5e37acf686",
+        "repository_id": 19,
+        "workspace_id": "1788024871_1788024833463169_955a2705",
+        "workspace_path": "/home/mrcel/.reguard/discovery_ws/1788024871_1788024833463169_955a2705/repo"
+      },
+      "position": 19,
+      "rationale": "Graph-state execution family - StateGraph.compile -> .invoke(state) -> checkpoint saver. Architecturally distinct from LangChain core despite brand kinship.",
+      "repository_id": 19,
+      "resolved_sha": "11ee185999b86bfea2d8c0e69cef9a5e37acf686",
+      "stars": 40516
+    },
+    {
+      "clone_url": "https://github.com/agentscope-ai/agentscope.git",
+      "full_name": "agentscope-ai/agentscope",
+      "materialization": {
+        "attempt_id": 1788025204010489,
+        "cache_hit": false,
+        "cache_key": "51fbb1e751bc3dec2e4210a034933edd",
+        "cache_path": "/home/mrcel/.reguard/discovery_cache",
+        "clone_url": "https://github.com/agentscope-ai/agentscope.git",
+        "full_name": "agentscope-ai/agentscope",
+        "repo_sha": "e90f1c7592896cc95f6e5ee506194f533378247d",
+        "repository_id": 1393,
+        "workspace_id": "1788025254_1788025204010489_b01c9f96",
+        "workspace_path": "/home/mrcel/.reguard/discovery_ws/1788025254_1788025204010489_b01c9f96/repo"
+      },
+      "position": 27,
+      "rationale": "agentscope - explicit multi-agent message-passing design (MsgHub / sequential / parallel / parallel branching). Distinct from crewAI/autoGen role models. Replacement for NousResearch/hermes-agent.",
+      "repository_id": 1393,
+      "resolved_sha": "e90f1c7592896cc95f6e5ee506194f533378247d",
+      "stars": 29730
+    },
+    {
+      "clone_url": "https://github.com/deepset-ai/haystack.git",
+      "full_name": "deepset-ai/haystack",
+      "materialization": {
+        "attempt_id": 1788025255110963,
+        "cache_hit": false,
+        "cache_key": "44ed149f2bdc3d91e2a991914bab2963",
+        "cache_path": "/home/mrcel/.reguard/discovery_cache",
+        "clone_url": "https://github.com/deepset-ai/haystack.git",
+        "full_name": "deepset-ai/haystack",
+        "repo_sha": "e318778c9bf60a1963e3b5f451359655dd696c30",
+        "repository_id": 29,
+        "workspace_id": "1788025286_1788025255110963_eedbbe86",
+        "workspace_path": "/home/mrcel/.reguard/discovery_ws/1788025286_1788025255110963_eedbbe86/repo"
+      },
+      "position": 29,
+      "rationale": "Haystack - pipeline-style LLM orchestration (Pipeline.add_node(...) -> .run()). Different from agent-style frameworks; tests the pipeline execution family.",
+      "repository_id": 29,
+      "resolved_sha": "e318778c9bf60a1963e3b5f451359655dd696c30",
+      "stars": 26325
+    },
+    {
+      "clone_url": "https://github.com/google/adk-python.git",
+      "full_name": "google/adk-python",
+      "materialization": {
+        "attempt_id": 1788025288303873,
+        "cache_hit": false,
+        "cache_key": "3628c626f4a992c641adbd6fefc82e76",
+        "cache_path": "/home/mrcel/.reguard/discovery_cache",
+        "clone_url": "https://github.com/google/adk-python.git",
+        "full_name": "google/adk-python",
+        "repo_sha": "c3d3730250b64156129508354b45120372f95334",
+        "repository_id": 32,
+        "workspace_id": "1788025298_1788025288303873_ee730b0f",
+        "workspace_path": "/home/mrcel/.reguard/discovery_ws/1788025298_1788025288303873_ee730b0f/repo"
+      },
+      "position": 30,
+      "rationale": "Google ADK - Runner(agent, session_service) -> run_async(). Provider-pluggable via google-adk providers; tests a different invocation surface.",
+      "repository_id": 32,
+      "resolved_sha": "c3d3730250b64156129508354b45120372f95334",
+      "stars": 21303
+    },
+    {
+      "clone_url": "https://github.com/microsoft/agent-framework.git",
+      "full_name": "microsoft/agent-framework",
+      "materialization": {
+        "attempt_id": null,
+        "cache_hit": false,
+        "cache_key": "direct_clone",
+        "cache_path": "(direct clone, not via SourceCache)",
+        "clone_url": "https://github.com/microsoft/agent-framework.git",
+        "full_name": "microsoft/agent-framework",
+        "note": "direct git clone - SourceCache materialization failed (network transient or archive symlink-safety)",
+        "repo_sha": "edfe115ea06bca57ae5a123d0fac5b3fdda13603",
+        "repository_id": 854,
+        "workspace_id": "direct_microsoft_agent-framework",
+        "workspace_path": "/home/mrcel/.reguard/discovery_ws/direct_microsoft_agent-framework"
+      },
+      "position": 43,
+      "rationale": "Microsoft agent-framework - ChatAgent / Workflow; Azure-influenced; tests Microsoft-style chat-agent + workflow builder family.",
+      "repository_id": 854,
+      "resolved_sha": "edfe115ea06bca57ae5a123d0fac5b3fdda13603",
+      "stars": 13137
+    }
+  ],
+  "kept_workspaces": true,
+  "phase": "integration_pattern_discovery",
+  "produced_at": "2026-08-29T17:44:18Z",
+  "sample_size": 12,
+  "schema_version": "1"
+}

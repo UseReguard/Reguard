@@ -19,7 +19,7 @@ preserved:
 Usage:
     python3 scripts/sync_article_notes.py \\
         --celex 32024R1689 \\
-        --vault /mnt/c/Users/mrcel/Desktop/Obsidian\\ Vaults/EU-AI-Compliance
+        --vault <path-to-obsidian-vault>
 """
 from __future__ import annotations
 
@@ -339,8 +339,11 @@ def main() -> int:
     ap.add_argument("--celex", default="32024R1689")
     ap.add_argument(
         "--vault",
-        default="/mnt/c/Users/mrcel/Desktop/Obsidian Vaults/EU-AI-Compliance",
-        help="Obsidian vault root",
+        default=os.environ.get(
+            "OBSIDIAN_VAULT_PATH",
+            "<set OBSIDIAN_VAULT_PATH to your local Obsidian vault>",
+        ),
+        help="Obsidian vault root (or set OBSIDIAN_VAULT_PATH env var)",
     )
     ap.add_argument(
         "--subdir",

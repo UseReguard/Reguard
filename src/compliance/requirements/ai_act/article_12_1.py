@@ -1,4 +1,4 @@
-"""Article 12(1) requirement test v1.3.0.
+"""Article 12(1) requirement test v1.4.0.
 
 Legal text (CELEX 32024R1689, Article 12(1)):
 
@@ -39,22 +39,30 @@ The `framework_persists_durably` flag and `framework_artifact_paths` /
 observation. The RequirementTest does not look at the framework's source
 code; it inspects only what the controlled run produced.
 
-v1.3 -> v1.2 deltas
+v1.4 -> v1.3 deltas
 -------------------
-- `EXIT_STATUS_NOT_CRASH` removed. The article tests capability to
-  record, not capability to succeed. A crashing system that records
-  start / execution / crash has produced a complete record with respect
-  to the article.
-- Adapters no longer synthesise terminal `exit` events into
-  `Evidence.events`. The test relies on framework-emitted terminal
-  events (mini-swe-agent's role="exit" message; nanobot's
-  TurnCompleted; CoreCoder's framework has none, which is the correct
-  signal that the framework does not emit a terminal event).
-- Eligibility by event origin is unchanged
-  (`SYSTEM_NATIVE` / `SYSTEM_STATE_EXPORTED_BY_HARNESS` eligible;
-  `HARNESS_GENERATED` rejected). The category applies in addition.
+- `TERMINAL_KIND_PRESENT` removed. Article 12(1) requires automatic
+  system-side recording of runtime events. A framework can demonstrate
+  that capability without modelling invocation termination as a
+  dedicated `exit` or `completed` event. gptme's runtime evidence
+  exposed the v1.3 terminal-marker requirement as an
+  implementation-specific false negative: gptme's LogManager writes
+  every conversation turn to a framework-side `conversation.jsonl`
+  that is durable and recoverable, but does not emit an explicit
+  terminal marker. That is a valid Article 12(1) implementation, not
+  a capability gap.
+- No replacement terminal/completion assertion is introduced. The
+  remaining A/B checks (`RECORDING_CATEGORY_FRAMEWORK_PERSISTS` and
+  `STEP_OR_TOOL_KIND_PRESENT`) already establish automatic recording
+  capability when combined with the provenance requirement.
+- A–E taxonomy unchanged. C/D semantics unchanged. E observed-absence
+  semantics unchanged. UNKNOWN / ERROR / UNSUPPORTED unchanged.
+- Provenance rules unchanged (`SYSTEM_NATIVE` /
+  `SYSTEM_STATE_EXPORTED_BY_HARNESS` eligible; `HARNESS_GENERATED`
+  rejected).
 - `PROBE_RAN_CLEANLY` short-circuit (ERROR on probe_status != "ok")
-  is unchanged and lives in the base class.
+  unchanged and still lives in the base class.
+- Generic `observation_quality` dispatch unchanged.
 """
 from __future__ import annotations
 
@@ -65,9 +73,8 @@ from compliance.pipeline.types import Evidence, EvidenceOrigin
 from ..base import CheckResult, RequirementTest, register_requirement
 
 
-# Per-event-kind sets. Unchanged from v1.2.0.
+# Per-event-kind sets. Unchanged from v1.3.0.
 _VALID_STEP_KINDS = {"step", "tool", "model"}
-_VALID_TERMINAL_KINDS = {"exit", "completed"}
 
 # Origins that may participate in PASS eligibility for A/B categories.
 _PASS_ELIGIBLE_ORIGINS = {
@@ -103,7 +110,7 @@ def _is_fatal_error(event: dict) -> bool:
 
 class Article121AutomaticLoggingTest(RequirementTest):
     id = "AI_ACT_12_1_AUTOMATIC_EVENT_LOGGING"
-    version = "1.3.0"
+    version = "1.4.0"
 
     def assert_evidence(self, evidence: Evidence) -> Iterable[CheckResult]:
         events = list(evidence.events)
@@ -147,7 +154,12 @@ class Article121AutomaticLoggingTest(RequirementTest):
 
         if category in ("A", "B"):
             # PASS-eligible. Both categories require that the framework
-            # itself wrote a durable artefact during the run.
+            # itself wrote a durable artefact during the run, and that
+            # the recorded entries represent real agent activity (not
+            # just harness noise). v1.4.0 dropped the terminal-event
+            # requirement: a framework can satisfy Article 12(1)
+            # without modelling invocation termination as a dedicated
+            # `exit` or `completed` event.
             yield CheckResult(
                 name="RECORDING_CATEGORY_FRAMEWORK_PERSISTS",
                 passed=framework_persists and len(framework_artifacts) > 0,
@@ -159,7 +171,6 @@ class Article121AutomaticLoggingTest(RequirementTest):
                 ),
             )
             eligible_step = _eligible_events(events, _VALID_STEP_KINDS)
-            eligible_term = _eligible_events(events, _VALID_TERMINAL_KINDS)
             yield CheckResult(
                 name="STEP_OR_TOOL_KIND_PRESENT",
                 passed=len(eligible_step) >= 1,
@@ -167,16 +178,6 @@ class Article121AutomaticLoggingTest(RequirementTest):
                     f"observed {len(eligible_step)} eligible event(s) with "
                     f"kind in {sorted(_VALID_STEP_KINDS)} (of "
                     f"{sum(1 for e in events if e.get('kind') in _VALID_STEP_KINDS)} "
-                    "total with that kind)"
-                ),
-            )
-            yield CheckResult(
-                name="TERMINAL_KIND_PRESENT",
-                passed=len(eligible_term) >= 1,
-                detail=(
-                    f"observed {len(eligible_term)} eligible event(s) with "
-                    f"kind in {sorted(_VALID_TERMINAL_KINDS)} (of "
-                    f"{sum(1 for e in events if e.get('kind') in _VALID_TERMINAL_KINDS)} "
                     "total with that kind)"
                 ),
             )

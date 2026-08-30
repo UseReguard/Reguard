@@ -53,6 +53,9 @@ class RequirementTest(ABC):
             probe did not run cleanly -> ERROR
             any schema mismatch       -> ERROR
             no events at all           -> UNKNOWN
+                (unless the adapter positively marked the empty bundle
+                with ``observation_quality="observed_absence"``; then
+                the requirement is given the bundle so it can decide)
             all checks PASSED          -> PASS
             some checks failed         -> FAIL
             adapter said n/a           -> UNSUPPORTED  (handled in adapter layer)
@@ -62,6 +65,27 @@ class RequirementTest(ABC):
         trajectory, or tripped the adapter parser is a setup problem,
         not evidence that the system under test violated the
         requirement. Those map to ERROR, never FAIL.
+
+        ``observation_quality`` is a generic, requirement-agnostic
+        adapter-set field on ``evidence.extra``:
+
+            "observed_absence" — the adapter positively observed that
+                the framework produced no recording on this run. The
+                absence is itself a runtime fact, not a harness guess.
+                An empty events bundle with this marker is dispatched
+                to ``assert_evidence`` so the requirement can decide
+                what absence means for its verdict. No synthetic
+                event is appended.
+
+            absent, ``"indeterminate"``, or any other value — the
+                adapter could not establish what the framework did.
+                An empty events bundle maps to UNKNOWN, matching
+                pre-existing behaviour.
+
+        This contract is generic: no requirement-specific logic is
+        encoded here. Any requirement that wants to interpret
+        observed absence may do so; any requirement that does not
+        check ``observation_quality`` simply ignores it.
         """
         if evidence.schema_version != RESULT_SCHEMA_VERSION:
             return Result(
@@ -93,6 +117,39 @@ class RequirementTest(ABC):
             )
 
         if not evidence.events:
+            # Generic dispatch on observation_quality. The base class
+            # does not encode any requirement-specific rule here; it
+            # only respects the adapter's positive observation. If
+            # the adapter positively observed the framework produced
+            # no recording ("observed_absence"), the empty bundle is
+            # delivered to assert_evidence so the requirement may
+            # interpret it. Anything else — including the field
+            # being absent — keeps the pre-existing UNKNOWN mapping.
+            observation_quality = evidence.extra.get("observation_quality")
+            if observation_quality == "observed_absence":
+                checks = tuple(self.assert_evidence(evidence))
+                failed = [c for c in checks if not c.passed]
+                if not failed:
+                    status = RunStatus.PASS
+                    reason = "all checks passed"
+                else:
+                    status = RunStatus.FAIL
+                    reason = (
+                        f"{len(failed)} check(s) failed: "
+                        + ", ".join(c.name for c in failed)
+                    )
+                return Result(
+                    schema_version=RESULT_SCHEMA_VERSION,
+                    status=status,
+                    reason=reason,
+                    checks=tuple(c.as_dict() for c in checks),
+                    summary={
+                        "check_count": len(checks),
+                        "failed_count": len(failed),
+                        "event_count": 0,
+                        "observation_quality": observation_quality,
+                    },
+                )
             return Result(
                 schema_version=RESULT_SCHEMA_VERSION,
                 status=RunStatus.UNKNOWN,

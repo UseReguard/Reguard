@@ -52,28 +52,56 @@ from .base import AdapterCapabilities, RepoAdapter
 _COLLECTOR = "pocketflow_adapter_v1"
 _PRODUCER = "pocketflow.flow.Flow"
 
+# Filenames the harness / runtime itself writes into the artifacts
+# workspace. The cross-check scan must ignore them, otherwise every
+# production run would carry candidate framework artefacts that are
+# in reality just our own logs.
+_HARNESS_WRITTEN_BASENAMES = frozenset({
+    "trajectory.json",
+    "container_result.json",
+    "probe.py",
+    "00_setup.stdout.log",
+    "00_setup.stderr.log",
+    "01_install.stdout.log",
+    "01_install.stderr.log",
+    "02_exec.stdout.log",
+    "02_exec.stderr.log",
+})
+
 
 def _scan_artifacts(workspace_root: str) -> list[str]:
-    """Return any *new* JSON / .log files under the workspace.
+    """Return any *new* JSON / .log files under the workspace that are
+    not known to be harness-written.
 
     A real framework recorder would have left at least one such file.
     PocketFlow does not. We deliberately bound the scan to the
     workspace the probe created so a pre-existing log file elsewhere
-    on the runner cannot fool the probe.
+    on the runner cannot fool the probe, and we skip the small set
+    of files the runtime always writes there itself, plus everything
+    inside the install virtualenv the harness created.
     """
     root = Path(workspace_root)
     if not root.exists():
         return []
+    # Top-level dirs that are not part of the framework's recording
+    # surface. venv/ holds the install virtualenv; node_modules/,
+    # .git/, etc. would be the analogous carve-outs for other
+    # ecosystems. We do not inspect them.
+    skipped_top_level = {"venv", ".venv", "site-packages", ".git", "node_modules"}
     out: list[str] = []
     for p in sorted(root.rglob("*")):
         if not p.is_file():
             continue
         if p.suffix not in (".json", ".log", ".jsonl", ".txt"):
             continue
-        # The probe trajectory file itself is fine to find — it is
-        # the harness-written summary, not a framework artefact. We
-        # still list it under harness_artifacts in the Evidence; the
-        # framework_artifact_paths list stays empty.
+        if p.name in _HARNESS_WRITTEN_BASENAMES:
+            continue
+        try:
+            rel = p.relative_to(root)
+        except ValueError:
+            rel = None
+        if rel is not None and rel.parts and rel.parts[0] in skipped_top_level:
+            continue
         out.append(str(p))
     return out
 
@@ -90,6 +118,13 @@ class PocketFlowAdapter(RepoAdapter):
             install_timeout_seconds=120,
             run_timeout_seconds=60,
             install_command="pip install -e .",
+            # PocketFlow's structural absence check is meaningful
+            # under S1 and S4; the framework does not provide a
+            # mechanism for failure/error recording in any scenario.
+            supported_scenarios=(
+                "compliance.article12_1.simple",
+                "compliance.article12_1.multi_step",
+            ),
         )
 
     def resolve_agent(self, repo_root: str) -> str:
@@ -134,6 +169,24 @@ class PocketFlowAdapter(RepoAdapter):
         # write a log file as a side effect. We do not invent events.
         events: list[dict] = []
 
+        # observation_quality is a generic, requirement-agnostic
+        # adapter-set field. PocketFlow's framework ran end-to-end
+        # and the probe independently re-scanned the workspace; both
+        # agree no framework artefact was written. That is a positive
+        # observation of absence — not an indeterminate "we could not
+        # tell". Stamping "observed_absence" lets the generic base
+        # class dispatch the empty bundle to assert_evidence instead
+        # of short-circuiting to UNKNOWN. No synthetic event is added.
+        observation_quality = (
+            "observed_absence"
+            if (
+                probe_status == "ok"
+                and not framework_candidate_artifacts
+                and not observed_artifact_paths
+            )
+            else "indeterminate"
+        )
+
         extra = {
             "recording_category": "E",
             "framework_persists_durably": False,
@@ -145,6 +198,7 @@ class PocketFlowAdapter(RepoAdapter):
             "collector": _COLLECTOR,
             "scenario_id": scenario.scenario_id,
             "framework_version": _detect_pocketflow_version(),
+            "observation_quality": observation_quality,
         }
         return Evidence(
             schema_version=EVIDENCE_SCHEMA_VERSION,

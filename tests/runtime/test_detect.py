@@ -50,21 +50,24 @@ def test_uv_lock_wins_over_pyproject(fixtures_map):
     assert strategy.setup[-1] == "--frozen"
 
 
-def test_poetry_lock_is_unsupported_in_runtime_image(fixtures_map):
-    """Poetry is detected but the runtime image does not install Poetry.
+def test_poetry_lock_is_supported_when_runtime_installs_poetry(fixtures_map):
+    """The runtime image installs Poetry 2.x, so a poetry.lock repo
+    gets a real install command (not an empty unsupported one).
 
-    Strategy is reported as 'poetry' with empty command so build/test
-    surfaces status=unsupported with a clear message rather than a
-    missing binary at exec time.
+    The strategy still resolves to "poetry", but the command now
+    runs `poetry install --no-interaction --only main` so dependency
+    installation actually happens.
     """
     strategy = _strategy(fixtures_map, "05-poetry")
     assert strategy.strategy == BUILD_STRATEGY_POETRY
-    assert strategy.command == []
-    assert "poetry" in __import__("runtime").detect.UNSUPPORTED_STRATEGIES
+    assert strategy.command  # non-empty install command
+    assert strategy.command[0] == "poetry"
+    assert "poetry" not in __import__("runtime").detect.UNSUPPORTED_STRATEGIES
 
 
-def test_pyproject_with_poetry_metadata_is_unsupported(fixtures_map, temp_dir):
-    """A pyproject.toml using [tool.poetry] without a lockfile is also unsupported."""
+def test_pyproject_with_poetry_metadata_is_supported(fixtures_map, temp_dir):
+    """A pyproject.toml using [tool.poetry] without a lockfile gets a
+    real install command when Poetry is installed in the runtime."""
     repo = temp_dir / "poetry_only_pyproject"
     repo.mkdir()
     (repo / "pyproject.toml").write_text(
@@ -74,7 +77,7 @@ def test_pyproject_with_poetry_metadata_is_unsupported(fixtures_map, temp_dir):
     )
     _, strategy = detect(repo)
     assert strategy.strategy == BUILD_STRATEGY_POETRY
-    assert strategy.command == []
+    assert strategy.command  # non-empty install command
 
 
 def test_setup_py_legacy_uses_setuptools(fixtures_map):
@@ -149,6 +152,7 @@ def test_pyproject_uses_poetry_without_lock(fixtures_map, temp_dir):
         "build-backend='poetry.core.masonry.api'\n"
     )
     _, strategy = detect(repo)
-    # Empty command so the host sees unsupported, not a missing binary.
+    # Poetry is now installed in the runtime; the strategy resolves
+    # to a real install command instead of an unsupported stub.
     assert strategy.strategy == BUILD_STRATEGY_POETRY
-    assert strategy.command == []
+    assert strategy.command

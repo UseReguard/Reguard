@@ -98,6 +98,10 @@ def _build_parser() -> argparse.ArgumentParser:
                              "(detect+install) before the test command. "
                              "Default: enabled. Disable with --no-auto-setup "
                              "if the host already prepared the environment.")
+    test_p.add_argument("--env", dest="test_env", action="append",
+                        default=[],
+                        help="KEY=VALUE extra env passed to the test command. "
+                             "Repeatable. Mirrors `exec --env`.")
 
     exec_p = sub.add_parser("exec", parents=[common],
                             help="Run a host-supplied command with the repo "
@@ -186,6 +190,11 @@ def main(argv: Optional[list[str]] = None) -> int:
                 network_policy=net,
             )
         elif args.mode == "test":
+            test_env: dict[str, str] = {}
+            for kv in getattr(args, "test_env", []) or []:
+                if "=" in kv:
+                    k, v = kv.split("=", 1)
+                    test_env[k] = v
             result = test_cmd.run(
                 repo_path=repo_path,
                 artifacts_dir=artifacts_dir,
@@ -195,6 +204,7 @@ def main(argv: Optional[list[str]] = None) -> int:
                 network_policy=net,
                 command=_split_command(getattr(args, "command", None)),
                 auto_setup=getattr(args, "auto_setup", True),
+                extra_env=test_env or None,
             )
         elif args.mode == "exec":
             env: dict[str, str] = {}

@@ -12,6 +12,7 @@ already present; only the block between the index markers is replaced.
 from __future__ import annotations
 
 import argparse
+import os
 import re
 import sqlite3
 import sys
@@ -83,7 +84,10 @@ def main() -> int:
     ap.add_argument("--celex", default="32024R1689")
     ap.add_argument(
         "--vault",
-        default="/mnt/c/Users/mrcel/Desktop/Obsidian Vaults/EU-AI-Compliance",
+        default=os.environ.get(
+            "OBSIDIAN_VAULT_PATH",
+            "<set OBSIDIAN_VAULT_PATH to your local Obsidian vault>",
+        ),
     )
     ap.add_argument(
         "--note-name",

@@ -1,0 +1,277 @@
+name: "Reguard Core"
+description: >-
+  Deterministic technical-control checks for AI agents. Runs
+  `reguard check` against the current repository, writes a
+  GitHub step summary, and exposes the result as outputs.
+author: "Reguard Core"
+
+branding:
+  icon: "shield"
+  color: "blue"
+
+inputs:
+  config:
+    description: >-
+      Path to a reguard.yml (or built-in integration manifest).
+      Overrides repository-local reguard.yml.
+    required: false
+    default: ""
+  requirement:
+    description: >-
+      Requirement ID to test. Only AI_ACT_12_1_AUTOMATIC_EVENT_LOGGING
+      is implemented today.
+    required: false
+    default: "AI_ACT_12_1_AUTOMATIC_EVENT_LOGGING"
+  fail-on:
+    description: >-
+      Comma-separated statuses that fail the job. CI policy only;
+      does not change the engine's verdict. Default: FAIL,ERROR.
+      Recommended strict: FAIL,ERROR,UNKNOWN,UNSUPPORTED.
+    required: false
+    default: "FAIL,ERROR"
+  output-dir:
+    description: >-
+      Project-local directory for result artefacts. The action
+      writes result.json, evidence.json, and summary.md under
+      `<output-dir>/<run-id>/`. Should be gitignored.
+    required: false
+    default: ".reguard/results"
+  python-version:
+    description: Python version to use.
+    required: false
+    default: "3.12"
+  reguard-version:
+    description: >-
+      Reguard Core version to install via pip from the configured
+      index (e.g. "0.1.0rc1" once published). When empty, the
+      action builds the wheel from its own source at
+      $GITHUB_ACTION_PATH and installs it locally.
+    required: false
+    default: ""
+
+outputs:
+  status:
+    description: "Engine status (PASS / FAIL / UNKNOWN / UNSUPPORTED / ERROR)"
+  requirement-id:
+    description: "Requirement ID tested"
+  requirement-version:
+    description: "Requirement contract version"
+  result-json:
+    description: "Path to the machine-readable result.json"
+  summary-file:
+    description: "Path to the human-readable summary.md"
+  repo-sha:
+    description: "Resolved repository SHA"
+  missing-capability:
+    description: "Missing capability if UNSUPPORTED, else empty"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ inputs.python-version }}
+
+    - name: Install build tooling
+      shell: bash
+      run: |
+        set -euo pipefail
+        python -m pip install --upgrade "pip>=23" "build>=1.0"
+
+    - name: Resolve Reguard install source
+      id: resolve
+      shell: bash
+      run: |
+        set -euo pipefail
+        echo "ACTION_PATH=${GITHUB_ACTION_PATH}" >> "$GITHUB_OUTPUT"
+        if [ -n "${{ inputs.reguard-version }}" ]; then
+          echo "install_mode=pip_index" >> "$GITHUB_OUTPUT"
+          echo "install_cmd=python -m pip install reguard==${{ inputs.reguard-version }}" >> "$GITHUB_OUTPUT"
+        else
+          # Resolve the wheel path NOW (shell glob expands here, not at eval time).
+          # Globbing inside an eval'd command does NOT happen reliably across
+          # runners; emit the exact filename so pip never sees a literal `*`.
+          WHL=$(ls "${GITHUB_ACTION_PATH}/dist"/reguard-*.whl 2>/dev/null | head -n1 || true)
+          if [ -z "${WHL}" ]; then
+            echo "::error::No wheel found under ${GITHUB_ACTION_PATH}/dist/. Did the build step run?" >&2
+            exit 1
+          fi
+          echo "install_mode=build_from_source" >> "$GITHUB_OUTPUT"
+          echo "install_cmd=python -m pip install ${WHL}" >> "$GITHUB_OUTPUT"
+        fi
+
+    - name: Build Reguard wheel from action source
+      if: steps.resolve.outputs.install_mode == 'build_from_source'
+      shell: bash
+      run: |
+        set -euo pipefail
+        cd "${GITHUB_ACTION_PATH}"
+        python -m build --wheel
+
+    - name: Install Reguard Core
+      shell: bash
+      run: |
+        set -euo pipefail
+        eval "${{ steps.resolve.outputs.install_cmd }}"
+
+    - name: Resolve repository SHA
+      id: sha
+      shell: bash
+      run: |
+        set -euo pipefail
+        SHA=$(git -C "${GITHUB_WORKSPACE}" rev-parse HEAD)
+        echo "sha=$SHA" >> "$GITHUB_OUTPUT"
+
+    - name: Run reguard check
+      id: check
+      shell: bash
+      env:
+        # Provider keys must NOT be present; the action enforces
+        # this regardless of inputs. GitHub-provided secrets are
+        # NOT exported into the harness environment.
+        OPENAI_API_KEY: ""
+        ANTHROPIC_API_KEY: ""
+        GOOGLE_API_KEY: ""
+        GEMINI_API_KEY: ""
+        AZURE_OPENAI_API_KEY: ""
+        HUGGINGFACEHUB_API_TOKEN: ""
+        COHERE_API_KEY: ""
+        MISTRAL_API_KEY: ""
+        GROQ_API_KEY: ""
+      run: |
+        set -euo pipefail
+        CONFIG_ARG=""
+        if [ -n "${{ inputs.config }}" ]; then
+          CONFIG_ARG="--config ${{ inputs.config }}"
+        fi
+        # Use the CONSUMER workspace, never the action checkout.
+        # GITHUB_WORKSPACE is the consumer repo; ${{ github.workspace }}
+        # expands to the consumer workspace at runtime.
+        CONSUMER_DIR="${GITHUB_WORKSPACE}"
+        set +e
+        OUTPUT=$(python -m compliance.cli check \
+          --repo-path "${CONSUMER_DIR}" \
+          --requirement "${{ inputs.requirement }}" \
+          --output-dir "${CONSUMER_DIR}/${{ inputs.output-dir }}" \
+          ${CONFIG_ARG} \
+          --fail-on "" 2>&1)
+        RC=$?
+        set -e
+        echo "$OUTPUT"
+        echo "exit-code=$RC" >> "$GITHUB_OUTPUT"
+        echo "$RC" > /tmp/reguard_rc
+
+    - name: Apply CI failure policy
+      shell: bash
+      run: |
+        set -euo pipefail
+        RC=$(cat /tmp/reguard_rc || echo 0)
+        FAIL_ON="${{ inputs.fail-on }}"
+        STATUS=$(python - <<'PY'
+        import glob, json
+        paths = sorted(glob.glob(f"{__import__('os').environ['GITHUB_WORKSPACE']}/${{ inputs.output-dir }}/*/result.json"))
+        if not paths:
+            print("ERROR")
+        else:
+            print(json.load(open(paths[-1]))["status"])
+        PY
+        )
+        echo "engine status: $STATUS"
+        echo "fail-on policy: $FAIL_ON"
+        case ",$FAIL_ON," in
+          *,$STATUS,*) exit 1 ;;
+          *) exit 0 ;;
+        esac
+
+    - name: Write GitHub summary
+      if: always()
+      shell: bash
+      run: |
+        set -euo pipefail
+        python - <<'PY'
+        import glob, json, os
+        ws = os.environ["GITHUB_WORKSPACE"]
+        out_dir = "${{ inputs.output-dir }}"
+        paths = sorted(glob.glob(f"{ws}/{out_dir}/*/result.json"))
+        if not paths:
+            print("No result.json found; cannot render summary.")
+            raise SystemExit(0)
+        with open(paths[-1]) as f:
+            r = json.load(f)
+        status = r["status"]
+        rid = r.get("requirement_id", "")
+        rver = r.get("requirement_version", "")
+        sha = r.get("repo_sha", "")
+        missing = r.get("missing_capability") or ""
+        marks = {
+            "PASS": "✅",
+            "FAIL": "❌",
+            "UNKNOWN": "⚠️",
+            "UNSUPPORTED": "ℹ️",
+            "ERROR": "💥",
+        }
+        print(f"# Reguard Core")
+        print()
+        print(f"## Result")
+        print()
+        print(f"{marks.get(status, status)} **{status}** — `{rid}` (contract {rver})")
+        print()
+        print(f"Repository: `{r.get('repository','')}`")
+        print(f"SHA: `{sha}`")
+        if r.get("integration", {}).get("recipe"):
+            print(f"Recipe: `{r['integration']['recipe']}`")
+        print()
+        print("## Checks")
+        print()
+        for c in r.get("checks", []):
+            mark = "✅" if c["passed"] else "❌"
+            print(f"- {mark} **{c['name']}** — {c['detail']}")
+        if not r.get("checks"):
+            print("- (no checks recorded)")
+        print()
+        if status == "UNSUPPORTED":
+            print(f"## Missing capability")
+            print()
+            print(f"`{missing or 'NO_EXECUTION_RECIPE'}`")
+            print()
+            print("Add a `reguard.yml` or use a supported integration.")
+        if status in ("FAIL", "ERROR"):
+            print(f"## Reason")
+            print()
+            print(r.get("reason", ""))
+        print()
+        print("## Scope")
+        print()
+        print("This is a deterministic technical-control result.")
+        print("It does not establish overall EU AI Act compliance.")
+        PY
+
+    - name: Expose outputs
+      if: always()
+      shell: bash
+      run: |
+        python - <<'PY' | tee -a "$GITHUB_OUTPUT"
+        import glob, json, os
+        ws = os.environ["GITHUB_WORKSPACE"]
+        out_dir = "${{ inputs.output-dir }}"
+        paths = sorted(glob.glob(f"{ws}/{out_dir}/*/result.json"))
+        if not paths:
+            for k, v in [("status","ERROR"), ("requirement-id",""),
+                         ("requirement-version",""), ("result-json",""),
+                         ("summary-file",""), ("repo-sha",""),
+                         ("missing-capability","NO_RESULT_FILE")]:
+                print(f"{k}={v}")
+            raise SystemExit(0)
+        result_path = paths[-1]
+        summary_path = result_path.replace("result.json", "summary.md")
+        with open(result_path) as f:
+            r = json.load(f)
+        print(f"status={r['status']}")
+        print(f"requirement-id={r.get('requirement_id','')}")
+        print(f"requirement-version={r.get('requirement_version','')}")
+        print(f"result-json={result_path}")
+        print(f"summary-file={summary_path}")
+        print(f"repo-sha={r.get('repo_sha','')}")
+        print(f"missing-capability={r.get('missing_capability') or ''}")
+        PY

@@ -1,0 +1,22 @@
+{
+  "completed_jobs": 5,
+  "corpus_run_id": 7,
+  "error_class_counts": {},
+  "error_count": 0,
+  "executor": "container",
+  "fail_count": 3,
+  "max_attempts": 2,
+  "max_workers": 5,
+  "pass_count": 2,
+  "requested_repo_count": 5,
+  "requirement_id": "AI_ACT_12_1_AUTOMATIC_EVENT_LOGGING",
+  "requirement_version": "1.4.0",
+  "runtime_version": "1.0.0",
+  "scenario_id": "compliance.article12_1.simple",
+  "schema_version": "1",
+  "skipped_count": 0,
+  "status": "completed",
+  "total_jobs": 5,
+  "unknown_count": 0,
+  "unsupported_count": 0
+}

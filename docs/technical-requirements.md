@@ -482,8 +482,8 @@ Build docs generator first if:
 
 ## 10. References
 
-- 28 EU laws in `/home/mrcel/projects/learning/eu-ai-compliance-db/data/raw/`
-- 11 standards in `/home/mrcel/projects/learning/eu-ai-compliance-db/data/raw/`
-- 2,441 classified items in SQLite at `data/eu_ai_compliance.db`
+- EU laws in `data/raw/` (downloaded from EUR-Lex; not redistributed — see § License)
+- Standards (third-party): see `data/raw/` ISO27001, ISO42001, SOC2, PCI-DSS, NEN7510, NIST-CSF — third-party content, removed from public tracking due to redistribution uncertainty
+- Classified items in SQLite at `data/eu_ai_compliance.db` (research data; not part of v0.1 release payload)
 - Scanner architecture: `docs/scanner-architecture.md`
 - Detection method classification: `scripts/classify_detection_methods.py`
