@@ -118,6 +118,13 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+    # The container integration tests read REGUARD_RUNTIME_IMAGE at
+    # module import time. Setting it here at the job level makes the
+    # env var available to every subsequent step (including the
+    # ``pytest`` subprocess the test runner spawns). The image is
+    # built earlier in this job from runtime/Dockerfile.
+    env:
+      REGUARD_RUNTIME_IMAGE: reguard-runtime:ci-test
     outputs:
       source_sha: ${{ steps.meta.outputs.source_sha }}
       git_tag: ${{ steps.parse.outputs.git_tag }}

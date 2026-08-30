@@ -118,6 +118,12 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+    # The container integration tests read REGUARD_RUNTIME_IMAGE at
+    # module import time. Setting it here at the job level makes the
+    # env var available to every subsequent step (including the
+    # ``pytest`` subprocess the test runner spawns).
+    env:
+      REGUARD_RUNTIME_IMAGE: reguard-runtime:ci-test
     steps:
       - name: Checkout source at HEAD
         uses: actions/checkout@v4
