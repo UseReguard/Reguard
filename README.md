@@ -12,11 +12,13 @@ Reguard runs deterministic technical-control checks against AI-agent systems and
 
 ## About
 
-AI agents are increasingly subject to requirements around logging, human oversight, resilience, cybersecurity, and transparency.
+Reguard turns compliance-relevant technical requirements into deterministic runtime tests for AI-agent systems.
 
-Reguard turns those requirements into deterministic runtime tests:
+Reguard Core is implemented in Python. **v0.1 currently supports Python-based AI-agent systems and explicitly supported execution recipes.** The evidence model and requirement contracts are designed to be runtime-agnostic, but Reguard does not yet claim universal language or backend support.
 
-```text id="zsh18g">
+Reguard evaluates observable properties of the **agent execution system**, not intrinsic properties of the foundation model.
+
+```text
 requirement
 → controlled execution
 → runtime evidence
@@ -24,9 +26,27 @@ requirement
 → PASS / FAIL / UNKNOWN / UNSUPPORTED / ERROR
 ```
 
-Reguard tests technical properties of the **agent execution system**.
+AI agents are increasingly subject to requirements around logging, human oversight, resilience, cybersecurity, and transparency. Reguard focuses on requirements that can be reduced to deterministic observations of runtime behaviour.
 
 It does **not** certify legal compliance.
+
+### Support and licensing
+
+**Runtime support**
+
+- Reguard Core itself is implemented in Python.
+- v0.1 currently targets supported Python-based AI-agent systems.
+- Built-in integrations and compatible `reguard.yml` execution recipes define the currently supported execution surface.
+- The underlying evidence and requirement architecture is designed to support additional languages and backends in the future.
+- Reguard does **not** currently claim universal support for every AI-agent framework, language, or backend.
+
+**Open source**
+
+Reguard Core is open source under **AGPL-3.0-only**.
+
+Commercial use is permitted. The AGPL is a strong copyleft license and carries source-sharing obligations in circumstances covered by the license.
+
+See [LICENSE](LICENSE) for the full license terms.
 
 ### Article 12(1) — what Reguard actually tests
 
@@ -34,7 +54,7 @@ Reguard tests whether, during a controlled invocation, the **agent execution sys
 
 A `PASS` is a deterministic technical-control result. It does **not** establish overall compliance with Article 12(1), Article 12, or the EU AI Act.
 
-For the full technical contract — including the four observable checks and the framework-artifact taxonomy — see:
+For the full technical contract, see:
 
 ```bash
 reguard explain AI_ACT_12_1_AUTOMATIC_EVENT_LOGGING
@@ -68,18 +88,24 @@ Governance processes, conformity assessment, registration, CE marking, organizat
 
 ## Getting started
 
-```bash id="m9vbhk"
-pip install reguard==0.1.0rc1
+Install the current release candidate:
 
+```bash
+pip install reguard==0.1.0rc2
+```
+
+Then:
+
+```bash
 reguard doctor
 reguard check
 ```
 
 Try the deterministic example:
 
-```bash id="40bzg4"
+```bash
 git clone https://github.com/UseReguard/Reguard
-cd reguard/examples/minimal-agent
+cd Reguard/examples/minimal-agent
 
 reguard doctor --repo-path .
 reguard check --repo-path .
@@ -87,19 +113,19 @@ reguard check --repo-path .
 
 Expected:
 
-```text id="vn0ttg"
+```text
 PASS — AI_ACT_12_1_AUTOMATIC_EVENT_LOGGING
 ```
 
-No model API key is required.
+No model-provider API key is required for the supported deterministic scenarios.
 
 ---
 
 ## GitHub Actions
 
-Run Reguard on every pull request:
+Run Reguard on every pull request and push:
 
-```yaml id="i6dm3r"
+```yaml
 name: Reguard
 
 on:
@@ -108,17 +134,17 @@ on:
 
 jobs:
   reguard:
-    # Reguard only needs to read the repository contents.
     permissions:
       contents: read
+
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
 
-      - uses: UseReguard/Reguard@v0.1.0-rc.1
+      - uses: UseReguard/Reguard@v0.1.0-rc.2
         with:
-          reguard-version: 0.1.0rc1
+          reguard-version: 0.1.0rc2
           fail-on: FAIL,ERROR
 ```
 
@@ -127,7 +153,7 @@ Reguard writes a human-readable GitHub summary and structured evidence for the r
 Default CI behaviour:
 
 | Result | CI |
-|---|---|
+| --- | --- |
 | `PASS` | ✅ Pass |
 | `FAIL` | ❌ Fail |
 | `ERROR` | ❌ Fail |
@@ -138,7 +164,7 @@ Default CI behaviour:
 
 ## Example
 
-```text id="dhhowh"
+```text
 Reguard Core
 
 Technical control
@@ -148,19 +174,14 @@ Technical control
 Result
   PASS
 
-Checks
-  ✓ framework-produced runtime record
-  ✓ runtime activity observed
-  ✓ recoverable framework state
-
 Evidence
   4 events
   2 framework artifacts
 ```
 
-Every run also produces:
+Every run also produces structured artifacts:
 
-```text id="kp18ap"
+```text
 .reguard/
 └── results/
     └── <run-id>/
@@ -181,11 +202,13 @@ Built-in config-driven integrations:
 
 Reguard also supports repositories with their own `reguard.yml` using a compatible execution recipe.
 
-```bash id="05eue0"
+```bash
 reguard init
 ```
 
-See [`docs/integrations.md`](docs/integrations.md).
+See [docs/integrations.md](docs/integrations.md).
+
+Support for an integration means Reguard has an execution and observation path for that integration. It does not imply that every project built with the framework will automatically be executable without configuration.
 
 ---
 
@@ -193,8 +216,8 @@ See [`docs/integrations.md`](docs/integrations.md).
 
 Reguard separates framework integration from compliance decisions:
 
-```text id="1ks3vi"
-Agent
+```text
+Agent system
   ↓
 Execution Recipe
   ↓
@@ -209,7 +232,9 @@ Requirement Test
 
 **Recipes execute. Observers observe. Normalizers normalize. Requirements decide.**
 
-No framework adapter gets to declare itself compliant.
+Framework adapters and execution recipes collect evidence. They do not declare a system compliant.
+
+Requirement tests operate on normalized runtime evidence.
 
 ---
 
@@ -221,9 +246,9 @@ Reguard does not ask an AI model:
 
 Instead, each check has a versioned technical contract.
 
-For example, the current Article 12(1) check asks whether, during a controlled invocation, the agent system itself automatically produces a recoverable record of actual runtime activity.
+For example, the current Article 12(1) check asks whether, during a controlled invocation, the agent execution system itself automatically produces a recoverable record of actual runtime activity.
 
-The evidence either satisfies the contract or it does not.
+The evidence either satisfies the contract, contradicts it, cannot establish it, or cannot currently be collected.
 
 That makes results:
 
@@ -231,21 +256,23 @@ That makes results:
 - inspectable;
 - versioned;
 - CI-friendly;
-- independent of model-provider API keys.
+- independent of an LLM acting as the compliance judge.
 
 ---
 
 ## Result semantics
 
 | Status | Meaning |
-|---|---|
+| --- | --- |
 | `PASS` | ✅ Technical contract satisfied |
 | `FAIL` | ❌ Evidence contradicts the contract |
 | `UNKNOWN` | ❔ Required fact could not be established |
-| `UNSUPPORTED` | ⚠️ Reguard cannot currently execute/observe the system |
+| `UNSUPPORTED` | ⚠️ Reguard cannot currently execute or observe the system |
 | `ERROR` | 💥 Execution or infrastructure failed |
 
 These states are deliberately kept separate.
+
+A `PASS` means the specific versioned technical contract was satisfied during the controlled evaluation. It is not a legal-compliance certification.
 
 ---
 
@@ -256,12 +283,12 @@ Reguard treats target repositories as untrusted.
 - ✅ Local-first
 - ✅ No Reguard telemetry
 - ✅ No evidence upload
-- ✅ Provider keys excluded from target execution
+- ✅ Provider keys excluded from supported deterministic target execution
 - ✅ Controlled runtime execution
 - ✅ Isolated result artifacts
 - ✅ Deterministic model stubs for supported scenarios
 
-See [`SECURITY.md`](SECURITY.md).
+See [SECURITY.md](SECURITY.md).
 
 ---
 
@@ -276,8 +303,8 @@ See [`SECURITY.md`](SECURITY.md).
 - ✅ Config-driven integrations
 - ✅ Structured evidence
 - ✅ Reproducible release artifacts
-- ✅ 285 automated tests
 - ✅ Frozen regression corpus
+- ✅ Public OCI runtime
 - ✅ No telemetry
 - ✅ No cloud dependency
 - ✅ No LLM judge
@@ -286,12 +313,12 @@ See [`SECURITY.md`](SECURITY.md).
 
 - ⬜ More EU AI Act runtime checks
 - ⬜ More execution families
-- ⬜ Public OCI runtime
+- ⬜ Broader framework support
 - ⬜ Better zero-config onboarding
 
 ### Longer term
 
-```text id="wxu61s"
+```text
 DEFINE
   ↓
 VERIFY
@@ -307,17 +334,26 @@ PROVE
 
 Reguard produces deterministic **technical-control evaluations**.
 
+Reguard verifies compliance-relevant properties of the **agent execution system**, not intrinsic properties of the foundation model.
+
 A `PASS` does not mean that a system is legally compliant with the EU AI Act.
 
 Reguard does not determine:
 
-- whether the AI Act applies;
+- whether the EU AI Act applies;
 - whether a system is high-risk;
 - organizational compliance;
 - conformity assessment;
 - governance obligations;
 - documentation obligations;
+- intrinsic foundation-model compliance;
 - overall legal compliance.
+
+Current v0.1 support is also intentionally narrower than the architecture:
+
+- Reguard Core is implemented in Python;
+- supported targets are currently Python-based AI-agent systems with supported integrations or compatible execution recipes;
+- universal language/backend support is not currently claimed.
 
 ---
 
@@ -325,7 +361,7 @@ Reguard does not determine:
 
 Contributions are welcome.
 
-See [`CONTRIBUTING.md`](CONTRIBUTING.md).
+See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 > **Observers observe. Normalizers normalize. Requirements decide.**
 
@@ -333,6 +369,8 @@ See [`CONTRIBUTING.md`](CONTRIBUTING.md).
 
 ## License
 
-Reguard is licensed under **AGPL-3.0-only**.
+Reguard Core is licensed under **AGPL-3.0-only**.
 
-See [`LICENSE`](LICENSE).
+It is open-source software. Commercial use is permitted, subject to the terms and obligations of the AGPL.
+
+See [LICENSE](LICENSE).
