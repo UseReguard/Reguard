@@ -94,20 +94,10 @@ jobs:
           fi
 
       - name: Checkout RC2 tag explicitly (NOT main)
-        shell: bash
-        run: |
-          set -euo pipefail
-          # Fetch tags so the GitHub-hosted runner has the RC2
-          # annotated tag locally even though we are not on main.
-          git init -q .
-          git remote add origin "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}.git" 2>/dev/null || true
-          git fetch --no-tags --depth=1 origin "refs/tags/${RC2_TAG}:refs/tags/${RC2_TAG}"
-          git checkout --quiet "refs/tags/${RC2_TAG}"
-          echo "checked-out: $(git rev-parse HEAD)"
-          echo "tag-object : $(git rev-parse ${RC2_TAG})"
-          echo "tag-type   : $(git cat-file -t ${RC2_TAG})"
-        env:
-          RC2_TAG: ${{ env.RC2_TAG }}
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          ref: refs/tags/${{ env.RC2_TAG }}
 
       - name: Hard-fail assertions
         id: assert
@@ -161,21 +151,18 @@ jobs:
             exit 1
           fi
 
-          # 6. The recovery workflow's own commit SHA on main is
-          #    recorded as publication infrastructure provenance,
-          #    not as RC2 source.
-          RECOVERY_WF_SHA="$(cat "${GITHUB_WORKSPACE}/.github/workflows/rc2-recovery.yml" | git hash-object -t blob --stdin)"
-          # The blob hash of the workflow file is informative but
-          # not the same as the workflow-file commit SHA; we still
-          # capture it so an audit trail records the version of
-          # this recovery workflow that produced the publication.
-          WORKFLOW_FILE_BLOB="${RECOVERY_WF_SHA}"
+          # 6. Record recovery-workflow identity for provenance.
+          #    ``${{ github.sha }}`` in a workflow_dispatch run is
+          #    the SHA of the workflow's source commit on main,
+          #    which is the recovery-workflow infrastructure SHA,
+          #    NOT the RC2 source SHA.
+          RECOVERY_WF_SHA="${GITHUB_SHA_FROM_TRIGGER}"
 
           echo "git_tag=${RC2_TAG}"                         >> "$GITHUB_OUTPUT"
           echo "package_version=${PKG_VERSION}"            >> "$GITHUB_OUTPUT"
           echo "source_sha=${PEELED_SHA}"                  >> "$GITHUB_OUTPUT"
           echo "is_prerelease=${IS_PRERELEASE}"            >> "$GITHUB_OUTPUT"
-          echo "recovery_workflow_sha=${WORKFLOW_FILE_BLOB}" >> "$GITHUB_OUTPUT"
+          echo "recovery_workflow_sha=${RECOVERY_WF_SHA}"  >> "$GITHUB_OUTPUT"
 
           {
             echo "## RC2 recovery validation"
@@ -186,11 +173,13 @@ jobs:
             echo "- Working checkout:  \`${WORKING_SHA}\` (matches peeled commit)"
             echo "- Package version:   \`${PKG_VERSION}\`"
             echo "- Pre-release:       ${IS_PRERELEASE}"
-            echo "- Recovery wf blob:  \`${WORKFLOW_FILE_BLOB}\` (publication infrastructure)"
+            echo "- Recovery wf SHA:   \`${RECOVERY_WF_SHA}\` (publication infrastructure, not RC2 source)"
             echo
             echo "RC2 product/source identity is \`${RC2_TAG} -> ${PEELED_SHA}\`."
             echo "The recovery workflow itself is publication infrastructure; it is NOT RC2 source."
           } >> "$GITHUB_STEP_SUMMARY"
+        env:
+          GITHUB_SHA_FROM_TRIGGER: ${{ github.sha }}
 
   build:
     name: Build RC2 artifacts (clean runner)
@@ -211,26 +200,20 @@ jobs:
       is_prerelease: ${{ steps.parse.outputs.is_prerelease }}
     steps:
       - name: Re-checkout RC2 tag (defence-in-depth)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          ref: refs/tags/${{ env.RC2_TAG }}
+
+      - name: Defence-in-depth HEAD + version assertions
         shell: bash
         run: |
           set -euo pipefail
-          git remote remove origin 2>/dev/null || true
-          git remote add origin "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}.git"
-          git fetch --no-tags --depth=1 origin "refs/tags/${RC2_TAG}:refs/tags/${RC2_TAG}"
-          git checkout --quiet "refs/tags/${RC2_TAG}"
           SHA="$(git rev-parse HEAD)"
           if [ "${SHA}" != "${RC2_EXPECTED_SHA}" ]; then
             echo "::error::build: working HEAD (${SHA}) != frozen RC2 SHA (${RC2_EXPECTED_SHA}); refusing to build."
             exit 1
           fi
-        env:
-          RC2_TAG: ${{ env.RC2_TAG }}
-          RC2_EXPECTED_SHA: ${{ env.RC2_EXPECTED_SHA }}
-
-      - name: Re-assert package version
-        shell: bash
-        run: |
-          set -euo pipefail
           PKG_VERSION="$(python -c "import tomllib, pathlib; \
             print(tomllib.loads(pathlib.Path('pyproject.toml').read_text())['project']['version'])")"
           if [ "${PKG_VERSION}" != "${RC2_EXPECTED_VERSION}" ]; then
@@ -238,6 +221,7 @@ jobs:
             exit 1
           fi
         env:
+          RC2_EXPECTED_SHA: ${{ env.RC2_EXPECTED_SHA }}
           RC2_EXPECTED_VERSION: ${{ env.RC2_EXPECTED_VERSION }}
 
       - name: Set up Python
@@ -520,20 +504,21 @@ jobs:
       runtime_digest: ${{ steps.build.outputs.digest }}
     steps:
       - name: Re-checkout RC2 tag (defence-in-depth)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          ref: refs/tags/${{ env.RC2_TAG }}
+
+      - name: Defence-in-depth HEAD assertion
         shell: bash
         run: |
           set -euo pipefail
-          git remote remove origin 2>/dev/null || true
-          git remote add origin "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}.git"
-          git fetch --no-tags --depth=1 origin "refs/tags/${RC2_TAG}:refs/tags/${RC2_TAG}"
-          git checkout --quiet "refs/tags/${RC2_TAG}"
           SHA="$(git rev-parse HEAD)"
           if [ "${SHA}" != "${RC2_EXPECTED_SHA}" ]; then
             echo "::error::publish-runtime: HEAD (${SHA}) != frozen RC2 SHA (${RC2_EXPECTED_SHA}); refusing to publish."
             exit 1
           fi
         env:
-          RC2_TAG: ${{ env.RC2_TAG }}
           RC2_EXPECTED_SHA: ${{ env.RC2_EXPECTED_SHA }}
 
       - name: Log in to GHCR
@@ -603,22 +588,23 @@ jobs:
           ( cd release-artifacts && sha256sum -c SHA256SUMS )
 
       - name: Re-checkout RC2 tag for release notes
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          ref: refs/tags/${{ env.RC2_TAG }}
+          path: notes_src
+
+      - name: Defence-in-depth HEAD assertion (release notes)
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p notes_src
           cd notes_src
-          git init -q .
-          git remote add origin "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}.git"
-          git fetch --no-tags --depth=1 origin "refs/tags/${RC2_TAG}:refs/tags/${RC2_TAG}"
-          git checkout --quiet "refs/tags/${RC2_TAG}"
           SHA="$(git rev-parse HEAD)"
           if [ "${SHA}" != "${RC2_EXPECTED_SHA}" ]; then
             echo "::error::release-notes: HEAD (${SHA}) != frozen RC2 SHA (${RC2_EXPECTED_SHA}); refusing to publish."
             exit 1
           fi
         env:
-          RC2_TAG: ${{ env.RC2_TAG }}
           RC2_EXPECTED_SHA: ${{ env.RC2_EXPECTED_SHA }}
 
       - name: Create GitHub prerelease v0.1.0-rc.2
