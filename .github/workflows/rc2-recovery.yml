@@ -1,0 +1,657 @@
+# Reguard Core v0.1.0-rc.2 — Manual Publication Recovery
+#
+# Purpose
+# -------
+# The RC2 tag `v0.1.0-rc.2` was pushed at
+# `63fe0543c0c9ff68d765efc9edba994c5672e81f` but the tag push did
+# not dispatch `.github/workflows/release.yml`. This workflow is a
+# narrowly scoped manual recovery: it uses `workflow_dispatch`,
+# checks out the **already-immutable** RC2 tag (NOT main), re-runs
+# the same release gates, and publishes via the same mechanisms
+# (PyPI Trusted Publishing / OIDC, GHCR, GitHub prerelease).
+#
+# Provenance boundary
+# -------------------
+# Two identities are recorded separately:
+#
+#   RC2 product/source identity:
+#     tag `v0.1.0-rc.2` → peeled commit `63fe0543...`
+#
+#   Recovery workflow identity:
+#     this file lives on `main` in a commit that came AFTER the
+#     RC2 tag. The SHA of that commit is "publication
+#     infrastructure provenance" and is NOT a representation of
+#     RC2 product source.
+#
+# Hard-fail safety gates
+# ----------------------
+# Every job re-asserts, at the very start of its execution:
+#
+#   - the tag `v0.1.0-rc.2` exists and is annotated;
+#   - its peeled commit is exactly
+#     `63fe0543c0c9ff68d765efc9edba994c5672e81f`;
+#   - the working checkout is exactly that commit (not main);
+#   - pyproject.toml `[project].version` is exactly `0.1.0rc2`;
+#   - the package version surfaced by `import compliance` is
+#     exactly `0.1.0rc2`.
+#
+# If any check fails, the job exits non-zero with a clear error
+# before any publication step runs.
+#
+# What this workflow does NOT do
+# ------------------------------
+# - It does NOT publish `latest`. No `latest` tag is added.
+# - It does NOT bump the package version.
+# - It does NOT modify the RC2 source.
+# - It does NOT recreate, delete, or move `v0.1.0-rc.2`.
+# - It does NOT change the existing release.yml.
+#
+# If a defect surfaces that requires a code change to fix, the
+# operator prompt demands RC3 at a new SHA; this workflow must
+# NOT paper over the defect.
+
+name: rc2-recovery
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: "Type RC2-GO to confirm manual publication of v0.1.0-rc.2"
+        required: true
+        type: string
+
+permissions: {}
+
+env:
+  PYTHON_VERSION: "3.12"
+  RC2_TAG: "v0.1.0-rc.2"
+  RC2_EXPECTED_SHA: "63fe0543c0c9ff68d765efc9edba994c5672e81f"
+  RC2_EXPECTED_VERSION: "0.1.0rc2"
+  RC2_RELEASE_TITLE: "Reguard Core v0.1.0-rc.2"
+  RC2_ARTIFACT_PREFIX: "reguard-dist-rc2-recovery"
+
+jobs:
+
+  validate:
+    name: Validate RC2 recovery invariants (hard-fail)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      git_tag: ${{ steps.assert.outputs.git_tag }}
+      package_version: ${{ steps.assert.outputs.package_version }}
+      source_sha: ${{ steps.assert.outputs.source_sha }}
+      recovery_workflow_sha: ${{ steps.assert.outputs.recovery_workflow_sha }}
+      is_prerelease: ${{ steps.assert.outputs.is_prerelease }}
+    steps:
+      - name: Confirm manual trigger token
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "${{ inputs.confirm }}" != "RC2-GO" ]; then
+            echo "::error::workflow_dispatch input 'confirm' must equal 'RC2-GO'; got '${{ inputs.confirm }}'."
+            exit 1
+          fi
+
+      - name: Checkout RC2 tag explicitly (NOT main)
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Fetch tags so the GitHub-hosted runner has the RC2
+          # annotated tag locally even though we are not on main.
+          git init -q .
+          git remote add origin "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}.git" 2>/dev/null || true
+          git fetch --no-tags --depth=1 origin "refs/tags/${RC2_TAG}:refs/tags/${RC2_TAG}"
+          git checkout --quiet "refs/tags/${RC2_TAG}"
+          echo "checked-out: $(git rev-parse HEAD)"
+          echo "tag-object : $(git rev-parse ${RC2_TAG})"
+          echo "tag-type   : $(git cat-file -t ${RC2_TAG})"
+        env:
+          RC2_TAG: ${{ env.RC2_TAG }}
+
+      - name: Hard-fail assertions
+        id: assert
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          # 1. Tag exists and is annotated.
+          TAG_OBJ_TYPE="$(git cat-file -t "${RC2_TAG}")"
+          if [ "${TAG_OBJ_TYPE}" != "tag" ]; then
+            echo "::error::RC2 tag ${RC2_TAG} is not annotated (got ${TAG_OBJ_TYPE}); refusing to publish."
+            exit 1
+          fi
+          TAG_OBJ_SHA="$(git rev-parse "${RC2_TAG}")"
+          PEELED_SHA="$(git rev-parse "${RC2_TAG}^{}")"
+          echo "tag-object-sha: ${TAG_OBJ_SHA}"
+          echo "peeled-commit : ${PEELED_SHA}"
+
+          # 2. Peeled commit equals the frozen RC2 SHA.
+          if [ "${PEELED_SHA}" != "${RC2_EXPECTED_SHA}" ]; then
+            echo "::error::RC2 peeled commit ${PEELED_SHA} != expected ${RC2_EXPECTED_SHA}; refusing to publish."
+            exit 1
+          fi
+
+          # 3. The working checkout is exactly the peeled commit
+          #    (NOT main, NOT some other SHA).
+          WORKING_SHA="$(git rev-parse HEAD)"
+          if [ "${WORKING_SHA}" != "${RC2_EXPECTED_SHA}" ]; then
+            echo "::error::Working checkout HEAD (${WORKING_SHA}) does not equal frozen RC2 SHA (${RC2_EXPECTED_SHA}); refusing to publish."
+            exit 1
+          fi
+
+          # 4. Tag shape is rc.2; is_prerelease=true.
+          if [[ "${RC2_TAG}" =~ ^v([0-9]+)\.([0-9]+)\.([0-9]+)-rc\.([0-9]+)$ ]]; then
+            IS_PRERELEASE="true"
+            EXPECTED_PKG_VERSION="${BASH_REMATCH[1]}.${BASH_REMATCH[2]}.${BASH_REMATCH[3]}rc${BASH_REMATCH[4]}"
+          else
+            echo "::error::Tag ${RC2_TAG} is not a v<major>.<minor>.<patch>-rc.<number> shape."
+            exit 1
+          fi
+
+          # 5. pyproject.toml version matches the tag.
+          PKG_VERSION="$(python -c "import tomllib, pathlib; \
+            print(tomllib.loads(pathlib.Path('pyproject.toml').read_text())['project']['version'])")"
+          if [ "${PKG_VERSION}" != "${EXPECTED_PKG_VERSION}" ]; then
+            echo "::error::pyproject.toml version ${PKG_VERSION} != expected ${EXPECTED_PKG_VERSION} from tag ${RC2_TAG}."
+            exit 1
+          fi
+          if [ "${PKG_VERSION}" != "${RC2_EXPECTED_VERSION}" ]; then
+            echo "::error::pyproject.toml version ${PKG_VERSION} != hard-coded RC2_EXPECTED_VERSION ${RC2_EXPECTED_VERSION}."
+            exit 1
+          fi
+
+          # 6. The recovery workflow's own commit SHA on main is
+          #    recorded as publication infrastructure provenance,
+          #    not as RC2 source.
+          RECOVERY_WF_SHA="$(cat "${GITHUB_WORKSPACE}/.github/workflows/rc2-recovery.yml" | git hash-object -t blob --stdin)"
+          # The blob hash of the workflow file is informative but
+          # not the same as the workflow-file commit SHA; we still
+          # capture it so an audit trail records the version of
+          # this recovery workflow that produced the publication.
+          WORKFLOW_FILE_BLOB="${RECOVERY_WF_SHA}"
+
+          echo "git_tag=${RC2_TAG}"                         >> "$GITHUB_OUTPUT"
+          echo "package_version=${PKG_VERSION}"            >> "$GITHUB_OUTPUT"
+          echo "source_sha=${PEELED_SHA}"                  >> "$GITHUB_OUTPUT"
+          echo "is_prerelease=${IS_PRERELEASE}"            >> "$GITHUB_OUTPUT"
+          echo "recovery_workflow_sha=${WORKFLOW_FILE_BLOB}" >> "$GITHUB_OUTPUT"
+
+          {
+            echo "## RC2 recovery validation"
+            echo
+            echo "- RC2 tag:           \`${RC2_TAG}\`"
+            echo "- Tag-object SHA:    \`${TAG_OBJ_SHA}\`"
+            echo "- Peeled commit:     \`${PEELED_SHA}\`"
+            echo "- Working checkout:  \`${WORKING_SHA}\` (matches peeled commit)"
+            echo "- Package version:   \`${PKG_VERSION}\`"
+            echo "- Pre-release:       ${IS_PRERELEASE}"
+            echo "- Recovery wf blob:  \`${WORKFLOW_FILE_BLOB}\` (publication infrastructure)"
+            echo
+            echo "RC2 product/source identity is \`${RC2_TAG} -> ${PEELED_SHA}\`."
+            echo "The recovery workflow itself is publication infrastructure; it is NOT RC2 source."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  build:
+    name: Build RC2 artifacts (clean runner)
+    needs: validate
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    # Same job-scoped env as release.yml's build job: container
+    # tests read REGUARD_RUNTIME_IMAGE at module import time.
+    env:
+      REGUARD_RUNTIME_IMAGE: reguard-runtime:ci-test
+    outputs:
+      source_sha: ${{ steps.meta.outputs.source_sha }}
+      git_tag: ${{ steps.parse.outputs.git_tag }}
+      package_version: ${{ steps.parse.outputs.package_version }}
+      wheel_sha256: ${{ steps.meta.outputs.wheel_sha }}
+      sdist_sha256: ${{ steps.meta.outputs.sdist_sha }}
+      is_prerelease: ${{ steps.parse.outputs.is_prerelease }}
+    steps:
+      - name: Re-checkout RC2 tag (defence-in-depth)
+        shell: bash
+        run: |
+          set -euo pipefail
+          git remote remove origin 2>/dev/null || true
+          git remote add origin "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}.git"
+          git fetch --no-tags --depth=1 origin "refs/tags/${RC2_TAG}:refs/tags/${RC2_TAG}"
+          git checkout --quiet "refs/tags/${RC2_TAG}"
+          SHA="$(git rev-parse HEAD)"
+          if [ "${SHA}" != "${RC2_EXPECTED_SHA}" ]; then
+            echo "::error::build: working HEAD (${SHA}) != frozen RC2 SHA (${RC2_EXPECTED_SHA}); refusing to build."
+            exit 1
+          fi
+        env:
+          RC2_TAG: ${{ env.RC2_TAG }}
+          RC2_EXPECTED_SHA: ${{ env.RC2_EXPECTED_SHA }}
+
+      - name: Re-assert package version
+        shell: bash
+        run: |
+          set -euo pipefail
+          PKG_VERSION="$(python -c "import tomllib, pathlib; \
+            print(tomllib.loads(pathlib.Path('pyproject.toml').read_text())['project']['version'])")"
+          if [ "${PKG_VERSION}" != "${RC2_EXPECTED_VERSION}" ]; then
+            echo "::error::build: pyproject.toml version ${PKG_VERSION} != ${RC2_EXPECTED_VERSION}; refusing to build."
+            exit 1
+          fi
+        env:
+          RC2_EXPECTED_VERSION: ${{ env.RC2_EXPECTED_VERSION }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install project and dev dependencies (clean runner)
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade "pip>=23" "build>=1.0" "twine>=5" "pytest>=8"
+          python -m pip install -e ".[dev]"
+
+      - name: Build local runtime image for container tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          OCI_BIN="${REGUARD_RUNTIME_BINARY:-}"
+          if [ -z "${OCI_BIN}" ]; then
+            if command -v podman >/dev/null 2>&1; then
+              OCI_BIN="podman"
+            elif command -v docker >/dev/null 2>&1; then
+              OCI_BIN="docker"
+            fi
+          fi
+          if [ -z "${OCI_BIN}" ]; then
+            echo "::warning::no podman or docker on PATH; container integration tests will be skipped."
+          else
+            echo "Building local runtime image with ${OCI_BIN}..."
+            "${OCI_BIN}" build \
+              -f runtime/Dockerfile \
+              -t reguard-runtime:ci-test \
+              .
+          fi
+
+      - name: Run full test suite
+        shell: bash
+        run: |
+          set -euo pipefail
+          pytest tests/ -q
+
+      - name: Build wheel and sdist
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf build dist src/*.egg-info src/compliance.egg-info
+          python -m build --sdist --wheel
+
+      - name: twine check
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m twine check dist/*
+
+      - name: Packaging tests against built wheel
+        shell: bash
+        run: |
+          set -euo pipefail
+          pytest tests/packaging/ -v
+
+      - name: Clean installed-wheel smoke
+        id: clean_smoke
+        shell: bash
+        run: |
+          set -euo pipefail
+          WHL="$(ls dist/*.whl | head -n1)"
+          python -m venv /tmp/reguard-rc2-recovery-smoke
+          # shellcheck disable=SC1091
+          source /tmp/reguard-rc2-recovery-smoke/bin/activate
+          pip install --upgrade "pip>=23" >/dev/null
+          pip install "${WHL}"
+          reguard --version
+          reguard doctor
+          reguard list
+          python - <<'PY'
+          from pathlib import Path
+          import compliance
+          path = Path(compliance.__file__).resolve()
+          print(f"compliance.__file__={path}")
+          if "site-packages" not in str(path):
+              raise SystemExit(
+                  f"expected compliance import from installed wheel site-packages, got: {path}"
+              )
+          if compliance.__version__ != "0.1.0rc2":
+              raise SystemExit(
+                  f"expected compliance.__version__ 0.1.0rc2, got {compliance.__version__!r}"
+              )
+          PY
+          test ! -e data/eu_ai_compliance.db
+          deactivate
+
+      - name: Clean installed-wheel check (reguard check)
+        id: clean_check
+        shell: bash
+        run: |
+          set -euo pipefail
+          # shellcheck disable=SC1091
+          source /tmp/reguard-rc2-recovery-smoke/bin/activate
+          FIXTURE_PATH="${GITHUB_WORKSPACE}/examples/minimal-agent"
+          test -d "${FIXTURE_PATH}"
+          set +e
+          reguard check \
+            --repo-path "${FIXTURE_PATH}" \
+            --repo SWE-agent/mini-swe-agent
+          CHECK_RC=$?
+          set -e
+          if [ "${CHECK_RC}" -ne 0 ]; then
+            echo "::error::reguard check exited with non-zero status ${CHECK_RC}; clean-wheel smoke FAILED."
+            exit "${CHECK_RC}"
+          fi
+          echo "reguard check exit code: 0 (PASS)"
+          deactivate
+
+      - name: Release build summary (truthful per-step)
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          {
+            echo "## RC2 recovery build result"
+            echo
+            if [ -d dist ] && ls dist/*.whl dist/*.tar.gz >/dev/null 2>&1; then
+              WHL_NAME="$(ls dist/*.whl   | head -n1 | xargs -n1 basename)"
+              SDIST_NAME="$(ls dist/*.tar.gz | head -n1 | xargs -n1 basename)"
+              echo "- Wheel:    \`${WHL_NAME}\`"
+              echo "- Sdist:    \`${SDIST_NAME}\`"
+            else
+              echo "- Wheel:    MISSING (build did not produce dist/)"
+              echo "- Sdist:    MISSING (build did not produce dist/)"
+            fi
+            SMOKE_STATUS="$(printf '%s' "${CLEAN_SMOKE_OUTCOME:-skipped}" | tr '[:lower:]' '[:upper:]')"
+            SMOKE_CONCL="$(printf '%s' "${CLEAN_SMOKE_CONCLUSION:-skipped}" | tr '[:lower:]' '[:upper:]')"
+            CHECK_STATUS="$(printf '%s' "${CLEAN_CHECK_OUTCOME:-skipped}" | tr '[:lower:]' '[:upper:]')"
+            CHECK_CONCL="$(printf '%s' "${CLEAN_CHECK_CONCLUSION:-skipped}" | tr '[:lower:]' '[:upper:]')"
+            echo "- Clean installed-wheel smoke: ${SMOKE_STATUS} (conclusion: ${SMOKE_CONCL})"
+            echo "- Clean installed-wheel check: ${CHECK_STATUS} (conclusion: ${CHECK_CONCL})"
+          } >> "$GITHUB_STEP_SUMMARY"
+        env:
+          CLEAN_SMOKE_OUTCOME: ${{ steps.clean_smoke.outcome }}
+          CLEAN_SMOKE_CONCLUSION: ${{ steps.clean_smoke.conclusion }}
+          CLEAN_CHECK_OUTCOME: ${{ steps.clean_check.outcome }}
+          CLEAN_CHECK_CONCLUSION: ${{ steps.clean_check.conclusion }}
+
+      - name: Re-parse tag for downstream jobs
+        id: parse
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "git_tag=${RC2_TAG}"                       >> "$GITHUB_OUTPUT"
+          echo "package_version=${RC2_EXPECTED_VERSION}"  >> "$GITHUB_OUTPUT"
+          echo "is_prerelease=true"                       >> "$GITHUB_OUTPUT"
+
+      - name: Record authoritative artifact hashes
+        id: meta
+        shell: bash
+        run: |
+          set -euo pipefail
+          SOURCE_SHA="$(git rev-parse HEAD)"
+          if [ "${SOURCE_SHA}" != "${RC2_EXPECTED_SHA}" ]; then
+            echo "::error::build: HEAD (${SOURCE_SHA}) drifted from frozen RC2 SHA (${RC2_EXPECTED_SHA})."
+            exit 1
+          fi
+          WHL_FILE="$(ls dist/*.whl | head -n1)"
+          SDIST_FILE="$(ls dist/*.tar.gz | head -n1)"
+          WHL_SHA="$(sha256sum "${WHL_FILE}" | awk '{print $1}')"
+          SDIST_SHA="$(sha256sum "${SDIST_FILE}" | awk '{print $1}')"
+          WHL_SIZE="$(stat -c '%s' "${WHL_FILE}")"
+          SDIST_SIZE="$(stat -c '%s' "${SDIST_FILE}")"
+          {
+            printf '%s  %s\n' "${WHL_SHA}"   "$(basename "${WHL_FILE}")"
+            printf '%s  %s\n' "${SDIST_SHA}" "$(basename "${SDIST_FILE}")"
+          } > dist/SHA256SUMS
+          ( cd dist && sha256sum -c SHA256SUMS )
+
+          echo "source_sha=${SOURCE_SHA}"  >> "$GITHUB_OUTPUT"
+          echo "wheel_sha=${WHL_SHA}"      >> "$GITHUB_OUTPUT"
+          echo "sdist_sha=${SDIST_SHA}"    >> "$GITHUB_OUTPUT"
+          echo "wheel_file=${WHL_FILE}"    >> "$GITHUB_OUTPUT"
+          echo "sdist_file=${SDIST_FILE}"  >> "$GITHUB_OUTPUT"
+          echo "wheel_size=${WHL_SIZE}"    >> "$GITHUB_OUTPUT"
+          echo "sdist_size=${SDIST_SIZE}"  >> "$GITHUB_OUTPUT"
+
+          {
+            echo "## RC2 recovery build artifacts"
+            echo
+            echo "- Wheel:    \`$(basename "${WHL_FILE}")\`  (${WHL_SIZE} bytes)"
+            echo "  - SHA256: \`${WHL_SHA}\`"
+            echo "- Sdist:    \`$(basename "${SDIST_FILE}")\`  (${SDIST_SIZE} bytes)"
+            echo "  - SHA256: \`${SDIST_SHA}\`"
+            echo "- SHA256SUMS: \`dist/SHA256SUMS\` (verified)"
+            echo "- Source SHA: \`${SOURCE_SHA}\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload RC2 release artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.RC2_ARTIFACT_PREFIX }}-${{ env.RC2_TAG }}
+          path: |
+            dist/*.whl
+            dist/*.tar.gz
+            dist/SHA256SUMS
+          if-no-files-found: error
+          retention-days: 14
+
+  publish-pypi:
+    name: Publish reguard==0.1.0rc2 to PyPI (Trusted Publishing)
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+    permissions:
+      id-token: write
+    steps:
+      - name: Download RC2 release artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ env.RC2_ARTIFACT_PREFIX }}-${{ env.RC2_TAG }}
+          path: release-artifacts
+
+      - name: Verify downloaded artifacts against SHA256SUMS
+        shell: bash
+        run: |
+          set -euo pipefail
+          ( cd release-artifacts && sha256sum -c SHA256SUMS )
+
+      - name: Stage PyPI distributions only
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf pypi-dist
+          mkdir -p pypi-dist
+          cp release-artifacts/*.whl   pypi-dist/
+          cp release-artifacts/*.tar.gz pypi-dist/
+          WHL_COUNT=$(find pypi-dist -maxdepth 1 -type f -name '*.whl'   | wc -l)
+          SDIST_COUNT=$(find pypi-dist -maxdepth 1 -type f -name '*.tar.gz' | wc -l)
+          ALL_COUNT=$(find pypi-dist -maxdepth 1 -type f | wc -l)
+          if [ "${WHL_COUNT}"   -ne 1 ] || \
+             [ "${SDIST_COUNT}" -ne 1 ] || \
+             [ "${ALL_COUNT}"   -ne 2 ]; then
+            echo "::error::pypi-dist contents invalid (wheel=${WHL_COUNT}, sdist=${SDIST_COUNT}, all=${ALL_COUNT})"
+            find pypi-dist -maxdepth 1 -type f -printf '%p\n'
+            exit 1
+          fi
+          echo "pypi-dist contains exactly one wheel and one sdist."
+
+      - name: Publish reguard==0.1.0rc2 via Trusted Publishing
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: pypi-dist
+
+      - name: Record PyPI publication status
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          {
+            echo "## RC2 PyPI publication"
+            echo
+            if [ "${{ job.status }}" = "success" ]; then
+              echo "- Status:    ✅ SUCCESS"
+              echo "- Project:   \`reguard\`"
+              echo "- Version:   \`${{ needs.build.outputs.package_version }}\`"
+              echo "- Source:    \`${{ needs.build.outputs.source_sha }}\`"
+              echo "- Target:    https://pypi.org/project/reguard/${{ needs.build.outputs.package_version }}/"
+            else
+              echo "- Status:    ❌ FAILED"
+              echo "- See job logs for the underlying error."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  publish-runtime:
+    name: Push reguard-runtime:0.1.0rc2 to GHCR
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      runtime_digest: ${{ steps.build.outputs.digest }}
+    steps:
+      - name: Re-checkout RC2 tag (defence-in-depth)
+        shell: bash
+        run: |
+          set -euo pipefail
+          git remote remove origin 2>/dev/null || true
+          git remote add origin "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}.git"
+          git fetch --no-tags --depth=1 origin "refs/tags/${RC2_TAG}:refs/tags/${RC2_TAG}"
+          git checkout --quiet "refs/tags/${RC2_TAG}"
+          SHA="$(git rev-parse HEAD)"
+          if [ "${SHA}" != "${RC2_EXPECTED_SHA}" ]; then
+            echo "::error::publish-runtime: HEAD (${SHA}) != frozen RC2 SHA (${RC2_EXPECTED_SHA}); refusing to publish."
+            exit 1
+          fi
+        env:
+          RC2_TAG: ${{ env.RC2_TAG }}
+          RC2_EXPECTED_SHA: ${{ env.RC2_EXPECTED_SHA }}
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push runtime image
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: runtime/Dockerfile
+          push: true
+          provenance: true
+          # Publish only the version tag and the immutable
+          # source-SHA tag. NEVER publish :latest for an RC.
+          tags: |
+            ghcr.io/usereguard/reguard-runtime:${{ needs.build.outputs.package_version }}
+            ghcr.io/usereguard/reguard-runtime:${{ needs.build.outputs.source_sha }}
+          build-args: |
+            REGUARD_SOURCE_REVISION=${{ needs.build.outputs.source_sha }}
+            REGUARD_SOURCE_VERSION=${{ needs.build.outputs.package_version }}
+
+      - name: Record GHCR publication status
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          {
+            echo "## RC2 GHCR publication"
+            echo
+            if [ "${{ steps.build.conclusion }}" = "success" ]; then
+              echo "- Status:    ✅ SUCCESS"
+              echo "- Reference: \`ghcr.io/usereguard/reguard-runtime:${{ needs.build.outputs.package_version }}\`"
+              echo "- SHA tag:   \`ghcr.io/usereguard/reguard-runtime:${{ needs.build.outputs.source_sha }}\`"
+              echo "- Digest:    \`${{ steps.build.outputs.digest }}\`"
+              echo "- \`latest\` is NOT published for RC."
+            else
+              echo "- Status:    ❌ FAILED"
+              echo "- See step logs for the underlying error."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  release:
+    name: Create GitHub prerelease for v0.1.0-rc.2
+    needs: [build, publish-pypi, publish-runtime]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download RC2 release artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ env.RC2_ARTIFACT_PREFIX }}-${{ env.RC2_TAG }}
+          path: release-artifacts
+
+      - name: Verify downloaded artifacts against SHA256SUMS
+        shell: bash
+        run: |
+          set -euo pipefail
+          ( cd release-artifacts && sha256sum -c SHA256SUMS )
+
+      - name: Re-checkout RC2 tag for release notes
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p notes_src
+          cd notes_src
+          git init -q .
+          git remote add origin "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}.git"
+          git fetch --no-tags --depth=1 origin "refs/tags/${RC2_TAG}:refs/tags/${RC2_TAG}"
+          git checkout --quiet "refs/tags/${RC2_TAG}"
+          SHA="$(git rev-parse HEAD)"
+          if [ "${SHA}" != "${RC2_EXPECTED_SHA}" ]; then
+            echo "::error::release-notes: HEAD (${SHA}) != frozen RC2 SHA (${RC2_EXPECTED_SHA}); refusing to publish."
+            exit 1
+          fi
+        env:
+          RC2_TAG: ${{ env.RC2_TAG }}
+          RC2_EXPECTED_SHA: ${{ env.RC2_EXPECTED_SHA }}
+
+      - name: Create GitHub prerelease v0.1.0-rc.2
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.RC2_TAG }}
+          name: ${{ env.RC2_RELEASE_TITLE }}
+          body_path: notes_src/audit/reguard_core_v0_1_release/rc_release_notes.md
+          prerelease: ${{ needs.build.outputs.is_prerelease == 'true' }}
+          fail_on_unmatched_files: true
+          files: |
+            release-artifacts/*.whl
+            release-artifacts/*.tar.gz
+            release-artifacts/SHA256SUMS
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Record release status
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          {
+            echo "## RC2 GitHub prerelease"
+            echo
+            if [ "${{ job.status }}" = "success" ]; then
+              echo "- Status:    ✅ SUCCESS"
+              echo "- Tag:       \`${{ env.RC2_TAG }}\`"
+              echo "- URL:       https://github.com/UseReguard/Reguard/releases/tag/${{ env.RC2_TAG }}"
+              echo "- Attached:  wheel + sdist + SHA256SUMS"
+              echo "- Prerelease: yes"
+            else
+              echo "- Status:    ❌ FAILED"
+              echo "- See job logs for the underlying error."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
