@@ -570,7 +570,15 @@ jobs:
 
   release:
     name: Create GitHub prerelease for v0.1.0-rc.2
-    needs: [build, publish-pypi, publish-runtime]
+    # NOTE: deliberately does NOT depend on publish-pypi. The
+    # GitHub Release ships the wheel + sdist + SHA256SUMS, which
+    # are produced by the build job and uploaded as artifacts.
+    # PyPI publication is an independent channel — its transient
+    # absence must not block the public availability of the
+    # GitHub Release. publish-runtime is still a dependency
+    # because the release job's body references the runtime image
+    # tag.
+    needs: [build, publish-runtime]
     runs-on: ubuntu-latest
     permissions:
       contents: write
